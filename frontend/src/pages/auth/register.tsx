@@ -25,13 +25,13 @@ const RegisterPage = () => {
                     </div>
                     <div className="space-y-2">
                         <Label>Email công việc</Label>
-                        <Input type="email" placeholder="nva@gigastore.com" className="bg-white/50" />
+                        <Input type="email" placeholder="nva@gmail.com" className="bg-white/50" />
                     </div>
                     <div className="space-y-2">
                         <Label>Mật khẩu</Label>
                         <Input type="password" className="bg-white/50" />
                     </div>
-                    <Button className="w-full bg-green-600 hover:bg-green-700 h-11 text-lg font-bold shadow-lg" onClick={() => navigate("/login")}>
+                    <Button className="w-full bg-green-600 hover:bg-green-600 h-11 text-lg font-bold shadow-lg" onClick={() => navigate("/login")}>
                         ĐĂNG KÝ
                     </Button>
                 </CardContent>

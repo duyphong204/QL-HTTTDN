@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HR_MANAGER
+  WAREHOUSE_MANAGER
+  SALES_MANAGER
+  EMPLOYEE
+  CUSTOMER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  profile   Profile?
+  employee  Employee?
+  orders    Order[]
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  fullName    String
+  phone       String?
+  address     String?
+  avatar      String?
+  dateOfBirth DateTime?
+}
+
+// --- HR MODULE ---
+
+model Employee {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  code         String   @unique // Employee Code (e.g. NV001)
+  position     String
+  baseSalary   Float
+  joinDate     DateTime @default(now())
+  resignDate   DateTime?
+  
+  salaries     Salary[]
+  leaveRequests LeaveRequest[]
+}
+
+model Salary {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  amount     Float
+  status     String   // PAID, PENDING
+  createdAt  DateTime @default(now())
+}
+
+model LeaveRequest {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  startDate  DateTime
+  endDate    DateTime
+  type       String   // SICK, ANNUAL, MATERNITY
+  reason     String
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt  DateTime @default(now())
+}
+
+// --- WAREHOUSE MODULE ---
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  products  Product[]
+  stockIns  StockIn[]
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  price         Float     // Selling price
+  costPrice     Float     // Import price
+  stockQuantity Int       @default(0)
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  supplierId    String
+  supplier      Supplier  @relation(fields: [supplierId], references: [id])
+  
+  stockInDetails StockInDetail[]
+  orderDetails   OrderDetail[]
+}
+
+model StockIn {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  date        DateTime @default(now())
+  totalAmount Float
+  
+  details     StockInDetail[]
+}
+
+model StockInDetail {
+  id        String  @id @default(uuid())
+  stockInId String
+  stockIn   StockIn @relation(fields: [stockInId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // Price at time of import
+}
+
+// --- SALES & ECOMMERCE ---
+
+model Order {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  fullName    String?  // For guest checkout or overridden info
+  phone       String?
+  address     String?
+  totalAmount Float
+  status      String   @default("PENDING") // PENDING, SHIPPING, COMPLETED, CANCELLED
+  createdAt   DateTime @default(now())
+  
+  details     OrderDetail[]
+}
+
+model OrderDetail {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // Price at time of sale
+}

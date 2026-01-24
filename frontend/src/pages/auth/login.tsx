@@ -21,19 +21,20 @@ const LoginPage = () => {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input type="email" placeholder="admin@gigastore.com" className="bg-white/50" />
+                        <Input type="email" placeholder="nguyenvana@gmail.com" className="bg-white/50" />
                     </div>
                     <div className="space-y-2">
                         <Label>Mật khẩu</Label>
                         <Input type="password" placeholder="••••••••" className="bg-white/50" />
                     </div>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-lg font-bold shadow-lg" onClick={() => navigate("/")}>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-500 h-11 text-lg font-bold shadow-lg"
+                        onClick={() => navigate("/")}>
                         ĐĂNG NHẬP
                     </Button>
                 </CardContent>
                 <CardFooter className="justify-center border-t border-slate-100 mt-4 pt-4">
                     <p className="text-sm text-slate-600">
-                        Mới vào làm? <Link to="/register" className="text-blue-600 font-bold hover:underline">Đăng ký ngay</Link>
+                        Mới vào làm? <Link to="/register" className="text-blue-500 font-bold hover:underline">Đăng ký ngay</Link>
                     </p>
                 </CardFooter>
             </Card>
