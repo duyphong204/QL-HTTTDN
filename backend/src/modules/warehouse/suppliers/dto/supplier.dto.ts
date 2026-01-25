@@ -1,0 +1,24 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from "class-validator";
+
+export class CreateSupplierDto {
+    @ApiProperty({ description: 'Tên nhà cung cấp' })
+    @IsString()
+    @IsNotEmpty({ message: 'Tên không được để trống' })
+    name: string;
+
+    @ApiProperty({ description: 'Địa chỉ' })
+    @IsString()
+    @IsOptional()
+    address?: string;
+
+    @ApiProperty({ description: 'Số điện thoại' })
+    @IsString()
+    @IsOptional()
+    phone?: string;
+
+    @ApiProperty({ description: 'Email liên hệ' })
+    @IsEmail({}, { message: 'Email không hợp lệ' })
+    @IsOptional()
+    email?: string;
+}
