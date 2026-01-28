@@ -5,8 +5,17 @@ import { CreateProductDto } from './dto/product.dto';
 @Injectable()
 export class ProductsService {
     constructor(private prisma: PrismaService) { }
-    async findAll() {
+    async findAll(search?: string, categoryId?: string) {
         return this.prisma.product.findMany({
+            where: {
+                ...(search && {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                    ]
+                }),
+                ...(categoryId && { categoryId }),
+            },
             include: {
                 supplier: true,
                 category: true,

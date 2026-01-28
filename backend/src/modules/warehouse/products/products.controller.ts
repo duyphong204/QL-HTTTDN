@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/product.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -13,8 +13,8 @@ import { Role } from 'src/common/enums/role.enum';
 export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
     @Get()
-    findAll() {
-        return this.productsService.findAll();
+    async findAll(@Query('search') search?: string, @Query('categoryId') categoryId?: string) {
+        return this.productsService.findAll(search, categoryId);
     }
     @Post()
     @Roles(Role.ADMIN)
