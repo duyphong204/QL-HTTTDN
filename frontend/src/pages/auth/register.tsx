@@ -3,9 +3,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/store/auth.store";
+import { useState } from "react";
+import { PATHS } from "@/routes";
 const RegisterPage = () => {
     const navigate = useNavigate();
-
+    const { register, isLoading } = useAuthStore();
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const handleRegister = async () => {
+        try {
+            await register(fullName, email, password);
+            navigate(PATHS.LOGIN);
+        } catch (error) {
+            alert("Đăng ký thất bại");
+        }
+    };
     return (
         <div
             className="flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat relative p-4"
@@ -16,23 +30,23 @@ const RegisterPage = () => {
             <Card className="z-10 w-full max-w-sm shadow-2xl border-none bg-white/90 backdrop-blur-md">
                 <CardHeader>
                     <CardTitle className="text-3xl text-center font-bold text-slate-900">GigaStore</CardTitle>
-                    <CardDescription className="text-center font-medium">Tạo tài khoản nhân viên mới</CardDescription>
+                    <CardDescription className="text-center font-medium">Tạo tài khoản mới</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Họ và tên</Label>
-                        <Input placeholder="Nguyễn Văn A" className="bg-white/50" />
+                        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nguyễn Văn A" className="bg-white/50" />
                     </div>
                     <div className="space-y-2">
                         <Label>Email công việc</Label>
-                        <Input type="email" placeholder="nva@gmail.com" className="bg-white/50" />
+                        <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="nva@gmail.com" className="bg-white/50" />
                     </div>
                     <div className="space-y-2">
                         <Label>Mật khẩu</Label>
-                        <Input type="password" className="bg-white/50" />
+                        <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="bg-white/50" placeholder="••••••••" />
                     </div>
-                    <Button className="w-full bg-green-600 hover:bg-green-600 h-11 text-lg font-bold shadow-lg" onClick={() => navigate("/login")}>
-                        ĐĂNG KÝ
+                    <Button className="w-full bg-green-600 hover:bg-green-600 h-11 text-lg font-bold shadow-lg" onClick={handleRegister} disabled={isLoading}>
+                        {isLoading ? "ĐANG ĐĂNG KÝ..." : "ĐĂNG KÝ"}
                     </Button>
                 </CardContent>
                 <CardFooter className="justify-center border-t border-slate-100 mt-4 pt-4">

@@ -3,10 +3,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/store/auth.store";
+import { useState } from "react";
+import { PATHS } from "@/routes";
 
 const LoginPage = () => {
     const navigate = useNavigate();
-
+    const { login, isLoading } = useAuthStore();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const handleLogin = async () => {
+        try {
+            await login(email, password);
+            navigate(PATHS.HOME, { replace: true });
+        } catch (error) {
+            alert("Đăng nhập thất bại");
+        }
+    };
     return (
         <div
             className="flex items-center justify-center min-h-screen bg-cover bg-center bg-no-repeat relative p-4"
@@ -21,15 +34,16 @@ const LoginPage = () => {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input type="email" placeholder="nguyenvana@gmail.com" className="bg-white/50" />
+                        <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="nguyenvana@gmail.com" className="bg-white/50" />
                     </div>
                     <div className="space-y-2">
                         <Label>Mật khẩu</Label>
-                        <Input type="password" placeholder="••••••••" className="bg-white/50" />
+                        <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="••••••••" className="bg-white/50" />
                     </div>
                     <Button className="w-full bg-blue-600 hover:bg-blue-500 h-11 text-lg font-bold shadow-lg"
-                        onClick={() => navigate("/")}>
-                        ĐĂNG NHẬP
+                        onClick={handleLogin}
+                        disabled={isLoading}>
+                        {isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP"}
                     </Button>
                 </CardContent>
                 <CardFooter className="justify-center border-t border-slate-100 mt-4 pt-4">

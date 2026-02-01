@@ -1,6 +1,8 @@
+import ProtectedRoute from "./ProtectedRoute"
+import HomePage from "@/pages/admin/HomePage"
 import LoginPage from "@/pages/auth/login"
 import RegisterPage from "@/pages/auth/register"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Route, Routes } from "react-router-dom"
 
 export const PATHS = {
     LOGIN: '/login',
@@ -13,7 +15,14 @@ export const AppRouter = () => {
         <Routes>
             <Route path={PATHS.LOGIN} element={<LoginPage />} />
             <Route path={PATHS.REGISTER} element={<RegisterPage />} />
-            <Route path="*" element={<Navigate to={PATHS.LOGIN} />} />
+            {/* private route  */}
+            <Route
+                path={PATHS.HOME}
+                element={
+                    <ProtectedRoute>
+                        <HomePage />
+                    </ProtectedRoute>
+                } />
         </Routes>
     )
 }

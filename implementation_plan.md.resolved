@@ -1,0 +1,25 @@
+# Kế hoạch triển khai - QL_HTTTDN
+
+Đây là kế hoạch xây dựng hệ thống quản lý chuẩn đồ án năm 4, tập trung vào tính logic và các công nghệ hiện đại.
+
+## Các thay đổi đề xuất
+
+### Backend (NestJS + Prisma)
+- **Auth Module:** Sử dụng Passport.js và JWT. Phân quyền dựa trên Role (ADMIN, CUSTOMER, HR_MANAGER, v.v.).
+- **Sales Module:** Xử lý logic nghiệp vụ quan trọng nhất là trừ kho khi đặt hàng thành công.
+- **Stock In:** Xử lý nhập hàng và cộng dồn tồn kho.
+
+### Công nghệ nâng cao (Để CV ấn tượng hơn)
+1. **Cloudinary:** Lưu trữ và quản lý hình ảnh sản phẩm (thay vì lưu local).
+2. **Socket.io:** Thông báo cho Admin khi có đơn hàng mới hoặc nhân viên xin nghỉ phép.
+3. **Redis:** Lưu cache danh sách sản phẩm trang chủ để web chạy cực nhanh.
+4. **Docker:** Đóng gói dự án để dễ dàng triển khai mọi nơi.
+
+## Kế hoạch xác minh
+
+### Kiểm tra tự động
+- Viết Unit Test cho logic tính lương và tính lợi nhuận.
+
+### Kiểm tra thủ công
+- Kiểm tra phân quyền: Khách hàng không thể truy cập trang Admin.
+- Kiểm tra tính toàn vẹn: Đặt hàng thành công thì số lượng kho phải giảm đúng bằng số lượng mua.
