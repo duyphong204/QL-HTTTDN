@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth.store";
 import { useState } from "react";
 import { PATHS } from "@/routes";
+import { toast } from "sonner";
 const RegisterPage = () => {
     const navigate = useNavigate();
     const { register, isLoading } = useAuthStore();
@@ -15,9 +16,10 @@ const RegisterPage = () => {
     const handleRegister = async () => {
         try {
             await register(fullName, email, password);
+            toast.success("Đăng ký thành công");
             navigate(PATHS.LOGIN);
         } catch (error) {
-            alert("Đăng ký thất bại");
+            toast.error("Đăng ký thất bại");
         }
     };
     return (

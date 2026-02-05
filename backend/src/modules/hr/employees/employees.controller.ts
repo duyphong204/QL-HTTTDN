@@ -1,12 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards, UsePipes } from "@nestjs/common";
 import { EmployeesService } from "./employees.service";
 import { CreateEmployeeFromUserDto, UpdateEmployeeDto, UpdateProfileDto } from "./dto/employee.dto";
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from "src/modules/auth/decorators/roles.decorator";
 import { Role } from "src/common/enums/role.enum";
+import { ValidationPipe } from "@nestjs/common";
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UsePipes(new ValidationPipe({ transform: true }))
 @Controller('hr/employees')
 export class EmployeesController {
     constructor(private readonly employeesService: EmployeesService) { }

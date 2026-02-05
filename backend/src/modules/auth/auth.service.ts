@@ -1,63 +1,147 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException, ForbiddenException, } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { Role } from 'src/common/enums/role.enum';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { JWT_CONFIG, JwtPayload } from './constants/jwt.constants';
 
 @Injectable()
 export class AuthService {
     constructor(
-        private usersService: UsersService,
-        private jwtService: JwtService
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService,
+        private readonly prisma: PrismaService,
     ) { }
 
-    async login(dto: LoginDto) {
-        const user = await this.usersService.findByEmail(dto.email);
+    private createPayload(userId: string, email: string, role: string): JwtPayload {
+        return { sub: userId, email, role };
+    }
 
-        if (user && await bcrypt.compare(dto.password, user.password)) {
-            const payload = {
-                email: user.email,
-                sub: user.id,
-                role: user.role
-            };
+    private async generateTokens(payload: JwtPayload) {
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync(payload, {
+                secret: JWT_CONFIG.ACCESS_TOKEN_SECRET,
+                expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRY,
+            }),
+            this.jwtService.signAsync(payload, {
+                secret: JWT_CONFIG.REFRESH_TOKEN_SECRET,
+                expiresIn: JWT_CONFIG.REFRESH_TOKEN_EXPIRY,
+            }),
+        ]);
 
-            return {
-                accessToken: await this.jwtService.sign(payload),
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    role: user.role,
-                    fullName: user.profile?.fullName
-                }
-            };
+        return { accessToken, refreshToken };
+    }
+
+    private async updateRefreshToken(userId: string, refreshToken: string) {
+        const hash = await bcrypt.hash(refreshToken, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refreshTokenHash: hash },
+        });
+    }
+
+    private async validateUser(email: string, password: string) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
         }
-        throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+        }
+
+        return user;
+    }
+
+    private async validateRefreshToken(refreshToken: string) {
+        const payload = await this.jwtService.verifyAsync<JwtPayload>(
+            refreshToken,
+            { secret: JWT_CONFIG.REFRESH_TOKEN_SECRET },
+        );
+
+        const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+            include: { profile: true },
+        });
+
+        if (!user || !user.refreshTokenHash) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        const isValid = await bcrypt.compare(
+            refreshToken,
+            user.refreshTokenHash,
+        );
+        if (!isValid) {
+            throw new ForbiddenException('Access denied');
+        }
+
+        return user;
     }
 
     async register(dto: RegisterDto) {
-        const userExist = await this.usersService.findByEmail(dto.email);
-        if (userExist) {
-            throw new ConflictException('Email đã tồn tại trong hệ thống');
+        const exists = await this.usersService.findByEmail(dto.email);
+        if (exists) {
+            throw new ConflictException('Email đã tồn tại');
         }
 
         const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-        const user = await this.usersService.create({
+        await this.usersService.create({
             email: dto.email,
             password: hashedPassword,
-            role: Role.CUSTOMER, // Dùng Enum cực kỳ an toàn
+            role: Role.CUSTOMER,
             profile: {
-                create: {
-                    fullName: dto.fullName // Đã đồng nhất chữ N viết hoa
-                }
-            }
+                create: { fullName: dto.fullName },
+            },
         });
 
+        return { message: 'Đăng ký thành công' };
+    }
+
+    async login(dto: LoginDto) {
+        const user = await this.validateUser(dto.email, dto.password);
+
+        const payload = this.createPayload(user.id, user.email, user.role);
+        const { accessToken, refreshToken } = await this.generateTokens(payload);
+
+        await this.updateRefreshToken(user.id, refreshToken);
+
         return {
-            message: 'Đăng ký tài khoản thành công',
-            userId: user.id
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                fullName: user.profile?.fullName,
+            },
         };
+    }
+
+    async refresh(refreshToken: string) {
+        const user = await this.validateRefreshToken(refreshToken);
+
+        const payload = this.createPayload(user.id, user.email, user.role);
+        const { accessToken, refreshToken: newRefreshToken } =
+            await this.generateTokens(payload);
+
+        await this.updateRefreshToken(user.id, newRefreshToken);
+
+        return {
+            accessToken,
+            refreshToken: newRefreshToken,
+        };
+    }
+
+    async logout(userId: string) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refreshTokenHash: null },
+        });
     }
 }

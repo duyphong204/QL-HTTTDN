@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth.store";
 import { useState } from "react";
 import { PATHS } from "@/routes";
+import { toast } from "sonner";
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -15,9 +16,10 @@ const LoginPage = () => {
     const handleLogin = async () => {
         try {
             await login(email, password);
+            toast.success("Đăng nhập thành công");
             navigate(PATHS.HOME, { replace: true });
         } catch (error) {
-            alert("Đăng nhập thất bại");
+            toast.error("Đăng nhập thất bại");
         }
     };
     return (

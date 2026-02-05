@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Request, UseGuards, UsePipes } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
 import { CreateSalaryDto } from './dto/salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
@@ -6,10 +6,12 @@ import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ValidationPipe } from "@nestjs/common";
 
 @ApiTags('HR - Salaries')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UsePipes(new ValidationPipe({ transform: true }))
 @Controller('hr/salaries')
 
 export class SalariesController {

@@ -1,4 +1,4 @@
-import type { UserRole } from "@/types";
+import type { Role } from "../../types/auth.type";
 import {
     LayoutDashboard,
     Users,
@@ -15,7 +15,7 @@ interface MenuItem {
     label: string;
     icon: React.ReactNode;
     path: string;
-    roles: UserRole[];
+    roles: Role[];
 }
 export const MenuItems: MenuItem[] = [
     {
@@ -23,76 +23,76 @@ export const MenuItems: MenuItem[] = [
         label: 'Tổng quan',
         icon: <LayoutDashboard className="w-5 h-5" />,
         path: '/dashboard',
-        roles: ['admin', 'hr_manager', 'warehouse_manager', 'sales_manager', 'employee'],
+        roles: ['ADMIN', 'HR_MANAGER', 'WAREHOUSE_MANAGER', 'SALES_MANAGER', 'EMPLOYEE'],
     },
     {
         id: 'users',
         label: 'Quản lý User',
         icon: <UserCog className="w-5 h-5" />,
         path: '/users',
-        roles: ['admin'],
+        roles: ['ADMIN'],
     },
     {
         id: 'reports',
         label: 'Báo cáo Tổng hợp',
         icon: <BarChart3 className="w-5 h-5" />,
         path: '/reports',
-        roles: ['admin'],
+        roles: ['ADMIN'],
     },
     {
         id: 'employees',
         label: 'Quản lý Nhân sự',
         icon: <Users className="w-5 h-5" />,
         path: '/employees',
-        roles: ['admin', 'hr_manager', 'employee'],
+        roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'],
     },
     {
         id: 'leave-requests',
         label: 'Đơn xin nghỉ',
         icon: <FileText className="w-5 h-5" />,
         path: '/leave-requests',
-        roles: ['admin', 'hr_manager', 'employee'],
+        roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'],
     },
     {
         id: 'salary',
         label: 'Quản lý Lương',
         icon: <FileText className="w-5 h-5" />,
         path: '/salary',
-        roles: ['admin', 'hr_manager', 'employee'],
+        roles: ['ADMIN', 'HR_MANAGER', 'EMPLOYEE'],
     },
     {
         id: 'products',
         label: 'Quản lý Sản phẩm',
         icon: <Package className="w-5 h-5" />,
         path: '/products',
-        roles: ['admin', 'warehouse_manager'],
+        roles: ['ADMIN', 'WAREHOUSE_MANAGER'],
     },
     {
         id: 'suppliers',
         label: 'Nhà cung cấp',
         icon: <Warehouse className="w-5 h-5" />,
         path: '/suppliers',
-        roles: ['admin', 'warehouse_manager'],
+        roles: ['ADMIN', 'WAREHOUSE_MANAGER'],
     },
     {
         id: 'import-orders',
         label: 'Phiếu Nhập',
         icon: <Package className="w-5 h-5" />,
         path: '/import-orders',
-        roles: ['admin', 'warehouse_manager'],
+        roles: ['ADMIN', 'WAREHOUSE_MANAGER'],
     },
     {
         id: 'export-orders',
         label: 'Phiếu Xuất/Bán hàng',
         icon: <ShoppingCart className="w-5 h-5" />,
         path: '/export-orders',
-        roles: ['admin', 'sales_manager'],
+        roles: ['ADMIN', 'SALES_MANAGER'],
     },
     {
         id: 'sales-reports',
         label: 'Báo cáo Kinh doanh',
         icon: <BarChart3 className="w-5 h-5" />,
         path: '/sales-reports',
-        roles: ['admin', 'sales_manager'],
+        roles: ['ADMIN', 'SALES_MANAGER'],
     },
 ] 

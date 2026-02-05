@@ -20,18 +20,19 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  email            String   @unique
+  password         String
+  role             Role     @default(CUSTOMER)
+  refreshTokenHash String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   
-  profile   Profile?
-  employee  Employee?
-  orders    Order[]
-  cart      Cart?
-  logs      SystemLog[]
+  profile  Profile?
+  employee Employee?
+  orders   Order[]
+  cart     Cart?
+  logs     SystemLog[]
 }
 
 model Profile {

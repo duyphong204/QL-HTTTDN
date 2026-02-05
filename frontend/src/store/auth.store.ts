@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { authService } from "@/services/auth.service";
 import type { User } from "@/types/user.type";
+import { setAccessToken } from "@/services/api";
 
 interface AuthState {
     user: User | null;
@@ -23,7 +24,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             const res = await authService.login({ email, password });
 
-            localStorage.setItem("accessToken", res.accessToken);
+            // Only store access token (refresh token is in httpOnly cookie)
+            setAccessToken(res.accessToken);
 
             set({
                 accessToken: res.accessToken,
@@ -35,10 +37,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     register: async (fullName, email, password) => {
-        const res = await authService.register({ fullName, email, password });
-
-        localStorage.setItem("accessToken", res.accessToken);
-        set({ accessToken: res.accessToken, user: res.user });
+        await authService.register({ fullName, email, password });
+        // Auto-login after successful registration
+        await useAuthStore.getState().login(email, password);
     },
 
     fetchProfile: async () => {
@@ -47,8 +48,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     logout: async () => {
-        await authService.logout();
-        localStorage.removeItem("accessToken");
+        try {
+            await authService.logout();
+        } catch (error) {
+            // Ignore logout errors, clear tokens anyway
+            console.error("Logout error:", error);
+        }
+
+        // Clear access token (refresh token cookie cleared by backend)
+        setAccessToken(null);
         set({ user: null, accessToken: null });
     },
 }));
