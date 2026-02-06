@@ -1,4 +1,4 @@
-import axiosInstance from './api';
+import { axiosInstance } from './api';
 import type { Product, CreateProductDto, Supplier, Category, StockIn, CreateStockInDto } from '@/types/warehouse.type';
 
 // ==================== PRODUCTS ====================

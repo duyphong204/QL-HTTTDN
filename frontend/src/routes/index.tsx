@@ -14,6 +14,7 @@ export const PATHS = {
 export const AppRouter = () => {
     return (
         <Routes>
+            {/* Public routes with Auth layout */}
             <Route path={PATHS.LOGIN} element={<LoginPage />} />
             <Route path={PATHS.REGISTER} element={<RegisterPage />} />
             {/* Private routes with Sidebar layout */}

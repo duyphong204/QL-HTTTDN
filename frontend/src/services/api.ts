@@ -1,41 +1,25 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { API_CONFIG, STORAGE_KEYS } from "./constants";
+import { API_CONFIG } from "./constants";
 
-// Create axios instance with default config
+let accessToken: string | null = null;
+
+export const setAccessToken = (token: string | null): void => {
+    accessToken = token;
+};
+
+export const getAccessToken = (): string | null => {
+    return accessToken;
+};
+
 export const axiosInstance = axios.create({
     baseURL: API_CONFIG.BASE_URL,
     timeout: API_CONFIG.TIMEOUT,
-    withCredentials: true, // CRITICAL: Send cookies automatically
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-// In-memory token storage (more secure than localStorage for access token)
-let accessToken: string | null = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-
-/**
- * Update access token in memory and localStorage
- */
-export const setAccessToken = (token: string | null): void => {
-    accessToken = token;
-    if (token) {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-    } else {
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-    }
-};
-
-/**
- * Clear all tokens and redirect to login
- */
-const clearTokensAndRedirect = (): void => {
-    setAccessToken(null);
-    // No need to clear refresh token - it's in httpOnly cookie
-    window.location.href = "/login";
-};
-
-// Request interceptor - Attach access token to requests
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         if (accessToken && config.headers) {
@@ -46,70 +30,72 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Token refresh state management
 let isRefreshing = false;
-let refreshPromise: Promise<string> | null = null;
+let failedQueue: any[] = [];
 
-/**
- * Refresh access token using httpOnly cookie
- */
-const refreshAccessToken = async (): Promise<string> => {
-    try {
-        // No need to send refresh token - it's automatically sent via cookie
-        const { data } = await axios.post(
-            `${API_CONFIG.BASE_URL}/auth/refresh`,
-            {}, // Empty body
-            { withCredentials: true } // Send cookies
-        );
-
-        // Update access token (refresh token is updated in cookie by backend)
-        setAccessToken(data.accessToken);
-
-        return data.accessToken;
-    } catch (error) {
-        // Refresh failed, clear everything
-        clearTokensAndRedirect();
-        throw error;
-    }
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
 };
 
-// Response interceptor - Handle 401 errors and auto-refresh
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-        // Only handle 401 errors for non-refresh endpoints
         if (
             error.response?.status === 401 &&
             !originalRequest._retry &&
             !originalRequest.url?.includes("/auth/refresh") &&
             !originalRequest.url?.includes("/auth/login")
         ) {
-            originalRequest._retry = true;
-
-            // If not already refreshing, start refresh process
-            if (!isRefreshing) {
-                isRefreshing = true;
-                refreshPromise = refreshAccessToken().finally(() => {
-                    isRefreshing = false;
-                    refreshPromise = null;
-                });
+            if (isRefreshing) {
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        if (originalRequest.headers) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                        }
+                        return axiosInstance(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
             }
 
-            try {
-                // Wait for refresh to complete
-                const newToken = await refreshPromise;
+            originalRequest._retry = true;
+            isRefreshing = true;
 
-                // Retry original request with new token
+            try {
+                const { data } = await axios.post(
+                    `${API_CONFIG.BASE_URL}/auth/refresh`,
+                    {},
+                    { withCredentials: true }
+                );
+
+                const newToken = data.accessToken;
+                setAccessToken(newToken);
+
+                processQueue(null, newToken);
+
                 if (originalRequest.headers) {
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 }
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
-                // Refresh failed, redirect to login
-                clearTokensAndRedirect();
+                processQueue(refreshError, null);
+                setAccessToken(null);
+                window.location.href = "/login";
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 
