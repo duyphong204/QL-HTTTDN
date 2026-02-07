@@ -1,5 +1,4 @@
 import type { Role } from "./auth.type"
-import type { BaseEntity } from "./common.type"
 
 export interface Profile {
     fullName: string
@@ -9,8 +8,25 @@ export interface Profile {
     dateOfBirth?: string
 }
 
-export interface User extends BaseEntity {
+export interface User {
+    id: string
     email: string
     role: Role
     profile?: Profile
+    createdAt: string
+}
+export interface CreateUserDto {
+    email: string;
+    password: string;
+    role: Role;
+    profile: {
+        fullName: string;
+    };
+}
+export interface UpdateUserDto {
+    email?: string;
+    role?: Role;
+    profile?: {
+        fullName?: string;
+    };
 }

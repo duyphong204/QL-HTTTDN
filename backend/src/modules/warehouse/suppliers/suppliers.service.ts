@@ -11,6 +11,18 @@ export class SuppliersService {
     async create(dto: CreateSupplierDto) {
         return this.prisma.supplier.create({ data: dto });
     }
+
+    async findOne(id: string) {
+        return this.prisma.supplier.findUnique({ where: { id } });
+    }
+
+    async update(id: string, dto: any) {
+        return this.prisma.supplier.update({
+            where: { id },
+            data: dto
+        });
+    }
+
     async remove(id: string) {
         return this.prisma.supplier.delete({ where: { id } });
     }

@@ -3,13 +3,21 @@ import { useAuthStore } from "@/store/auth.store";
 import { PATHS } from "@/routes";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const { accessToken } = useAuthStore();
+    const { isAuthenticated, isLoading } = useAuthStore();
 
-    if (!accessToken) {
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
         return <Navigate to={PATHS.LOGIN} replace />;
     }
 
-    return children;
+    return <>{children}</>;
 };
 
 export default ProtectedRoute;

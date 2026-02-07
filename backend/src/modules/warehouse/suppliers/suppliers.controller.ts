@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
-import { CreateSupplierDto } from './dto/supplier.dto';
+import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
@@ -20,6 +20,17 @@ export class SuppliersController {
     @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
     create(@Body() dto: CreateSupplierDto) {
         return this.suppliersService.create(dto);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.suppliersService.findOne(id);
+    }
+
+    @Patch(':id')
+    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+    update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
+        return this.suppliersService.update(id, dto);
     }
     @Delete(':id')
     @Roles(Role.ADMIN)

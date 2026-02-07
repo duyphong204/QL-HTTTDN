@@ -29,7 +29,7 @@ export const MenuItems: MenuItem[] = [
         id: 'users',
         label: 'Quản lý User',
         icon: <UserCog className="w-5 h-5" />,
-        path: '/users',
+        path: 'admin/users',
         roles: ['ADMIN'],
     },
     {
@@ -71,7 +71,7 @@ export const MenuItems: MenuItem[] = [
         id: 'suppliers',
         label: 'Nhà cung cấp',
         icon: <Warehouse className="w-5 h-5" />,
-        path: '/suppliers',
+        path: 'admin/suppliers',
         roles: ['ADMIN', 'WAREHOUSE_MANAGER'],
     },
     {

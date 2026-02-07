@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/store/auth.store"
 import { LoginSchema, type LoginValues } from "@/lib/validators/auth.validator"
 import authBg from "@/assets/auth-bg.png";
+import { useNavigate } from "react-router-dom"
 export function LoginForm({
   className,
   ...props
@@ -26,8 +27,15 @@ export function LoginForm({
     resolver: zodResolver(LoginSchema),
   })
 
+  const navigate = useNavigate()
   const onSubmit = async (data: LoginValues) => {
-    await useAuthStore.getState().login(data.email, data.password)
+    try {
+      await useAuthStore.getState().login(data.email, data.password)
+      navigate("/")
+    }
+    catch (error) {
+      console.log(error)
+    }
   }
 
   return (
