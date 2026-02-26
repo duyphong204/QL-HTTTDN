@@ -5,11 +5,6 @@ import { ProductsModule } from './products/products.module';
 import { StockInModule } from './stock-in/stock-in.module';
 
 @Module({
-  imports: [
-    CategoriesModule,
-    SuppliersModule,
-    ProductsModule,
-    StockInModule,
-  ],
+  imports: [CategoriesModule, SuppliersModule, ProductsModule, StockInModule],
 })
-export class WarehouseModule { }
+export class WarehouseModule {}

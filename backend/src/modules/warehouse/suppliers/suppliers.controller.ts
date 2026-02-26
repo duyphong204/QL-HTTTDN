@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -11,30 +20,30 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('suppliers')
 export class SuppliersController {
-    constructor(private readonly suppliersService: SuppliersService) { }
-    @Get()
-    findAll() {
-        return this.suppliersService.findAll();
-    }
-    @Post()
-    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    create(@Body() dto: CreateSupplierDto) {
-        return this.suppliersService.create(dto);
-    }
+  constructor(private readonly suppliersService: SuppliersService) {}
+  @Get()
+  findAll() {
+    return this.suppliersService.findAll();
+  }
+  @Post()
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  create(@Body() dto: CreateSupplierDto) {
+    return this.suppliersService.create(dto);
+  }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.suppliersService.findOne(id);
-    }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.suppliersService.findOne(id);
+  }
 
-    @Patch(':id')
-    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
-        return this.suppliersService.update(id, dto);
-    }
-    @Delete(':id')
-    @Roles(Role.ADMIN)
-    remove(@Param('id') id: string) {
-        return this.suppliersService.remove(id);
-    }
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
+    return this.suppliersService.update(id, dto);
+  }
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  remove(@Param('id') id: string) {
+    return this.suppliersService.remove(id);
+  }
 }

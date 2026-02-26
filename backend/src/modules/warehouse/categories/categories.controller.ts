@@ -12,15 +12,15 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('categories')
 export class CategoriesController {
-    constructor(private readonly categoriesService: CategoriesService) { }
+  constructor(private readonly categoriesService: CategoriesService) {}
 
-    @Get()
-    findAll() {
-        return this.categoriesService.findAll();
-    }
-    @Post()
-    @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-    create(@Body() dto: CreateCategoryDto) {
-        return this.categoriesService.create(dto);
-    }
+  @Get()
+  findAll() {
+    return this.categoriesService.findAll();
+  }
+  @Post()
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  create(@Body() dto: CreateCategoryDto) {
+    return this.categoriesService.create(dto);
+  }
 }

@@ -3,7 +3,7 @@ import { StockInController } from './stock-in.controller';
 import { StockInService } from './stock-in.service';
 
 @Module({
-    controllers: [StockInController],
-    providers: [StockInService],
+  controllers: [StockInController],
+  providers: [StockInService],
 })
-export class StockInModule { }
+export class StockInModule {}

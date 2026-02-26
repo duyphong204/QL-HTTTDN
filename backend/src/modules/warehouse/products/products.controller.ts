@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/product.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -11,19 +20,22 @@ import { Role } from 'src/common/enums/role.enum';
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
-    constructor(private readonly productsService: ProductsService) { }
-    @Get()
-    async findAll(@Query('search') search?: string, @Query('categoryId') categoryId?: string) {
-        return this.productsService.findAll(search, categoryId);
-    }
-    @Post()
-    @Roles(Role.ADMIN)
-    create(@Body() dto: CreateProductDto) {
-        return this.productsService.create(dto);
-    }
-    @Delete(':id')
-    @Roles(Role.ADMIN)
-    remove(@Param('id') id: string) {
-        return this.productsService.remove(id);
-    }
+  constructor(private readonly productsService: ProductsService) {}
+  @Get()
+  async findAll(
+    @Query('search') search?: string,
+    @Query('categoryId') categoryId?: string,
+  ) {
+    return this.productsService.findAll(search, categoryId);
+  }
+  @Post()
+  @Roles(Role.ADMIN)
+  create(@Body() dto: CreateProductDto) {
+    return this.productsService.create(dto);
+  }
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  remove(@Param('id') id: string) {
+    return this.productsService.remove(id);
+  }
 }

@@ -4,10 +4,6 @@ import { LeaveRequestsModule } from './leave-requests/leave-requests.module';
 import { SalariesModule } from './salaries/salaries.module';
 
 @Module({
-    imports: [
-        EmployeesModule,
-        LeaveRequestsModule,
-        SalariesModule
-    ],
+  imports: [EmployeesModule, LeaveRequestsModule, SalariesModule],
 })
-export class HRModule { }
+export class HRModule {}
