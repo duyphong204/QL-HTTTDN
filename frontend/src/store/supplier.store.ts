@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { supplierService } from "../services/supplier.service";
-import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "../services/supplier.service";
+import { supplierApi } from "@/api/warehouse.api";
+import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/warehouse.type";
 import { toast } from "sonner";
 
 interface SupplierState {
@@ -46,7 +46,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
             const { filters } = get();
             set({ isLoading: true, error: null });
             try {
-                const response = await supplierService.getSuppliers({
+                const response = await supplierApi.getSuppliers({
                     page: filters.page,
                     limit: filters.limit,
                     search: filters.search,
@@ -73,7 +73,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         addSupplier: async (data) => {
             set({ isLoading: true, error: null });
             try {
-                await supplierService.createSupplier(data);
+                await supplierApi.createSupplier(data);
                 toast.success("Thêm nhà cung cấp thành công");
                 get().actions.fetchSuppliers();
             } catch (error: any) {
@@ -86,7 +86,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         updateSupplier: async (id, data) => {
             set({ isLoading: true, error: null });
             try {
-                await supplierService.updateSupplier(id, data);
+                await supplierApi.updateSupplier(id, data);
                 toast.success("Cập nhật nhà cung cấp thành công");
                 get().actions.fetchSuppliers();
             } catch (error: any) {
@@ -99,7 +99,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         deleteSupplier: async (id) => {
             set({ isLoading: true, error: null });
             try {
-                await supplierService.deleteSupplier(id);
+                await supplierApi.deleteSupplier(id);
                 toast.success("Xóa nhà cung cấp thành công");
                 set((state) => ({
                     suppliers: state.suppliers.filter((s) => s.id !== id),

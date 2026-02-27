@@ -1,3 +1,4 @@
+
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { API_CONFIG } from "./constants";
 
@@ -10,6 +11,11 @@ export const setAccessToken = (token: string | null): void => {
 export const getAccessToken = (): string | null => {
     return accessToken;
 };
+export interface ApiErrorResponse {
+    statusCode: number;
+    message: string;
+    timestamp?: string;
+}
 
 export const axiosInstance = axios.create({
     baseURL: API_CONFIG.BASE_URL,
@@ -47,6 +53,12 @@ const processQueue = (error: any, token: string | null = null) => {
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
+        const apiError = error.response?.data as ApiErrorResponse;
+         if (apiError?.message) {
+            const customError = new Error(apiError.message);
+            customError.name = `HttpError${error.response?.status}`;
+            return Promise.reject(customError);
+        }
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
         if (

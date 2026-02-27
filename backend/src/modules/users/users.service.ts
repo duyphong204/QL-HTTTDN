@@ -28,7 +28,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     return user;
@@ -37,7 +37,7 @@ export class UsersService {
   async create(data: CreateUserDto) {
     const existedUser = await this.findByEmail(data.email);
     if (existedUser) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('Email đã tồn tại');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -49,7 +49,7 @@ export class UsersService {
         role: data.role,
         profile: {
           create: {
-            fullName: data.fullName,
+            fullName: data.profile.fullName,
           },
         },
       },
@@ -58,16 +58,15 @@ export class UsersService {
   }
   async update(id: string, data: UpdateUserDto) {
     await this.findOne(id);
-
     return this.prisma.user.update({
       where: { id },
       data: {
         email: data.email,
         role: data.role,
-        profile: data.fullName
+        profile: data.profile?.fullName
           ? {
               update: {
-                fullName: data.fullName,
+                fullName: data.profile.fullName,
               },
             }
           : undefined,

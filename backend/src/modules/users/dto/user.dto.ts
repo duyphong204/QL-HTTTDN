@@ -1,11 +1,24 @@
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
   IsOptional,
   IsString,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { Role } from 'src/common/enums/role.enum';
+
+export class ProfileDto {
+  @IsString()
+  fullName: string;
+}
+
+export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+}
 
 export class CreateUserDto {
   @IsEmail()
@@ -18,8 +31,9 @@ export class CreateUserDto {
   @IsEnum(Role)
   role: Role;
 
-  @IsString()
-  fullName: string;
+  @ValidateNested()
+  @Type(() => ProfileDto)
+  profile: ProfileDto;
 }
 
 export class UpdateUserDto {
@@ -32,6 +46,7 @@ export class UpdateUserDto {
   role?: Role;
 
   @IsOptional()
-  @IsString()
-  fullName?: string;
+  @ValidateNested()
+  @Type(() => UpdateProfileDto)
+  profile?: UpdateProfileDto;
 }

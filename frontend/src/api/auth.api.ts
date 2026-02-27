@@ -1,13 +1,8 @@
-import type {
-    LoginRequest,
-    LoginResponse,
-    RegisterRequest,
-    RegisterResponse,
-} from "@/types/auth.type";
-import { axiosInstance } from "./api";
-import type { User } from "@/types/user.type";
+import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/types/auth.type"
+import type { User } from "@/types/user.type"
+import { axiosInstance } from "./axios"
 
-export const authService = {
+export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
         const res = await axiosInstance.post("/auth/login", data);
         return res.data;
@@ -15,6 +10,11 @@ export const authService = {
 
     register: async (data: RegisterRequest): Promise<RegisterResponse> => {
         const res = await axiosInstance.post("/auth/register", data);
+        return res.data;
+    },
+
+    refresh: async (): Promise<{ accessToken: string }> => {
+        const res = await axiosInstance.post("/auth/refresh");
         return res.data;
     },
 

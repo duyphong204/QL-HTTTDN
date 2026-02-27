@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { authService } from "@/services/auth.service";
+import { authApi } from "@/api/auth.api";
 import type { User } from "@/types/user.type";
-import { setAccessToken } from "@/services/api";
+import { setAccessToken } from "@/api/axios";
 import { toast } from "sonner";
 
 interface AuthState {
@@ -13,7 +13,7 @@ interface AuthState {
     register: (fullName: string, email: string, password: string) => Promise<void>;
     fetchProfile: () => Promise<void>;
     logout: () => Promise<void>;
-    checkAuth: () => Promise<void>; // New action to restore session
+    checkAuth: () => Promise<void>; 
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     login: async (email, password) => {
         set({ isLoading: true });
         try {
-            const res = await authService.login({ email, password });
+            const res = await authApi.login({ email, password });
             setAccessToken(res.accessToken);
 
             set({
@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     register: async (fullName, email, password) => {
         try {
-            await authService.register({ fullName, email, password });
+            await authApi.register({ fullName, email, password });
             toast.success("Đăng ký thành công 🎉");
             await get().login(email, password);
         } catch (error: any) {
@@ -58,10 +58,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     fetchProfile: async () => {
         try {
-            const user = await authService.getProfile();
+            const user = await authApi.getProfile();
             set({ user, isAuthenticated: true });
         } catch (error: any) {
-            // If fetch profile fails, it might mean token expired and refresh failed
             set({ user: null, isAuthenticated: false });
         }
     },
@@ -69,12 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     checkAuth: async () => {
         set({ isLoading: true });
         try {
-            // Chiến thuật: Gọi fetchProfile.
-            // Vì api.ts đã có interceptor, nếu chưa có token nó sẽ gửi request không token -> 401
-            // Interceptor sẽ catch 401 -> gọi /refresh -> lấy token mới -> retry fetchProfile
-            // Nếu refresh thành công -> fetchProfile thành công -> set user
-            // Nếu refresh thất bại -> fetchProfile throw error -> catch -> set isAuthenticated = false
-            const user = await authService.getProfile();
+            const user = await authApi.getProfile();
             set({ user, isAuthenticated: true });
         } catch (error) {
             set({ user: null, isAuthenticated: false });
@@ -85,10 +79,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     logout: async () => {
         try {
-            await authService.logout();
+            await authApi.logout();
             toast.success("Đã đăng xuất 👋");
-        } catch {
-            // Ignore error
+        } catch (error: any) {
+            toast.error("Đăng xuất thất bại");
         }
 
         setAccessToken(null);

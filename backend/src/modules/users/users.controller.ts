@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -35,6 +37,7 @@ export class UsersController {
   }
   // POST /users
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   createUser(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }

@@ -12,12 +12,13 @@ export interface LoginRequest {
 }
 export interface LoginResponse {
     accessToken: string
-    refreshToken: string
     user: {
         id: string
         email: string
         role: Role
         fullName?: string
+        createdAt: Date;    
+        updatedAt: Date;
     }
 }
 

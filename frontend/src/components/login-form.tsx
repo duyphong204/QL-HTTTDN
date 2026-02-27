@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/store/auth.store"
-import { LoginSchema, type LoginValues } from "@/lib/validators/auth.validator"
+import { LoginSchema, type LoginValues } from "@/schemas/auth.schema"
 import authBg from "@/assets/auth-bg.png";
 import { useNavigate } from "react-router-dom"
 export function LoginForm({

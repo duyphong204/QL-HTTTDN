@@ -22,20 +22,22 @@ import { Plus, Search, Pencil, Trash2, Filter } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
-const userSchema = z.object({
-    fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    role: z.string(),
-    password: z.string().optional(), // Optional for edit
-});
-
+import { CreateUserSchema } from "@/schemas/user.schema"
+ import type { User } from "@/types/user.type";
+import type { CreateUserValues } from "@/schemas/user.schema";
 const UserManagement = () => {
-    const { users, isLoading, actions } = useUserStore();
+     const users = useUserStore((state) => state.users);
+    const isLoading = useUserStore((state) => state.isLoading);
+
+    const fetchUsers = useUserStore((state) => state.fetchUsers);
+    const addUser = useUserStore((state) => state.addUser);
+    const updateUser = useUserStore((state) => state.updateUser);
+    const deleteUser = useUserStore((state) => state.deleteUser);
+    const setFilters = useUserStore((state) => state.setFilters);
+
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<any>(null);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
 
     const {
         register,
@@ -44,38 +46,42 @@ const UserManagement = () => {
         reset,
         formState: { errors },
     } = useForm({
-        resolver: zodResolver(userSchema),
-        defaultValues: {
-            fullName: "",
+        resolver: zodResolver(CreateUserSchema),
+       defaultValues: {
             email: "",
-            role: "EMPLOYEE",
             password: "",
+            role: "CUSTOMER",
+            profile: {
+                fullName: "",
+            },
         },
     });
 
     useEffect(() => {
-        actions.fetchUsers();
-    }, []);
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
-        actions.setFilters({ search: e.target.value });
+        setFilters({ search: e.target.value });
     };
 
     const handleAddUser = () => {
         setEditingUser(null);
         reset({
-            fullName: "",
             email: "",
-            role: "EMPLOYEE",
             password: "",
+            role: "CUSTOMER",
+            profile: {
+                fullName: "",
+            },
         });
         setIsModalOpen(true);
     };
 
-    const handleEditUser = (user: any) => {
+    const handleEditUser = (user: User) => {
         setEditingUser(user);
-        setValue("fullName", user.fullName);
+        setValue("profile.fullName", user.profile?.fullName || "");
         setValue("email", user.email);
         setValue("role", user.role);
         setIsModalOpen(true);
@@ -83,32 +89,35 @@ const UserManagement = () => {
 
     const handleDeleteUser = async (id: string) => {
         if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-            await actions.deleteUser(id);
+            await deleteUser(id);
         }
     };
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: CreateUserValues) => {
         try {
             if (editingUser) {
-                await actions.updateUser(editingUser.id, data);
+            await updateUser(editingUser.id, data);
             } else {
-                await actions.addUser(data);
+            await addUser(data);
             }
+
             setIsModalOpen(false);
+            reset();
         } catch (error) {
             console.error(error);
         }
     };
 
-    // Helper helper to get role badge color
     const getRoleBadgeVariant = (role: string) => {
         switch (role) {
             case "ADMIN":
                 return "destructive";
-            case "HR":
+            case "HR_MANAGER":
                 return "info";
-            case "WAREHOUSE":
+            case "WAREHOUSE_MANAGER":
                 return "success";
+            case "SALES_MANAGER":
+                return "default";
             default:
                 return "secondary";
         }
@@ -117,13 +126,14 @@ const UserManagement = () => {
     const getRoleName = (role: string) => {
         switch (role) {
             case "ADMIN": return "Quản trị viên";
-            case "HR": return "Quản lý Nhân sự";
-            case "WAREHOUSE": return "Quản lý Kho";
-            case "SALES": return "Quản lý Kinh doanh";
+            case "CUSTOMER": return "Khách hàng";
+            case "HR_MANAGER": return "Quản lý Nhân sự";
+            case "WAREHOUSE_MANAGER": return "Quản lý Kho";
+            case "SALES_MANAGER": return "Quản lý Kinh doanh";
             case "EMPLOYEE": return "Nhân viên";
             default: return role;
         }
-    }
+    };
 
     return (
         <div className="space-y-6">
@@ -160,10 +170,10 @@ const UserManagement = () => {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-gray-50">
-                                <TableHead className="w-[200px] font-bold text-gray-700">Username</TableHead>
+                                <TableHead className="w-[200px] font-bold text-gray-700">Email</TableHead>
                                 <TableHead className="font-bold text-gray-700">Họ tên</TableHead>
-                                <TableHead className="font-bold text-gray-700">Email</TableHead>
                                 <TableHead className="font-bold text-gray-700">Vai trò</TableHead>
+                                <TableHead className="font-bold text-gray-700">Sdt</TableHead>
                                 <TableHead className="text-right font-bold text-gray-700">Thao tác</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -189,12 +199,13 @@ const UserManagement = () => {
                                                 {user.profile?.fullName}
                                             </div>
                                         </TableCell>
-                                        <TableCell>{user.email}</TableCell>
+                                     {/* <TableCell>{user.email}</TableCell> */}
                                         <TableCell>
-                                            <Badge variant={getRoleBadgeVariant(user.role) as any} className="rounded-md px-2 py-0.5">
-                                                {getRoleName(user.role)}
+                                        <Badge variant={getRoleBadgeVariant(user.role)}>
+                                                    {getRoleName(user.role)}
                                             </Badge>
                                         </TableCell>
+                                        <TableCell>{user.profile?.phone || "Chưa có số điện thoại"} </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)} className="h-8 w-8 text-gray-600 hover:text-blue-600">
@@ -228,14 +239,8 @@ const UserManagement = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="fullName">Họ tên</Label>
-                            <Input id="fullName" {...register("fullName")} />
-                            {errors.fullName && <span className="text-red-500 text-sm">{errors.fullName.message as string}</span>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input id="password" type="password" {...register("password")} />
-                            {errors.password && <span className="text-red-500 text-sm">{errors.password.message as string}</span>}
+                            <Input id="fullName" {...register("profile.fullName")} />
+                            {errors.profile?.fullName && <span className="text-red-500 text-sm">{errors.profile.fullName.message as string}</span>}
                         </div>
 
                         <div className="space-y-2">
@@ -246,9 +251,10 @@ const UserManagement = () => {
                                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <option value="ADMIN">Quản trị viên</option>
-                                    <option value="HR">Quản lý Nhân sự</option>
-                                    <option value="WAREHOUSE">Quản lý Kho</option>
-                                    <option value="SALES">Quản lý Kinh doanh</option>
+                                    <option value="CUSTOMER">Khách hàng</option>
+                                    <option value="HR_MANAGER">Quản lý Nhân sự</option>
+                                    <option value="WAREHOUSE_MANAGER">Quản lý Kho</option>
+                                    <option value="SALES_MANAGER">Quản lý Kinh doanh</option>
                                     <option value="EMPLOYEE">Nhân viên</option>
                                 </select>
                             </div>
@@ -257,7 +263,13 @@ const UserManagement = () => {
                         {!editingUser && (
                             <div className="space-y-2">
                                 <Label htmlFor="password">Mật khẩu</Label>
-                                <Input id="password" type="password" {...register("password")} />
+                                <Input id="password" type="password" {...register("password")} 
+                                />
+                                    {errors.password && (
+                                    <span className="text-red-500 text-sm">
+                                        {errors.password.message as string}
+                                    </span>
+                        )}
                             </div>
                         )}
 

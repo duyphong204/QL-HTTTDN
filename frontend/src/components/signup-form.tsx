@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useState } from "react"
 import { useAuthStore } from "@/store/auth.store"
 import { useNavigate } from "react-router-dom"
-import { RegisterSchema, type RegisterValues } from "@/lib/validators/auth.validator"
+import { RegisterSchema, type RegisterValues } from "@/schemas/auth.schema"
 import registerBg from "@/assets/auth-bg.png";
 export function SignupForm({
   className,
