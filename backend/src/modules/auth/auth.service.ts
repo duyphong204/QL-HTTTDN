@@ -98,8 +98,8 @@ export class AuthService {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -116,7 +116,6 @@ export class AuthService {
 
   async refresh(req: Request, res: Response) {
     const cookies = req.cookies as { refreshToken?: string };
-
     const refreshToken = cookies.refreshToken;
 
     if (!refreshToken) {
@@ -155,8 +154,8 @@ export class AuthService {
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

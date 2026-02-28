@@ -15,11 +15,13 @@ interface AuthState {
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>; 
 }
+const toErrorMessage = (error: unknown): string =>
+    error instanceof Error ? error.message : "Lỗi không xác định";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     isAuthenticated: false,
-    isLoading: true, // Start as true to wait for checkAuth
+    isLoading: true, 
 
     login: async (email, password) => {
         set({ isLoading: true });
@@ -30,16 +32,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             set({
                 user: res.user,
                 isAuthenticated: true,
+                isLoading: false,
             });
 
             toast.success("Đăng nhập thành công 🎉");
-        } catch (error: any) {
-            toast.error(
-                error?.response?.data?.message || "Đăng nhập thất bại"
-            );
-            throw error;
-        } finally {
+        } catch (error: unknown) {
+            const msg = toErrorMessage(error); 
+            toast.error(msg);
             set({ isLoading: false });
+            throw error;
         }
     },
 
@@ -48,10 +49,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             await authApi.register({ fullName, email, password });
             toast.success("Đăng ký thành công 🎉");
             await get().login(email, password);
-        } catch (error: any) {
-            toast.error(
-                error?.response?.data?.message || "Đăng ký thất bại"
-            );
+        } catch (error: unknown) {
+            const msg = toErrorMessage(error);
+            toast.error(msg);
             throw error;
         }
     },
@@ -60,18 +60,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             const user = await authApi.getProfile();
             set({ user, isAuthenticated: true });
-        } catch (error: any) {
-            set({ user: null, isAuthenticated: false });
+        } catch (error: unknown) {
+                const msg = toErrorMessage(error);
+                toast.error(msg);
+                set({ user: null, isAuthenticated: false });
         }
     },
 
     checkAuth: async () => {
         set({ isLoading: true });
         try {
+            const { accessToken } = await authApi.refresh();
+            setAccessToken(accessToken);
+
             const user = await authApi.getProfile();
-            set({ user, isAuthenticated: true });
-        } catch (error) {
-            set({ user: null, isAuthenticated: false });
+
+            set({
+                user,
+                isAuthenticated: true,
+                isLoading : false                                                                                                                                         
+            });
+        } catch(error) {
+            setAccessToken(null);
+            set({
+                user: null,
+                isAuthenticated: false
+            });
         } finally {
             set({ isLoading: false });
         }
@@ -81,7 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             await authApi.logout();
             toast.success("Đã đăng xuất 👋");
-        } catch (error: any) {
+        } catch (error: unknown) {
             toast.error("Đăng xuất thất bại");
         }
 
