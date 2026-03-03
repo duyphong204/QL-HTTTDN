@@ -27,7 +27,7 @@ export class AuthService {
     email: string,
     role: string,
   ): JwtPayload {
-    return { sub: userId, email, role };
+    return { id: userId, email, role };
   }
 
   private async generateTokens(payload: JwtPayload) {
@@ -133,7 +133,7 @@ export class AuthService {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
+      where: { id: payload.id },
     });
 
     if (!user || !user.refreshTokenHash) {

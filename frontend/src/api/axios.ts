@@ -47,70 +47,71 @@ const processQueue = (error: any, token: string | null = null) => {
             prom.resolve(token);
         }
     });
-    failedQueue = [];
+    failedQueue = [];   
 };
 
 axiosInstance.interceptors.response.use(
-    (response) => response,
-    async (error: AxiosError) => {
-        const apiError = error.response?.data as ApiErrorResponse;
-         if (apiError?.message) {
-            const customError = new Error(apiError.message);
-            customError.name = `HttpError${error.response?.status}`;
-            return Promise.reject(customError);
-        }
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+  (response) => response,
+  async (error: AxiosError) => {
 
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !originalRequest.url?.includes("/auth/refresh") &&
-            !originalRequest.url?.includes("/auth/login")
-        ) {
-            if (isRefreshing) {
-                return new Promise(function (resolve, reject) {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        if (originalRequest.headers) {
-                            originalRequest.headers.Authorization = `Bearer ${token}`;
-                        }
-                        return axiosInstance(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/login")
+    ) {
+
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
             }
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
 
-            originalRequest._retry = true;
-            isRefreshing = true;
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-            try {
-                const { data } = await axios.post(
-                    `${API_CONFIG.BASE_URL}/auth/refresh`,
-                    {},
-                    { withCredentials: true }
-                );
+      try {
+        const { data } = await axios.post(
+          `${API_CONFIG.BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
 
-                const newToken = data.accessToken;
-                setAccessToken(newToken);
+        const newToken = data.accessToken;
+        setAccessToken(newToken);
 
-                processQueue(null, newToken);
+        processQueue(null, newToken);
 
-                if (originalRequest.headers) {
-                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                }
-                return axiosInstance(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-                setAccessToken(null);
-                window.location.href = "/login";
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
 
-        return Promise.reject(error);
+        return axiosInstance(originalRequest);
+
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        setAccessToken(null);
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
+    const apiError = error.response?.data as ApiErrorResponse;
+    if (apiError?.message) {
+      return Promise.reject(new Error(apiError.message));
+    }
+
+    return Promise.reject(error);
+  }
 );

@@ -92,7 +92,7 @@ const UserManagement = () => {
             await deleteUser(id);
         }
     };
-
+    
     const onSubmit = async (data: CreateUserValues) => {
         try {
             if (editingUser) {
@@ -118,8 +118,10 @@ const UserManagement = () => {
                 return "success";
             case "SALES_MANAGER":
                 return "default";
+            case "EMPLOYEE":
+                return "secondary"; 
             default:
-                return "secondary";
+                return "outline";
         }
     };
 

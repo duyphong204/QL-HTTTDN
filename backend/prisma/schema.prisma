@@ -27,7 +27,9 @@ model User {
   refreshTokenHash String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
+  isActive         Boolean  @default(true)   
+  deletedAt        DateTime? 
+
   profile  Profile?
   employee Employee?
   orders   Order[]

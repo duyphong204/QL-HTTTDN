@@ -57,16 +57,13 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                 set({ suppliers, isLoading: false });
             } catch (error: any) {
                 console.error("Error fetching suppliers:", error);
-                // Mock data fallback
+                
                 set({
-                    suppliers: [
-                        { id: '1', name: 'Samsung Electronics Vietnam', contactPerson: 'Nguyễn Văn A', email: 'contact@samsung.vn', phone: '0281234567', address: 'KCN Tân Thuận, Q.7, TP.HCM', createdAt: '2023-01-01' },
-                        { id: '2', name: 'Apple Vietnam', contactPerson: 'Trần Thị B', email: 'info@apple.vn', phone: '0282345678', address: 'Keangnam Landmark, Hà Nội', createdAt: '2023-02-15' },
-                        { id: '3', name: 'Xiaomi Vietnam', contactPerson: 'Lê Văn C', email: 'support@xiaomi.vn', phone: '0283456789', address: 'Vinhomes Central Park, TP.HCM', createdAt: '2023-03-20' },
-                        { id: '4', name: 'Sony Vietnam', contactPerson: 'Phạm Thị D', email: 'sales@sony.vn', phone: '0284567890', address: '123 Nguyễn Văn Linh, Q.7, TP.HCM', createdAt: '2023-04-10' },
-                    ],
-                    isLoading: false
+                    suppliers: [],
+                    isLoading: false,
+                    error: error.message || "Failed to fetch suppliers",
                 })
+                toast.error("Lấy danh sách nhà cung cấp thất bại: " + (error.message || "Unknown error") );
             }
         },
 

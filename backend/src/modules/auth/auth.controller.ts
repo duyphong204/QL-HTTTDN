@@ -42,7 +42,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
   getProfile(@Req() req: Request & { user: JwtPayload }) {
-    return this.authService.getProfile(req.user.sub);
+    return this.authService.getProfile(req.user.id);
   }
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -53,6 +53,6 @@ export class AuthController {
     @Req() req: Request & { user: JwtPayload },
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.logout(req.user.sub, res);
+    return this.authService.logout(req.user.id, res);
   }
 }

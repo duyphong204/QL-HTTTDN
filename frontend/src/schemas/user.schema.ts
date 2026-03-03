@@ -17,14 +17,10 @@ export const CreateUserSchema = z.object({
 export type CreateUserValues = z.infer<typeof CreateUserSchema>
 
 export const UpdateUserSchema = z.object({
-    email: emailSchema.optional(),
+    email: z.string().email("Email không hợp lệ"),
     role: z.enum(["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER", "EMPLOYEE", "CUSTOMER"]).optional(),
     profile: z.object({
         fullName: z.string().optional(),
-        phone: z.string().optional(),
-        address: z.string().optional(),
-        avatar: z.string().optional(),
-        dateOfBirth: z.string().optional(),
     }).optional(),
 })
 

@@ -24,11 +24,15 @@ import { ValidationPipe } from '@nestjs/common';
 @Controller('hr/leave-requests')
 export class LeaveRequestsController {
   constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
+  @Roles(Role.EMPLOYEE)
   @Post()
   async create(@Request() req: any, @Body() dto: CreateLeaveDto) {
-    return this.leaveRequestsService.create(req.user.userId, dto);
+    return this.leaveRequestsService.create(req.user.id, dto);
   }
-
+  @Get('me')
+  async getMyRequests(@Request() req: any) {
+    return this.leaveRequestsService.getMyRequests(req.user.id);
+  }
   @Patch(':id/status')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateStatus(
@@ -36,7 +40,7 @@ export class LeaveRequestsController {
     @Body('status') status: string,
     @Request() req: any,
   ) {
-    return this.leaveRequestsService.updateStatus(id, status, req.user.userId);
+    return this.leaveRequestsService.updateStatus(id, status, req.user.id);
   }
 
   @Get()

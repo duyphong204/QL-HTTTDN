@@ -12,6 +12,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
   async findAll() {
     return this.prisma.user.findMany({
+      where: { isActive: true },
       include: { profile: true },
     });
   }
@@ -77,8 +78,12 @@ export class UsersService {
   async remove(id: string) {
     await this.findOne(id);
 
-    return this.prisma.user.delete({
+    return this.prisma.user.update({
       where: { id },
+      data: {
+        isActive: false,
+        deletedAt: new Date(),
+      },
     });
   }
   async updateRole(id: string, role: Role) {

@@ -5,12 +5,12 @@ export interface Supplier extends BaseEntity {
     address?: string
     phone?: string
     email?: string
-    contactPerson?: string
+  //  contactPerson?: string
 }
 
 export interface CreateSupplierDto {
     name: string
-    contactPerson?: string
+   // contactPerson?: string
     phone?: string
     email?: string
     address?: string
@@ -18,7 +18,7 @@ export interface CreateSupplierDto {
 
 export interface UpdateSupplierDto {
     name?: string
-    contactPerson?: string
+   // contactPerson?: string
     phone?: string
     email?: string
     address?: string

@@ -6,13 +6,30 @@ import { CreateLeaveDto } from './dto/leave.dto';
 export class LeaveRequestsService {
   constructor(private prisma: PrismaService) {}
 
+  // async create(userId: string, dto: CreateLeaveDto) {
+  //   const employee = await this.prisma.employee.findUnique({
+  //     where: { userId },
+  //   });
+  //   if (!employee) {
+  //     throw new NotFoundException('Không tìm thấy nhân viên');
+  //   }
+  //   return this.prisma.leaveRequest.create({
+  //     data: {
+  //       ...dto,
+  //       employeeId: employee.id,
+  //     },
+  //   });
+  // }
   async create(userId: string, dto: CreateLeaveDto) {
     const employee = await this.prisma.employee.findUnique({
       where: { userId },
+      select: { id: true },
     });
+
     if (!employee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
+
     return this.prisma.leaveRequest.create({
       data: {
         ...dto,
@@ -20,7 +37,17 @@ export class LeaveRequestsService {
       },
     });
   }
-
+  async getMyRequests(userId: string) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { userId },
+    });
+    if (!employee) {
+      throw new NotFoundException('Không tìm thấy nhân viên');
+    }
+    return this.prisma.leaveRequest.findMany({
+      where: { employeeId: employee.id },
+    });
+  }
   async findAll() {
     return this.prisma.leaveRequest.findMany({
       include: {
@@ -30,6 +57,7 @@ export class LeaveRequestsService {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
   async updateStatus(id: string, status: string, adminId: string) {

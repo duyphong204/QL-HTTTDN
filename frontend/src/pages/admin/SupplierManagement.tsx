@@ -8,18 +8,13 @@ import { Plus, Search, Pencil, Trash2, Filter } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
-const supplierSchema = z.object({
-    name: z.string().min(2, "Tên nhà cung cấp phải có ít nhất 2 ký tự"),
-    contactPerson: z.string().min(2, "Người liên hệ phải có ít nhất 2 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    phone: z.string().min(10, "Số điện thoại không hợp lệ"),
-    address: z.string().min(5, "Địa chỉ phải có ít nhất 5 ký tự"),
-});
+import { CreateSupplierSchema, type CreateSupplierValues } from "@/schemas/supplier.schema";
 
 const SupplierManagement = () => {
-    const { suppliers, isLoading, actions } = useSupplierStore();
+    // const { suppliers, isLoading, actions } = useSupplierStore();
+    const suppliers = useSupplierStore((state) => state.suppliers);
+    const isLoading = useSupplierStore((state) => state.isLoading);
+    const actions = useSupplierStore((state) => state.actions);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState<any>(null);
@@ -31,10 +26,9 @@ const SupplierManagement = () => {
         reset,
         formState: { errors },
     } = useForm({
-        resolver: zodResolver(supplierSchema),
+        resolver: zodResolver(CreateSupplierSchema),
         defaultValues: {
             name: "",
-            contactPerson: "",
             email: "",
             phone: "",
             address: "",
@@ -54,7 +48,6 @@ const SupplierManagement = () => {
         setEditingSupplier(null);
         reset({
             name: "",
-            contactPerson: "",
             email: "",
             phone: "",
             address: "",
@@ -65,7 +58,6 @@ const SupplierManagement = () => {
     const handleEditSupplier = (supplier: any) => {
         setEditingSupplier(supplier);
         setValue("name", supplier.name);
-        setValue("contactPerson", supplier.contactPerson);
         setValue("email", supplier.email);
         setValue("phone", supplier.phone);
         setValue("address", supplier.address);
@@ -78,7 +70,7 @@ const SupplierManagement = () => {
         }
     };
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: CreateSupplierValues) => {
         try {
             if (editingSupplier) {
                 await actions.updateSupplier(editingSupplier.id, data);
@@ -126,7 +118,7 @@ const SupplierManagement = () => {
                         <TableHeader>
                             <TableRow className="bg-gray-50">
                                 <TableHead className="font-bold text-gray-700">Tên NCC</TableHead>
-                                <TableHead className="font-bold text-gray-700">Người liên hệ</TableHead>
+                                {/* <TableHead className="font-bold text-gray-700">Người liên hệ</TableHead> */}
                                 <TableHead className="font-bold text-gray-700">Điện thoại</TableHead>
                                 <TableHead className="font-bold text-gray-700">Email</TableHead>
                                 <TableHead className="font-bold text-gray-700">Địa chỉ</TableHead>
@@ -186,11 +178,11 @@ const SupplierManagement = () => {
                                 {errors.name && <span className="text-red-500 text-sm">{errors.name.message as string}</span>}
                             </div>
 
-                            <div className="space-y-2">
+                            {/* <div className="space-y-2">
                                 <Label htmlFor="contactPerson">Người liên hệ</Label>
                                 <Input id="contactPerson" {...register("contactPerson")} />
                                 {errors.contactPerson && <span className="text-red-500 text-sm">{errors.contactPerson.message as string}</span>}
-                            </div>
+                            </div> */}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
