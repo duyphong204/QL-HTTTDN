@@ -1,5 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
+
+export enum SalaryStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+}
 export class CreateSalaryDto {
   @ApiProperty()
   @IsString()
@@ -19,7 +31,7 @@ export class CreateSalaryDto {
   @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
   @IsNumber()
   deduction: number;
-  @ApiProperty({ example: 'PAID/PENDING' })
-  @IsString()
-  status: string;
+  @ApiProperty({ enum: SalaryStatus })
+  @IsEnum(SalaryStatus)
+  status: SalaryStatus;
 }

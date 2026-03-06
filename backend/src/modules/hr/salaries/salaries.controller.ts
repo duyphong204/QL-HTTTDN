@@ -16,7 +16,6 @@ import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-
 @ApiTags('HR - Salaries')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,14 +24,24 @@ import { ValidationPipe } from '@nestjs/common';
 export class SalariesController {
   constructor(private readonly salariesService: SalariesService) {}
 
-  @Post()
+  @Post('calculate')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   create(@Body() dto: CreateSalaryDto) {
     return this.salariesService.calculateSalary(dto);
   }
   @Get('me')
-  getMySalaries(@Request() req: any) {
-    return this.salariesService.getMySalaries(req.user.userId);
+  getMySalaries(
+    @Request() req: any,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    const monthNumber = month ? Number(month) : undefined;
+    const yearNumber = year ? Number(year) : undefined;
+    return this.salariesService.getMySalaries(
+      req.user.id,
+      monthNumber,
+      yearNumber,
+    );
   }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)

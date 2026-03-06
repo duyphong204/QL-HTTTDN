@@ -85,7 +85,6 @@ export interface StockIn extends BaseEntity {
 }
 export interface CreateSupplierDto {
     name: string;
-    contactPerson?: string;
     phone?: string;
     email?: string;
     address?: string;
@@ -93,7 +92,6 @@ export interface CreateSupplierDto {
 
 export interface UpdateSupplierDto {
     name?: string;
-    contactPerson?: string;
     phone?: string;
     email?: string;
     address?: string;

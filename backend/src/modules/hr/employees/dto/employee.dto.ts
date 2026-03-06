@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsEnum,
-  IsNotEmpty,
+  IsDateString,
   IsNumber,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
 export class UpdateProfileDto {
   @ApiProperty()
@@ -35,21 +35,23 @@ export class UpdateEmployeeDto {
   baseSalary?: number;
 }
 export class CreateEmployeeFromUserDto {
-  @ApiProperty({ description: 'ID của User muốn biến thành nhân viên' })
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  userId: string;
-  @ApiProperty({ example: 'NV001' })
+  @IsOptional()
+  department?: string;
+
+  @ApiProperty({ required: false })
   @IsString()
-  @IsNotEmpty()
-  code: string;
-  @ApiProperty()
-  @IsString()
-  department: string;
-  @ApiProperty()
-  @IsString()
-  position: string;
-  @ApiProperty()
+  @IsOptional()
+  position?: string;
+
+  @ApiProperty({ example: 10000000 })
   @IsNumber()
+  @Min(0)
   baseSalary: number;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  joinDate?: string;
 }

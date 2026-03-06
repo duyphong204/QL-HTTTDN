@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLeaveDto } from './dto/leave.dto';
 
@@ -6,33 +10,26 @@ import { CreateLeaveDto } from './dto/leave.dto';
 export class LeaveRequestsService {
   constructor(private prisma: PrismaService) {}
 
-  // async create(userId: string, dto: CreateLeaveDto) {
-  //   const employee = await this.prisma.employee.findUnique({
-  //     where: { userId },
-  //   });
-  //   if (!employee) {
-  //     throw new NotFoundException('Không tìm thấy nhân viên');
-  //   }
-  //   return this.prisma.leaveRequest.create({
-  //     data: {
-  //       ...dto,
-  //       employeeId: employee.id,
-  //     },
-  //   });
-  // }
   async create(userId: string, dto: CreateLeaveDto) {
     const employee = await this.prisma.employee.findUnique({
       where: { userId },
       select: { id: true },
     });
-
     if (!employee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(dto.endDate);
 
+    if (endDate < startDate) {
+      throw new BadRequestException('Ngày kết thúc phải sau ngày bắt đầu');
+    }
     return this.prisma.leaveRequest.create({
       data: {
-        ...dto,
+        startDate: new Date(dto.startDate),
+        endDate: new Date(dto.endDate),
+        type: dto.type,
+        reason: dto.reason,
         employeeId: employee.id,
       },
     });

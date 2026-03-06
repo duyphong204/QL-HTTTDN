@@ -1,3 +1,4 @@
+import type { CreateSupplierDto, UpdateSupplierDto } from "@/types/supplier.type";
 import { axiosInstance } from "./axios"
 import type {
     Product,
@@ -41,12 +42,12 @@ export const supplierApi = {
         return res.data;
     },
 
-    createSupplier: async (data: any) => {
+    createSupplier: async (data: CreateSupplierDto) => {
         const res = await axiosInstance.post<Supplier>("/suppliers", data);
         return res.data;
     },
 
-    updateSupplier: async (id: string, data: any) => {
+    updateSupplier: async (id: string, data: UpdateSupplierDto) => {
         const res = await axiosInstance.patch<Supplier>(`/suppliers/${id}`, data);
         return res.data;
     },

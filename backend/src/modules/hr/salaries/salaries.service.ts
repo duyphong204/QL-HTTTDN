@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateSalaryDto } from './dto/salary.dto';
-
+import { Prisma } from '@prisma/client';
 @Injectable()
 export class SalariesService {
   constructor(private prisma: PrismaService) {}
@@ -41,24 +41,75 @@ export class SalariesService {
     });
   }
 
-  async getMySalaries(userId: string) {
+  async getMySalaries(userId: string, month?: number, year?: number) {
     const employee = await this.prisma.employee.findUnique({
       where: { userId },
     });
+
     if (!employee) throw new NotFoundException('Nhân viên không tồn tại');
+
+    const where: Prisma.SalaryWhereInput = {
+      employeeId: employee.id,
+    };
+
+    if (month !== undefined) {
+      where.month = month;
+    }
+
+    if (year !== undefined) {
+      where.year = year;
+    }
+
     return this.prisma.salary.findMany({
-      where: { employeeId: employee.id },
+      where,
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
   }
   async findAll(month?: number, year?: number) {
+    const where: Prisma.SalaryWhereInput = {};
+
+    if (month !== undefined) {
+      where.month = month;
+    }
+
+    if (year !== undefined) {
+      where.year = year;
+    }
+
     return this.prisma.salary.findMany({
-      where: {
-        ...(month && { month }),
-        ...(year && { year }),
-      },
-      include: {
-        employee: { include: { user: { include: { profile: true } } } },
+      where,
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      select: {
+        id: true,
+        month: true,
+        year: true,
+        amount: true,
+        bonus: true,
+        deduction: true,
+        status: true,
+        createdAt: true,
+
+        employee: {
+          select: {
+            id: true,
+            code: true,
+            baseSalary: true,
+
+            user: {
+              select: {
+                id: true,
+                email: true,
+
+                profile: {
+                  select: {
+                    fullName: true,
+                    phone: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   }

@@ -35,10 +35,13 @@ export class EmployeesController {
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
     return this.employeesService.updateMe(req.user.userId, dto);
   }
-  @Post()
+  @Post(':userId')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async create(@Body() dto: CreateEmployeeFromUserDto) {
-    return this.employeesService.create(dto);
+  async create(
+    @Param('userId') userId: string,
+    @Body() dto: CreateEmployeeFromUserDto,
+  ) {
+    return this.employeesService.createFromUser(userId, dto);
   }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
