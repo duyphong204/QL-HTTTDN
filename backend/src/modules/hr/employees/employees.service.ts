@@ -12,7 +12,7 @@ import {
 import { Prisma } from '@prisma/client';
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async updateMe(userId: string, dto: UpdateProfileDto) {
     const employee = await this.prisma.employee.findUnique({
@@ -101,9 +101,30 @@ export class EmployeesService {
   }
   async findAll() {
     return this.prisma.employee.findMany({
-      where: { resignDate: null },
-      include: {
-        user: { include: { profile: true } },
+      where: {
+        resignDate: null,
+        user: {
+          role: {
+            notIn: ['ADMIN', 'CUSTOMER'],
+          },
+        },
+      },
+      select: {
+        id: true,
+        code: true,
+        department: true,
+        position: true,
+        baseSalary: true,
+        user: {
+          select: {
+            email: true,
+            profile: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+        },
       },
     });
   }
@@ -141,6 +162,7 @@ export class EmployeesService {
       });
     });
   }
+
   async remove(id: string) {
     const employee = await this.prisma.employee.findUnique({
       where: { id },
@@ -164,5 +186,29 @@ export class EmployeesService {
       });
       return { message: 'Nhân sự đã được cho nghĩ việc' };
     });
+  }
+  async getHrStatistics() {
+    const totalEmployees = await this.prisma.employee.count({
+      where: { resignDate: null },
+    });
+    const totalResigned = await this.prisma.employee.count({
+      where: { resignDate: { not: null } },
+    });
+
+    // Tổng lương phải trả tháng hiện tại
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const salaryAggregate = await this.prisma.salary.aggregate({
+      where: { month: currentMonth, year: currentYear },
+      _sum: { amount: true, bonus: true, deduction: true }
+    });
+    return {
+      totalEmployees,
+      totalResigned,
+      salaryMonth: currentMonth,
+      salaryYear: currentYear,
+      totalSalaryPaid: salaryAggregate._sum.amount || 0,
+      totalBonus: salaryAggregate._sum.bonus || 0,
+    };
   }
 }

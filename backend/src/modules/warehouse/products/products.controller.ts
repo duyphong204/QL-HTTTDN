@@ -4,12 +4,13 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/product.dto';
+import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
@@ -20,7 +21,7 @@ import { Role } from 'src/common/enums/role.enum';
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) { }
   @Get()
   async findAll(
     @Query('search') search?: string,
@@ -37,5 +38,15 @@ export class ProductsController {
   @Roles(Role.ADMIN)
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
+  }
+  @Patch(':id')
+  @Roles(Role.ADMIN)
+  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
+    return this.productsService.update(id, dto);
+  }
+  @Get('statistics/inventory-report')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  getInventoryStatistics() {
+    return this.productsService.getInventoryStatistics();
   }
 }

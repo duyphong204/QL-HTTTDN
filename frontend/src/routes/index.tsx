@@ -1,5 +1,5 @@
 import ProtectedRoute from "./ProtectedRoute"
-import AdminLayout from "@/layouts/AdminLayout"
+import AdminLayout from "@/layouts/AppLayout"
 import HomePage from "@/pages/admin/HomePage"
 import UserManagement from "@/pages/admin/UserManagement"
 import SupplierManagement from "@/pages/admin/SupplierManagement"
@@ -12,6 +12,10 @@ import { Toaster } from "sonner"
 import NotFoundPage from "@/pages/NotFoundPage"
 import SalaryManagement from "@/pages/hr/SalaryManagement"
 import LeaveRequestPage from "@/pages/employee/EmployeeLeaveRequestPage"
+import EmployeeManagement from "@/pages/hr/EmployeeManagement"
+import LeaveRequestManagement from "@/pages/hr/LeaveRequestManagement"
+import MySalaryPage from "@/pages/employee/MySalaryPage"
+
 export const AppRouter = () => {
     const checkAuth = useAuthStore((state) => state.checkAuth)
 
@@ -33,16 +37,19 @@ export const AppRouter = () => {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/admin" element={<HomePage />} />
                     <Route path="/admin/dashboard" element={<HomePage />} />
-                    
+
                     {/* Admin only */}
                     <Route path="/admin/users" element={<UserManagement />} />
-                    
+
                     {/* HR */}
                     <Route path="/hr/salaries" element={<SalaryManagement />} />
-                    
+                    <Route path="/hr/employees" element={<EmployeeManagement />} />
+                    <Route path="/hr/leave-requests" element={<LeaveRequestManagement />} />
+
                     {/* Employee */}
                     <Route path="/employee/leave-request" element={<LeaveRequestPage />} />
-                    
+                    <Route path="/employee/salary" element={<MySalaryPage />} />
+
                     {/* Warehouse */}
                     <Route path="/warehouse/suppliers" element={<SupplierManagement />} />
                 </Route>

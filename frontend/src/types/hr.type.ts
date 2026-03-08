@@ -21,6 +21,14 @@ export interface CreateEmployeeDto {
     joinDate: Date
 }
 
+export interface UpdateProfileDto {
+    fullName?: string;
+    phone?: string;
+    address?: string;
+    position?: string;
+    department?: string;
+}
+
 export interface UpdateEmployeeDto {
     code?: string
     department?: string

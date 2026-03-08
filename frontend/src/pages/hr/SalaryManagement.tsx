@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,97 +18,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Download, Search } from "lucide-react";
+import { DollarSign, Download, Search, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { salaryApi } from "@/api/hr.api";
+import type { Salary } from "@/types/hr.type";
 
-type Salary = {
-  id: string;
-  month: number;
-  year: number;
-  amount: number;
-  bonus: number;
-  deduction: number;
-  status: "PAID" | "PENDING";
-  employee: {
-    id: string;
-    code: string;
-    baseSalary: number;
-    user: {
-      id: string;
-      email: string;
-      profile: {
-        fullName: string;
-        phone: string | null;
-      };
-    };
-  };
-};
-
-/* ================= MOCK DATA ================= */
-const mockSalaries: Salary[] = [
-  {
-    id: "1",
-    month: 3,
-    year: 2026,
-    amount: 12800000,
-    bonus: 1000000,
-    deduction: 200000,
-    status: "PENDING",
-    employee: {
-      id: "emp1",
-      code: "NV0001",
-      baseSalary: 12000000,
-      user: {
-        id: "user1",
-        email: "dat@gmail.com",
-        profile: {
-          fullName: "Lê Văn Đạt",
-          phone: null,
-        },
-      },
-    },
-  },
-  {
-    id: "2",
-    month: 3,
-    year: 2026,
-    amount: 15500000,
-    bonus: 1500000,
-    deduction: 500000,
-    status: "PAID",
-    employee: {
-      id: "emp2",
-      code: "NV0002",
-      baseSalary: 14000000,
-      user: {
-        id: "user2",
-        email: "minh@gmail.com",
-        profile: {
-          fullName: "Phạm Thị Minh",
-          phone: null,
-        },
-      },
-    },
-  },
-];
-
-/* ================= COMPONENT ================= */
-const SalaryManagement = () => {
-  const [salaries, setSalaries] = useState<Salary[]>(mockSalaries);
+export default function SalaryManagement() {
+  const [salaries, setSalaries] = useState<Salary[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // State bộ lọc và tìm kiếm
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("2026-03");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
+  // Fetch dữ liệu từ API thực tế
+  const fetchSalaries = async () => {
+    try {
+      setLoading(true);
+      const data = await salaryApi.getSalaries();
+      setSalaries(data);
+    } catch (error) {
+      toast.error("Lỗi khi tải danh sách lương!");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tự động load dữ liệu khi component vào trang
+  useEffect(() => {
+    fetchSalaries();
+  }, []);
+
   /* ================= FILTER ================= */
   const filteredSalaries = salaries.filter((s) => {
+    // Chuyển format {month, year} sang string dạng YYYY-MM
     const monthString = `${s.year}-${String(s.month).padStart(2, "0")}`;
     const matchesMonth = monthString === selectedMonth;
-    const matchesSearch = s.employee.user.profile.fullName
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    
+    // Tìm kiếm theo tên (có check null safety)
+    const fullName = s.employee?.user?.profile?.fullName || "";
+    const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "ALL" || s.status === statusFilter;
+    // Lọc theo trạng thái
+    const matchesStatus = statusFilter === "ALL" || s.status === statusFilter;
 
     return matchesMonth && matchesSearch && matchesStatus;
   });
@@ -118,26 +72,35 @@ const SalaryManagement = () => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount);
+    }).format(amount || 0);
   };
 
   /* ================= ACTION ================= */
-  const handleMarkAsPaid = (salaryId: string) => {
-    setSalaries(
-      salaries.map((s) =>
-        s.id === salaryId ? { ...s, status: "PAID" } : s
-      )
-    );
-    toast.success("Đã thanh toán lương!");
+  const handleMarkAsPaid = async (salaryId: string) => {
+    try {
+      // Cập nhật API (status => "PAID")
+      await salaryApi.updateSalary(salaryId, { status: "PAID" });
+      
+      // Update state tại giao diện luôn để phản hồi ngay lập tức
+      setSalaries(
+        salaries.map((s) =>
+          s.id === salaryId ? { ...s, status: "PAID" } : s
+        )
+      );
+      toast.success("Đã thanh toán lương thành công!");
+    } catch (error) {
+      toast.error("Xảy ra lỗi khi thanh toán lương!");
+      console.error(error);
+    }
   };
 
   const handleExport = () => {
-    toast.info("Chức năng xuất Excel đang phát triển");
+    toast.info("Chức năng xuất Excel đang trong quá trình phát triển");
   };
 
   /* ================= SUMMARY ================= */
   const totalSalary = filteredSalaries.reduce(
-    (sum, s) => sum + s.amount,
+    (sum, s) => sum + (s.amount || 0),
     0
   );
   const paidCount = filteredSalaries.filter(
@@ -145,16 +108,22 @@ const SalaryManagement = () => {
   ).length;
 
   return (
-    <div className="space-y-6">
-      {/* TITLE */}
-      <div>
-        <h1 className="text-3xl font-bold">Quản lý Lương</h1>
-        <p className="text-gray-500 mt-1">
-          Quản lý và thanh toán lương nhân viên
-        </p>
+    <div className="space-y-6 p-6">
+      {/* TITLE VÀ HEADER ACTIONS */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Quản lý Lương</h1>
+          <p className="text-gray-500 mt-1">
+            Quản lý và thanh toán lương nhân viên
+          </p>
+        </div>
+        
+        <Button variant="outline" onClick={fetchSalaries} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+        </Button>
       </div>
 
-      {/* SUMMARY */}
+      {/* THẺ SUMMARY */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -170,7 +139,7 @@ const SalaryManagement = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <p className="text-sm font-medium">Số nhân viên</p>
+            <p className="text-sm font-medium">Số nhân viên trong tháng</p>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -184,7 +153,7 @@ const SalaryManagement = () => {
             <p className="text-sm font-medium">Đã thanh toán</p>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-green-600">
               {paidCount}/{filteredSalaries.length}
             </div>
           </CardContent>
@@ -220,7 +189,7 @@ const SalaryManagement = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Tìm nhân viên..."
+                placeholder="Tìm tên nhân viên..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -229,15 +198,15 @@ const SalaryManagement = () => {
 
             <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              Xuất Excel
             </Button>
           </div>
         </CardHeader>
 
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-md border">
             <Table className="min-w-[700px]">
-              <TableHeader>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Nhân viên</TableHead>
                   <TableHead className="text-right">Lương cơ bản</TableHead>
@@ -250,62 +219,73 @@ const SalaryManagement = () => {
               </TableHeader>
 
               <TableBody>
-                {filteredSalaries.map((salary) => (
-                  <TableRow key={salary.id}>
-                    <TableCell className="font-medium">
-                      {salary.employee.user.profile.fullName}
-                    </TableCell>
-
-                    <TableCell className="text-right">
-                      {formatCurrency(salary.employee.baseSalary)}
-                    </TableCell>
-
-                    <TableCell className="text-right text-green-600">
-                      +{formatCurrency(salary.bonus)}
-                    </TableCell>
-
-                    <TableCell className="text-right text-red-600">
-                      -{formatCurrency(salary.deduction)}
-                    </TableCell>
-
-                    <TableCell className="text-right font-semibold">
-                      {formatCurrency(salary.amount)}
-                    </TableCell>
-
-                    <TableCell>
-                      <Badge
-                        className={
-                          salary.status === "PAID"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }
-                      >
-                        {salary.status === "PAID"
-                          ? "Đã thanh toán"
-                          : "Chưa thanh toán"}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Download className="w-4 h-4" />
-                        </Button>
-
-                        {salary.status === "PENDING" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleMarkAsPaid(salary.id)}
-                            className="text-green-600"
-                          >
-                            Thanh toán
-                          </Button>
-                        )}
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Đang tải dữ liệu...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredSalaries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Không tìm thấy bản ghi lương nào trong tháng này.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredSalaries.map((salary) => (
+                    <TableRow key={salary.id} className="hover:bg-gray-50/50">
+                      <TableCell className="font-medium">
+                        {salary.employee?.user?.profile?.fullName || "N/A"}
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        {formatCurrency(salary.employee?.baseSalary || 0)}
+                      </TableCell>
+
+                      <TableCell className="text-right text-green-600">
+                        +{formatCurrency(salary.bonus || 0)}
+                      </TableCell>
+
+                      <TableCell className="text-right text-red-600">
+                        -{formatCurrency(salary.deduction || 0)}
+                      </TableCell>
+
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(salary.amount || 0)}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            salary.status === "PAID"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                          }
+                        >
+                          {salary.status === "PAID"
+                            ? "Đã thanh toán"
+                            : "Chưa thanh toán"}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {salary.status === "PENDING" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleMarkAsPaid(salary.id)}
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                            >
+                              Thanh toán
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -313,6 +293,4 @@ const SalaryManagement = () => {
       </Card>
     </div>
   );
-};
-
-export default SalaryManagement;
+}

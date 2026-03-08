@@ -35,3 +35,14 @@ export class CreateSalaryDto {
   @IsEnum(SalaryStatus)
   status: SalaryStatus;
 }
+export class UpdateSalaryDto {
+  @ApiProperty({ description: 'Tiền thưởng' })
+  @IsNumber()
+  bonus: number;
+  @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
+  @IsNumber()
+  deduction: number;
+  @ApiProperty({ enum: SalaryStatus })
+  @IsEnum(SalaryStatus)
+  status: SalaryStatus;
+}

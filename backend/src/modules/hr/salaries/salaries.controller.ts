@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  Patch,
   Post,
   Query,
   Request,
@@ -9,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
-import { CreateSalaryDto } from './dto/salary.dto';
+import { CreateSalaryDto, UpdateSalaryDto } from './dto/salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -22,7 +24,7 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('salaries')
 export class SalariesController {
-  constructor(private readonly salariesService: SalariesService) {}
+  constructor(private readonly salariesService: SalariesService) { }
 
   @Post('calculate')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
@@ -50,5 +52,10 @@ export class SalariesController {
       month ? +month : undefined,
       year ? +year : undefined,
     );
+  }
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  update(@Param('id') id: string, @Body() dto: UpdateSalaryDto) {
+    return this.salariesService.update(id, dto);
   }
 }

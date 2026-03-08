@@ -4,11 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSalaryDto } from './dto/salary.dto';
+import { CreateSalaryDto, UpdateSalaryDto } from './dto/salary.dto';
 import { Prisma } from '@prisma/client';
 @Injectable()
 export class SalariesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
+
   async calculateSalary(dto: CreateSalaryDto) {
     const exist = await this.prisma.salary.findFirst({
       where: {
@@ -111,6 +112,16 @@ export class SalariesService {
           },
         },
       },
+    });
+  }
+  async update(id: string, dto: UpdateSalaryDto) {
+    const exist = await this.prisma.salary.findUnique({
+      where: { id },
+    });
+    if (!exist) throw new NotFoundException('Lương không tồn tại');
+    return this.prisma.salary.update({
+      where: { id },
+      data: dto,
     });
   }
 }

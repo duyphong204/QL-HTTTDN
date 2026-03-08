@@ -30,84 +30,84 @@ const AdminLayout = () => {
     const { user, logout } = useAuthStore();
 
     const menuItems: MenuItem[] = [
-    {
-        title: "Tổng quan",
-        href: "/admin/dashboard",
-        icon: LayoutDashboard,
-        allowedRoles: ["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-    },
-    {
-        title: "Quản lý User",
-        href: "/admin/users",
-        icon: Users,
-        allowedRoles: ["ADMIN"],
-    },
-    {
-        title: "Quản lý Nhân sự",
-        href: "/hr/employees",
-        icon: Users,
-        allowedRoles: ["HR_MANAGER"],
-    },
-    {
-        title: "xin nghỉ phép",
-        href: "/employee/leave-request",
-        icon: FileText,
-        allowedRoles: ["EMPLOYEE"],
-    },
-    {
-        title: "Hồ sơ cá nhân",
-        href: "/employee/profile",
-        icon: FileText,
-        allowedRoles: ["EMPLOYEE"],
-    },
-    {
-        title: "Duyệt đơn nghỉ",
-        href: "/hr/leave-requests",
-        icon: FileText,
-        allowedRoles: ["HR_MANAGER"],
-    },
-    {
-        title: "Quản lý Lương",
-        href: "/hr/salaries",
-        icon: FileText,
-        allowedRoles: ["HR_MANAGER"],
-    },
-    {
-        title: "Sản phẩm",
-        href: "/warehouse/products",
-        icon: Package,
-        allowedRoles: ["WAREHOUSE_MANAGER"],
-    },
-    {
-        title: "Nhà cung cấp",
-        href: "/warehouse/suppliers",
-        icon: Building,
-        allowedRoles: ["WAREHOUSE_MANAGER"],
-    },
-    {
-        title: "Phiếu nhập",
-        href: "/warehouse/import-slips",
-        icon: Package,
-        allowedRoles: ["WAREHOUSE_MANAGER"],
-    },
-    {
-        title: "Phiếu xuất",
-        href: "/sales/export-slips",
-        icon: ShoppingCart,
-        allowedRoles: ["SALES_MANAGER"],
-    },
-    {
-        title: "Báo cáo",
-        href: "/sales/reports",
-        icon: BarChart3,
-        allowedRoles: ["ADMIN", "SALES_MANAGER"],
-    },
-    {
-        title: "Bảng lương của tôi",
-        href: "/employee/my-salary",
-        icon: FileText,
-        allowedRoles: ["EMPLOYEE"],
-    },
+        {
+            title: "Tổng quan",
+            href: "/admin/dashboard",
+            icon: LayoutDashboard,
+            allowedRoles: ["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
+        },
+        {
+            title: "Quản lý User",
+            href: "/admin/users",
+            icon: Users,
+            allowedRoles: ["ADMIN"],
+        },
+        {
+            title: "Quản lý Nhân sự",
+            href: "/hr/employees",
+            icon: Users,
+            allowedRoles: ["HR_MANAGER"],
+        },
+        {
+            title: "xin nghỉ phép",
+            href: "/employee/leave-request",
+            icon: FileText,
+            allowedRoles: ["EMPLOYEE"],
+        },
+        {
+            title: "Hồ sơ cá nhân",
+            href: "/employee/profile",
+            icon: FileText,
+            allowedRoles: ["EMPLOYEE"],
+        },
+        {
+            title: "Duyệt đơn nghỉ",
+            href: "/hr/leave-requests",
+            icon: FileText,
+            allowedRoles: ["HR_MANAGER"],
+        },
+        {
+            title: "Quản lý Lương",
+            href: "/hr/salaries",
+            icon: FileText,
+            allowedRoles: ["HR_MANAGER"],
+        },
+        {
+            title: "Sản phẩm",
+            href: "/warehouse/products",
+            icon: Package,
+            allowedRoles: ["WAREHOUSE_MANAGER"],
+        },
+        {
+            title: "Nhà cung cấp",
+            href: "/warehouse/suppliers",
+            icon: Building,
+            allowedRoles: ["WAREHOUSE_MANAGER"],
+        },
+        {
+            title: "Phiếu nhập",
+            href: "/warehouse/import-slips",
+            icon: Package,
+            allowedRoles: ["WAREHOUSE_MANAGER"],
+        },
+        {
+            title: "Phiếu xuất",
+            href: "/sales/export-slips",
+            icon: ShoppingCart,
+            allowedRoles: ["SALES_MANAGER"],
+        },
+        {
+            title: "Báo cáo",
+            href: "/sales/reports",
+            icon: BarChart3,
+            allowedRoles: ["ADMIN", "SALES_MANAGER"],
+        },
+        {
+            title: "Bảng lương của tôi",
+            href: "/employee/salary",
+            icon: FileText,
+            allowedRoles: ["EMPLOYEE"],
+        },
     ];
 
     const filteredMenuItems = menuItems.filter(item =>

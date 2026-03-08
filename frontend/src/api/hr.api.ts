@@ -1,3 +1,4 @@
+import type { UpdateProfileDto } from "@/types/user.type";
 import { axiosInstance } from "./axios"
 import type {
     Employee,
@@ -31,6 +32,22 @@ export const employeeApi = {
         const res = await axiosInstance.patch<Employee>(`/employees/${id}`, data);
         return res.data;
     },
+    deleteEmployee: async (id: string) => {
+        const res = await axiosInstance.delete(`/employees/${id}`);
+        return res.data;
+    },
+    getMyProfile: async () => {
+        const res = await axiosInstance.get('/employees/me');
+        return res.data;
+    },
+    updateMyProfile: async (data: UpdateProfileDto) => {
+        const res = await axiosInstance.patch('/employees/me', data);
+        return res.data;
+    },
+    getHrStatistics: async () => {
+        const res = await axiosInstance.get('/employees/statistics/hr-report');
+        return res.data;
+    },
 };
 
 export const leaveRequestApi = {
@@ -56,7 +73,7 @@ export const leaveRequestApi = {
         );
         return res.data;
     },
-    deleteLeaveRequest: async (id: string) => {    
+    deleteLeaveRequest: async (id: string) => {
         const res = await axiosInstance.delete(`/leave-requests/${id}`);
         return res.data;
     }
@@ -75,6 +92,14 @@ export const salaryApi = {
 
     updateSalary: async (id: string, data: UpdateSalaryDto) => {
         const res = await axiosInstance.patch<Salary>(`/salaries/${id}`, data);
+        return res.data;
+    },
+    getMySalaries: async (params?: { month?: number; year?: number }) => {
+        const res = await axiosInstance.get('/salaries/me', { params });
+        return res.data;
+    },
+    calculateSalary: async (data: CreateSalaryDto) => {
+        const res = await axiosInstance.post('/salaries/calculate', data);
         return res.data;
     },
 };
