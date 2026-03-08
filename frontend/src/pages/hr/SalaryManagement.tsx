@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, Download, Search } from "lucide-react";
 import { toast } from "sonner";
 
-/* ================= TYPES ================= */
 type Salary = {
   id: string;
   month: number;

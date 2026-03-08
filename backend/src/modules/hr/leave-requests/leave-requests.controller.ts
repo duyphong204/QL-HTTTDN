@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -12,7 +13,7 @@ import {
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { LeaveRequestsService } from './leave-requests.service';
-import { CreateLeaveDto } from './dto/leave.dto';
+import { CreateLeaveDto, UpdateLeaveStatusDto } from './dto/leave.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
@@ -21,7 +22,7 @@ import { ValidationPipe } from '@nestjs/common';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
-@Controller('hr/leave-requests')
+@Controller('leave-requests')
 export class LeaveRequestsController {
   constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
   @Roles(Role.EMPLOYEE)
@@ -37,15 +38,18 @@ export class LeaveRequestsController {
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateStatus(
     @Param('id') id: string,
-    @Body('status') status: string,
+    @Body() dto: UpdateLeaveStatusDto,
     @Request() req: any,
   ) {
-    return this.leaveRequestsService.updateStatus(id, status, req.user.id);
+    return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id);
   }
-
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   findAll() {
     return this.leaveRequestsService.findAll();
+  }
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    return this.leaveRequestsService.delete(id);
   }
 }

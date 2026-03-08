@@ -39,6 +39,11 @@ export const leaveRequestApi = {
         return res.data;
     },
 
+    getMyLeaveRequests: async () => {
+        const res = await axiosInstance.get<LeaveRequest[]>("/leave-requests/me")
+        return res.data
+    },
+
     createLeaveRequest: async (data: CreateLeaveRequestDto) => {
         const res = await axiosInstance.post<LeaveRequest>("/leave-requests", data);
         return res.data;
@@ -46,11 +51,15 @@ export const leaveRequestApi = {
 
     approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto) => {
         const res = await axiosInstance.patch<LeaveRequest>(
-            `/leave-requests/${id}`,
+            `/leave-requests/${id}/status`,
             data
         );
         return res.data;
     },
+    deleteLeaveRequest: async (id: string) => {    
+        const res = await axiosInstance.delete(`/leave-requests/${id}`);
+        return res.data;
+    }
 };
 
 export const salaryApi = {

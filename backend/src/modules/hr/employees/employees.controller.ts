@@ -24,7 +24,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
-@Controller('hr/employees')
+@Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
   @Get('me')

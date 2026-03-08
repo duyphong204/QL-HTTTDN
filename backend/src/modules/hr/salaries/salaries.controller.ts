@@ -20,7 +20,7 @@ import { ValidationPipe } from '@nestjs/common';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
-@Controller('hr/salaries')
+@Controller('salaries')
 export class SalariesController {
   constructor(private readonly salariesService: SalariesService) {}
 

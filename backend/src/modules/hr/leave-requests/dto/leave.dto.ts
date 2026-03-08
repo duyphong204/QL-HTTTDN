@@ -1,17 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
+import { IsDateString, IsIn, IsNotEmpty, IsString } from 'class-validator';
+
 export class CreateLeaveDto {
   @ApiProperty()
   @IsDateString()
-  startDate: Date;
+  startDate: string;
+
   @ApiProperty()
   @IsDateString()
-  endDate: Date;
-  @ApiProperty({ example: 'SICK/ANNUAL/MATERNITY' })
-  @IsString()
-  @IsNotEmpty()
+  endDate: string;
+
+  @ApiProperty({ example: 'SICK | ANNUAL | MATERNITY | RESIGNATION' })
+  @IsIn(['SICK', 'ANNUAL', 'MATERNITY', 'RESIGNATION'])
   type: string;
+
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   reason: string;
+}
+
+export class UpdateLeaveStatusDto {
+  @IsIn(['APPROVED', 'REJECTED'])
+  status: string;
 }

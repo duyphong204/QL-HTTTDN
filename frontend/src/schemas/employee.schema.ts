@@ -11,11 +11,21 @@ export const CreateEmployeeSchema = z.object({
 
 export type CreateEmployeeValues = z.infer<typeof CreateEmployeeSchema>
 
-export const CreateLeaveRequestSchema = z.object({
-    startDate: z.coerce.date(),
-    endDate: z.coerce.date(),
-    type: z.enum(["SICK", "ANNUAL", "MATERNITY"]),
-    reason: z.string().min(10),
-})
+export const CreateLeaveRequestSchema = z
+  .object({
+    startDate: z.string().min(1, "Vui lòng chọn ngày bắt đầu"),
+    endDate: z.string().min(1, "Vui lòng chọn ngày kết thúc"),
+    type: z.enum(["SICK", "ANNUAL", "MATERNITY", "RESIGNATION"], {
+      required_error: "Vui lòng chọn loại đơn",
+    }),
+    reason: z.string().min(10, "Lý do phải ít nhất 10 ký tự"),
+  })
+  .refine(
+    (data) => new Date(data.endDate) >= new Date(data.startDate),
+    { 
+      message: "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu", 
+      path: ["endDate"] 
+    }
+  )
 
 export type CreateLeaveRequestValues = z.infer<typeof CreateLeaveRequestSchema>

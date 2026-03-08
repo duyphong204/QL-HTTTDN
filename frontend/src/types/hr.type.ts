@@ -77,9 +77,9 @@ export interface UpdateSalaryDto {
 export interface LeaveRequest extends BaseEntity {
     employeeId: string
     employee?: Employee
-    startDate: Date
-    endDate: Date
-    type: "SICK" | "ANNUAL" | "MATERNITY"
+    startDate: string
+    endDate: string
+    type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"
     reason: string
     status: "PENDING" | "APPROVED" | "REJECTED"
     approvedById?: string
@@ -87,9 +87,9 @@ export interface LeaveRequest extends BaseEntity {
 }
 
 export interface CreateLeaveRequestDto {
-    startDate: Date
-    endDate: Date
-    type: "SICK" | "ANNUAL" | "MATERNITY"
+    startDate: string
+    endDate: string
+    type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"
     reason: string
 }
 

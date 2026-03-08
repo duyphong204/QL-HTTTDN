@@ -11,7 +11,7 @@ import { useEffect } from "react"
 import { Toaster } from "sonner"
 import NotFoundPage from "@/pages/NotFoundPage"
 import SalaryManagement from "@/pages/hr/SalaryManagement"
-import LeaveRequestPage from "@/pages/employee/LeaveRequestPage"
+import LeaveRequestPage from "@/pages/employee/EmployeeLeaveRequestPage"
 export const AppRouter = () => {
     const checkAuth = useAuthStore((state) => state.checkAuth)
 

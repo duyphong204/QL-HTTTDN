@@ -46,21 +46,82 @@ export class LeaveRequestsService {
     });
   }
   async findAll() {
-    return this.prisma.leaveRequest.findMany({
-      include: {
+    const leaveRequests = await this.prisma.leaveRequest.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        type: true,
+        startDate: true,
+        endDate: true,
+        reason: true,
+        status: true,
+        createdAt: true,
         employee: {
-          include: {
-            user: { include: { profile: true } },
+          select: {
+            code: true,
+            user: {
+              select: {
+                profile: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
     });
+
+    return leaveRequests.map((item) => ({
+      id: item.id,
+      employeeName: item.employee.user.profile?.fullName ?? item.employee.code,
+      type: item.type,
+      startDate: item.startDate,
+      endDate: item.endDate,
+      reason: item.reason,
+      status: item.status,
+      createdAt: item.createdAt,
+    }));
   }
   async updateStatus(id: string, status: string, adminId: string) {
+    const leave = await this.prisma.leaveRequest.findUnique({
+      where: { id },
+    });
+
+    if (!leave) {
+      throw new NotFoundException('Không tìm thấy đơn nghỉ');
+    }
+
+    if (leave.status !== 'PENDING') {
+      throw new BadRequestException('Đơn đã được xử lý');
+    }
+
     return this.prisma.leaveRequest.update({
       where: { id },
-      data: { status, approvedById: adminId },
+      data: {
+        status,
+        approvedById: adminId,
+      },
+    });
+  }
+  async delete(id: string) {
+    const leave = await this.prisma.leaveRequest.findUnique({
+      where: { id },
+    });
+
+    if (!leave) {
+      throw new NotFoundException('Không tìm thấy đơn nghỉ');
+    }
+
+    if (leave.status !== 'PENDING') {
+      throw new BadRequestException('Chỉ có thể xóa đơn đang chờ duyệt');
+    }
+
+    return this.prisma.leaveRequest.delete({
+      where: { id },
     });
   }
 }
