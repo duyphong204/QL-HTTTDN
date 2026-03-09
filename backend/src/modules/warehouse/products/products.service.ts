@@ -1,27 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/product.dto';
+import { prismaPaginate } from 'src/common/helper/prismaPaginate';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
-  async findAll(search?: string, categoryId?: string) {
-    return this.prisma.product.findMany({
-      where: {
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-        ...(categoryId && { categoryId }),
-      },
+  // async findAll(search?: string, categoryId?: string) {
+  //   return this.prisma.product.findMany({
+  //     where: {
+  //       ...(search && {
+  //         OR: [
+  //           { name: { contains: search, mode: 'insensitive' } },
+  //           { description: { contains: search, mode: 'insensitive' } },
+  //         ],
+  //       }),
+  //       ...(categoryId && { categoryId }),
+  //     },
+  //     include: {
+  //       supplier: true,
+  //       category: true,
+  //     },
+  //   });
+  // }
+  async findAll(query: PaginationQueryDto) {
+    const { categoryId } = query;
+    const where = {
+      ...(categoryId && { categoryId }),
+    };
+    return prismaPaginate(this.prisma.product, query, {
+      where,
+      searchFields: ['name', 'description'],
       include: {
         supplier: true,
         category: true,
       },
     });
   }
+
   async create(dto: CreateProductDto) {
     return this.prisma.product.create({ data: dto });
   }

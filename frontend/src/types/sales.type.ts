@@ -18,6 +18,7 @@ export interface CartItem extends BaseEntity {
 export interface AddToCartDto {
     productId: string
     quantity: number
+    product: Product
 }
 
 export interface UpdateCartItemDto {

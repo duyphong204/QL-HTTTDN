@@ -2,8 +2,8 @@ import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
 import { PATHS } from "@/routes";
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const { isAuthenticated, isLoading } = useAuthStore();
+const ProtectedRoute = ({ children,allowedRoles  }: { children: React.ReactNode; allowedRoles?: string[] }) => {
+    const { isAuthenticated, isLoading, user } = useAuthStore();
 
     if (isLoading) {
         return (
@@ -15,6 +15,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     if (!isAuthenticated) {
         return <Navigate to={PATHS.LOGIN} replace />;
+    }
+
+    if (allowedRoles && user && !allowedRoles.includes(user?.role)) {
+        return <Navigate to={"/"} replace />;
     }
 
     return <>{children}</>;

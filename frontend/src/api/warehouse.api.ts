@@ -1,3 +1,4 @@
+
 import { axiosInstance } from "./axios"
 import type {
     Product,
@@ -7,6 +8,7 @@ import type {
     CreateProductDto,
     UpdateProductDto,
     CreateStockInDto,
+    ProductListResponse,
 } from "@/types/warehouse.type"
 
 export const categoryApi = {
@@ -20,7 +22,7 @@ export const categoryApi = {
         return res.data;
     },
 
-    updateCategory: async (id: string, data: { name: string }) => {
+    updateCategory: async (id: string, data: { name?: string }) => {
         const res = await axiosInstance.patch<Category>(`/categories/${id}`, data);
         return res.data;
     },
@@ -57,8 +59,9 @@ export const supplierApi = {
 };
 
 export const productApi = {
+    
     getProducts: async (params?: any) => {
-        const res = await axiosInstance.get<Product[]>("/products", { params });
+        const res = await axiosInstance.get<ProductListResponse>("/products", { params });
         return res.data;
     },
 

@@ -13,16 +13,36 @@ export interface Supplier extends BaseEntity {
 }
 
 export interface Product extends BaseEntity {
+    id: string
     name: string
     description?: string
     price: number
     costPrice: number
     stockQuantity: number
     minStock: number
+    image: string
     categoryId: string
     supplierId: string
     category?: Category
     supplier?: Supplier
+}
+
+export interface ProductListResponse {
+  items: Product[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalsizeInPage: number;
+    totalPages: number;
+  };
+}
+
+export interface CreateCategoryDto {
+    name: string
+}
+
+export interface UpdateCategoryDto {
+    name?: string
 }
 
 export interface CreateProductDto {

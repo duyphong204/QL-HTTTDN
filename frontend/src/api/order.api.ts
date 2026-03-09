@@ -17,7 +17,7 @@ export const orderApi = {
         return res.data;
     },
 
-    updateOrderStatus: async (id: string, status: string) => {
+    updateOrderStatus: async (id: string, status?: string) => {
         const res = await axiosInstance.patch<Order>(`/orders/${id}/status`, { status });
         return res.data;
     },

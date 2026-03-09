@@ -33,6 +33,10 @@ export class CreateProductDto {
   @Min(0)
   stockQuantity: number; // Số lượng tồn kho
 
+  @IsOptional()
+  @IsString()
+  image?: string;
+
   @ApiProperty({ description: 'ID của danh mục sản phẩm' })
   @IsString()
   @IsNotEmpty()
