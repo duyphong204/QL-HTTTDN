@@ -29,7 +29,7 @@ export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) { }
   @Get('me')
   getMe(@Request() req: any) {
-    return this.employeesService.getProfile(req.user.userId);
+    return this.employeesService.getProfile(req.user.id);
   }
   @Get('statistics/hr-report')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
@@ -38,7 +38,7 @@ export class EmployeesController {
   }
   @Patch('me') //Nhân viên tự sửa thông tin
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
-    return this.employeesService.updateMe(req.user.userId, dto);
+    return this.employeesService.updateMe(req.user.id, dto);
   }
   @Post(':userId')
   @Roles(Role.ADMIN, Role.HR_MANAGER)

@@ -12,7 +12,7 @@ import {
 import { Prisma } from '@prisma/client';
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async updateMe(userId: string, dto: UpdateProfileDto) {
     const employee = await this.prisma.employee.findUnique({
@@ -200,7 +200,7 @@ export class EmployeesService {
     const currentYear = new Date().getFullYear();
     const salaryAggregate = await this.prisma.salary.aggregate({
       where: { month: currentMonth, year: currentYear },
-      _sum: { amount: true, bonus: true, deduction: true }
+      _sum: { amount: true, bonus: true, deduction: true },
     });
     return {
       totalEmployees,

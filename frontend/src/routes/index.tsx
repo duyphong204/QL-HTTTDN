@@ -15,6 +15,7 @@ import LeaveRequestPage from "@/pages/employee/EmployeeLeaveRequestPage"
 import EmployeeManagement from "@/pages/hr/EmployeeManagement"
 import LeaveRequestManagement from "@/pages/hr/LeaveRequestManagement"
 import MySalaryPage from "@/pages/employee/MySalaryPage"
+import ProfilePage from "@/pages/employee/ProfilePage"
 
 export const AppRouter = () => {
     const checkAuth = useAuthStore((state) => state.checkAuth)
@@ -49,6 +50,7 @@ export const AppRouter = () => {
                     {/* Employee */}
                     <Route path="/employee/leave-request" element={<LeaveRequestPage />} />
                     <Route path="/employee/salary" element={<MySalaryPage />} />
+                    <Route path='/employee/profile' element={<ProfilePage />} />
 
                     {/* Warehouse */}
                     <Route path="/warehouse/suppliers" element={<SupplierManagement />} />

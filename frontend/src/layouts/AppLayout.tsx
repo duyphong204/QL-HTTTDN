@@ -113,14 +113,23 @@ const AdminLayout = () => {
     const filteredMenuItems = menuItems.filter(item =>
         user && item.allowedRoles.includes(user.role)
     );
-
+    
     return (
         <div className="min-h-screen bg-gray-50 flex">
+            {/* Lớp nền tối (Backdrop) cho mobile khi mở Sidebar */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+
             {/* Sidebar */}
             <aside
                 className={cn(
                     "bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-50 transition-all duration-300 transform",
-                    isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full w-64 lg:translate-x-0 lg:w-20"
+                    isSidebarOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0 lg:w-20"
                 )}
             >
                 <div className="h-16 flex items-center justify-center border-b border-gray-200 px-4">
@@ -135,7 +144,7 @@ const AdminLayout = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-blue-600 p-2 rounded-md">
+                        <div className="bg-blue-600 p-2 rounded-md hidden lg:block">
                             <Briefcase className="text-white h-6 w-6" />
                         </div>
                     )}
@@ -148,6 +157,7 @@ const AdminLayout = () => {
                             <Link
                                 key={item.href}
                                 to={item.href}
+                                onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                                     isActive
@@ -180,18 +190,18 @@ const AdminLayout = () => {
 
             {/* Main Content */}
             <main className={cn(
-                "flex-1 transition-all duration-300 min-h-screen",
-                isSidebarOpen ? "ml-64" : "ml-0 lg:ml-20"
+                "flex-1 transition-all duration-300 min-h-screen flex flex-col w-full overflow-hidden",
+                isSidebarOpen ? "ml-0 lg:ml-64" : "ml-0 lg:ml-20"
             )}>
                 {/* Mobile Header trigger */}
-                <div className="lg:hidden h-16 bg-white border-b flex items-center px-4 sticky top-0 z-40">
+                <div className="lg:hidden h-16 bg-white border-b flex items-center px-4 sticky top-0 z-40 shrink-0">
                     <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                         <Menu className="h-6 w-6" />
                     </Button>
                     <span className="ml-4 font-bold text-gray-800">Electronics Store</span>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6 w-full max-w-full overflow-hidden">
                     <Outlet />
                 </div>
             </main>

@@ -19,6 +19,9 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   address?: string;
+  position?: string;
+  department?: string;
+  dateOfBirth?: string; 
 }
 export class UpdateEmployeeDto {
   @ApiProperty()

@@ -8,7 +8,7 @@ import { CreateSalaryDto, UpdateSalaryDto } from './dto/salary.dto';
 import { Prisma } from '@prisma/client';
 @Injectable()
 export class SalariesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async calculateSalary(dto: CreateSalaryDto) {
     const exist = await this.prisma.salary.findFirst({

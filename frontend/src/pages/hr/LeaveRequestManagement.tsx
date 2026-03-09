@@ -1,41 +1,21 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { leaveRequestApi } from "@/api/hr.api";
-import type { LeaveRequest } from "@/types/hr.type";
+import { useEffect } from "react";
+import { useLeaveRequestStore } from "@/store/leaveRequest.store";
 import dayjs from "dayjs";
 
 export default function LeaveRequestManagement() {
-    const [requests, setRequests] = useState<LeaveRequest[]>([]);
-    const [loading, setLoading] = useState(true);
+    const leaveRequests       = useLeaveRequestStore((s) => s.leaveRequests);
+    const loading             = useLeaveRequestStore((s) => s.loading);
+    const fetchLeaveRequests  = useLeaveRequestStore((s) => s.fetchLeaveRequests);
+    const approveLeaveRequest = useLeaveRequestStore((s) => s.approveLeaveRequest);
 
     useEffect(() => {
-        fetchRequests();
-    }, []);
+        void fetchLeaveRequests();
+    }, [fetchLeaveRequests]);
 
-    const fetchRequests = async () => {
-        try {
-            setLoading(true);
-            const data = await leaveRequestApi.getLeaveRequests();
-            setRequests(data);
-        } catch (error) {
-            toast.error("Lỗi khi tải danh sách đơn xin nghỉ!");
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUpdateStatus = async (id: string, newStatus: 'APPROVED' | 'REJECTED') => {
-        const confirmMsg = newStatus === 'APPROVED' ? "Xác nhận DUYỆT đơn này?" : "Xác nhận TỪ CHỐI đơn này?";
-        if (!confirm(confirmMsg)) return;
-
-        try {
-            await leaveRequestApi.approveLeaveRequest(id, { status: newStatus });
-            toast.success("Cập nhật trạng thái thành công!");
-            fetchRequests();
-        } catch (error) {
-            toast.error("Lỗi khi cập nhật trạng thái!");
-        }
+    const handleUpdateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
+        const msg = status === "APPROVED" ? "Xác nhận DUYỆT đơn này?" : "Xác nhận TỪ CHỐI đơn này?";
+        if (!confirm(msg)) return;
+        await approveLeaveRequest(id, status);
     };
 
     const getStatusBadge = (status: string) => {
@@ -60,7 +40,7 @@ export default function LeaveRequestManagement() {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Duyệt Đơn Nghỉ Phép / Nghỉ Việc</h1>
-                <button onClick={fetchRequests} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-200 transition">
+                <button onClick={() => void fetchLeaveRequests()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-200 transition">
                     Làm mới dữ liệu
                 </button>
             </div>
@@ -82,7 +62,7 @@ export default function LeaveRequestManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {requests.map((req) => (
+                                {leaveRequests.map((req) => (
                                     <tr key={req.id} className="border-b hover:bg-gray-50 transition">
                                         <td className="p-4 font-medium">
                                             {req.employee?.user?.profile?.fullName || req.employee?.code || 'N/A'}
@@ -103,13 +83,13 @@ export default function LeaveRequestManagement() {
                                             {req.status === 'PENDING' ? (
                                                 <div className="flex gap-2 justify-center">
                                                     <button
-                                                        onClick={() => handleUpdateStatus(req.id, 'APPROVED')}
+                                                        onClick={() => void handleUpdateStatus(req.id, 'APPROVED')}
                                                         className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-sm shadow-sm"
                                                     >
                                                         Duyệt
                                                     </button>
                                                     <button
-                                                        onClick={() => handleUpdateStatus(req.id, 'REJECTED')}
+                                                        onClick={() => void handleUpdateStatus(req.id, 'REJECTED')}
                                                         className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition text-sm shadow-sm"
                                                     >
                                                         Từ chối
@@ -121,7 +101,7 @@ export default function LeaveRequestManagement() {
                                         </td>
                                     </tr>
                                 ))}
-                                {requests.length === 0 && (
+                                {leaveRequests.length === 0 && (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center text-gray-500">
                                             Không có đơn xin phép nào.

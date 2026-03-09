@@ -12,8 +12,14 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
   async findAll() {
     return this.prisma.user.findMany({
-      where: { isActive: true },
-      include: { profile: true },
+      where: { isActive: true, deletedAt: null },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        profile: true,
+      },
     });
   }
   async findByEmail(email: string) {
