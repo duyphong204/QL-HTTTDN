@@ -1,13 +1,9 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
-  CreateEmployeeFromUserDto,
   UpdateEmployeeDto,
   UpdateProfileDto,
+  CreateEmployeeDto,
 } from './dto/employee.dto';
 import { Prisma } from '@prisma/client';
 @Injectable()
@@ -43,38 +39,33 @@ export class EmployeesService {
 
     return `NV${nextNumber.toString().padStart(4, '0')}`;
   }
-  async createFromUser(userId: string, dto: CreateEmployeeFromUserDto) {
+
+  async create(dto: CreateEmployeeDto) {
     return this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-        include: { employee: true },
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          password: dto.password,
+          role: 'EMPLOYEE',
+        },
       });
 
-      if (!user) {
-        throw new NotFoundException('User không tồn tại');
-      }
-
-      if (user.employee) {
-        throw new ConflictException('User đã là nhân viên');
-      }
-
-      // 🔥 Sinh mã tự động
-      const generatedCode = await this.generateEmployeeCode(tx);
+      await tx.profile.create({
+        data: {
+          userId: user.id,
+          fullName: dto.fullName,
+          phone: dto.phone,
+        },
+      });
 
       const employee = await tx.employee.create({
         data: {
           userId: user.id,
-          code: generatedCode,
+          code: `NV${Date.now()}`,
           department: dto.department,
           position: dto.position,
           baseSalary: dto.baseSalary,
-          joinDate: dto.joinDate ? new Date(dto.joinDate) : new Date(),
         },
-      });
-
-      await tx.user.update({
-        where: { id: user.id },
-        data: { role: 'EMPLOYEE' },
       });
 
       await tx.jobHistory.create({
@@ -83,7 +74,6 @@ export class EmployeesService {
           department: dto.department,
           position: dto.position,
           baseSalary: dto.baseSalary,
-          startDate: new Date(),
         },
       });
 
@@ -91,30 +81,47 @@ export class EmployeesService {
     });
   }
   async getProfile(userId: string) {
-    return this.prisma.employee.findUnique({
+    const employee = await this.prisma.employee.findUnique({
       where: { userId },
-      include: {
-        user: { include: { profile: true } },
-        jobHistories: true,
+      select: {
+        id: true,
+        userId: true,
+        code: true,
+        department: true,
+        position: true,
+        baseSalary: true,
+        joinDate: true,
+        resignDate: true,
+
+        user: {
+          select: {
+            email: true,
+            profile: {
+              select: {
+                fullName: true,
+                phone: true,
+                address: true,
+                avatar: true,
+                dateOfBirth: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!employee) {
+      throw new NotFoundException('Nhân viên không tồn tại');
+    }
+
+    return employee;
   }
   async findAll() {
     return this.prisma.employee.findMany({
       where: {
         resignDate: null,
-        user: {
-          role: {
-            notIn: ['ADMIN', 'CUSTOMER'],
-          },
-        },
       },
-      select: {
-        id: true,
-        code: true,
-        department: true,
-        position: true,
-        baseSalary: true,
+      include: {
         user: {
           select: {
             email: true,
@@ -123,6 +130,11 @@ export class EmployeesService {
                 fullName: true,
               },
             },
+          },
+        },
+        jobHistories: {
+          orderBy: {
+            startDate: 'desc',
           },
         },
       },

@@ -43,27 +43,32 @@ export class SalariesService {
   }
 
   async getMySalaries(userId: string, month?: number, year?: number) {
-    const employee = await this.prisma.employee.findUnique({
-      where: { userId },
-    });
-
-    if (!employee) throw new NotFoundException('Nhân viên không tồn tại');
-
-    const where: Prisma.SalaryWhereInput = {
-      employeeId: employee.id,
-    };
-
-    if (month !== undefined) {
-      where.month = month;
-    }
-
-    if (year !== undefined) {
-      where.year = year;
-    }
-
     return this.prisma.salary.findMany({
-      where,
+      where: {
+        employee: {
+          userId,
+        },
+        ...(month && { month }),
+        ...(year && { year }),
+      },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      include: {
+        employee: {
+          select: {
+            code: true,
+            baseSalary: true,
+            user: {
+              select: {
+                profile: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
   async findAll(month?: number, year?: number) {

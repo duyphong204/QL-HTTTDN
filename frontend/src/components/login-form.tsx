@@ -28,9 +28,11 @@ export function LoginForm({
   })
 
   const navigate = useNavigate()
+  const login = useAuthStore((state) => state.login);
+
   const onSubmit = async (data: LoginValues) => {
     try {
-      await useAuthStore.getState().login(data.email, data.password)
+      await login(data);
       navigate("/")
     }
     catch (error) {

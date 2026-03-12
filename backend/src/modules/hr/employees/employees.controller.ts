@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import {
+  CreateEmployeeDto,
   CreateEmployeeFromUserDto,
   UpdateEmployeeDto,
   UpdateProfileDto,
@@ -26,7 +27,7 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) { }
+  constructor(private readonly employeesService: EmployeesService) {}
   @Get('me')
   getMe(@Request() req: any) {
     return this.employeesService.getProfile(req.user.id);
@@ -40,13 +41,10 @@ export class EmployeesController {
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
     return this.employeesService.updateMe(req.user.id, dto);
   }
-  @Post(':userId')
+  @Post('')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async create(
-    @Param('userId') userId: string,
-    @Body() dto: CreateEmployeeFromUserDto,
-  ) {
-    return this.employeesService.createFromUser(userId, dto);
+  async create(@Body() dto: CreateEmployeeDto) {
+    return this.employeesService.create(dto);
   }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)

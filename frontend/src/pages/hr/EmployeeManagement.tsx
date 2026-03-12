@@ -1,243 +1,282 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { employeeApi } from "@/api/hr.api";
-import { userApi } from "@/api/user.api";
-import type { Employee } from "@/types/hr.type";
-import type { User } from "@/types/user.type";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Search, History } from "lucide-react";
+import { useEffect, useState } from "react"
+import { useHrStore } from "@/store/hr.store"
 
-type ModalType = "add" | "edit-position" | "history" | null;
+import { Search, UserPlus, Pencil, Trash2, Eye } from "lucide-react"
+
+import { EmployeeFormModal } from "@/components/hr/EmployeeFormModal"
+import { EmployeeDetailModal } from "@/components/hr/EmployeeDetailModal"
+
+import type { Employee } from "@/types/hr.type"
+import type { CreateEmployeeDto } from "@/types/hr.type"
+
+const POSITION_BADGE: Record<string, string> = {
+  "HR Manager": "bg-blue-100 text-blue-600",
+  "Developer": "bg-purple-100 text-purple-600",
+  "Accountant": "bg-emerald-100 text-emerald-600",
+  "Sales": "bg-orange-100 text-orange-600",
+}
 
 export default function EmployeeManagement() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<ModalType>(null);
-  const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
 
-  // Form State
-  const [addForm, setAddForm] = useState({ userId: "", department: "", position: "", baseSalary: "", joinDate: "" });
-  const [posForm, setPosForm] = useState({ department: "", position: "", baseSalary: "" });
+  const {
+    employees,
+    loadingEmployees,
+    fetchEmployees,
+    deleteEmployee,
+    createEmployee,
+    updateEmployee
+  } = useHrStore()
 
-  useEffect(() => { fetchEmployees(); fetchUsers(); }, []);
+  const [search, setSearch] = useState("")
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
 
-  const fetchEmployees = async () => {
-    setLoading(true);
-    try {
-      const data = await employeeApi.getEmployees();
-      setEmployees(data);
-    } catch { toast.error("Lỗi khi tải danh sách nhân viên!"); }
-    finally { setLoading(false); }
-  };
+  useEffect(() => {
+    fetchEmployees()
+  }, [fetchEmployees])
 
-  const fetchUsers = async () => {
-    try {
-      const data = await userApi.getUsers();
-      setUsers(data);
-    } catch { /* bỏ qua */ }
-  };
+  const filteredEmployees = employees.filter((emp) => {
 
-  const handleAdd = async () => {
-    try {
-      await employeeApi.createEmployee(addForm as any);
-      toast.success("Thêm nhân viên thành công!");
-      setModal(null);
-      fetchEmployees();
-    } catch { toast.error("Lỗi khi thêm nhân viên!"); }
-  };
+    const name = emp.user?.profile?.fullName?.toLowerCase() || ""
 
-  const handleUpdatePosition = async () => {
-    if (!selectedEmp) return;
-    try {
-      await employeeApi.updateEmployee(selectedEmp.id, {
-        department: posForm.department,
-        position: posForm.position,
-        baseSalary: Number(posForm.baseSalary),
-      });
-      toast.success("Cập nhật chức vụ thành công! Lịch sử công tác đã được lưu.");
-      setModal(null);
-      fetchEmployees();
-    } catch { toast.error("Lỗi khi cập nhật chức vụ!"); }
-  };
+    return (
+      emp.code.toLowerCase().includes(search.toLowerCase()) ||
+      name.includes(search.toLowerCase())
+    )
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Cho nhân viên này nghỉ việc?")) return;
-    try {
-      await employeeApi.deleteEmployee(id);
-      toast.success("Đã xử lý nghỉ việc thành công!");
-      fetchEmployees();
-    } catch { toast.error("Lỗi khi xử lý!"); }
-  };
+  })
 
-  const openEditPosition = (emp: Employee) => {
-    setSelectedEmp(emp);
-    setPosForm({ department: emp.department || "", position: emp.position || "", baseSalary: String(emp.baseSalary) });
-    setModal("edit-position");
-  };
+  const openCreateModal = () => {
+    setEditingEmployee(null)
+    setModalOpen(true)
+  }
 
-  const filtered = employees.filter(e =>
-    (e.user?.profile?.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-    e.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const openEditModal = (employee: Employee) => {
+    setEditingEmployee(employee)
+    setModalOpen(true)
+  }
+
+  const handleDelete = async (id: string, name?: string) => {
+
+    if (confirm(`Bạn có chắc muốn xoá nhân viên ${name}?`)) {
+      await deleteEmployee(id)
+    }
+
+  }
+
+  const handleSubmit = async (data: CreateEmployeeDto) => {
+
+    if (editingEmployee) {
+      await updateEmployee(editingEmployee.id, data)
+    } else {
+      await createEmployee(data)
+    }
+
+    setModalOpen(false)
+
+  }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý Nhân sự</h1>
-          <p className="text-sm text-gray-500">{employees.length} nhân viên đang làm việc</p>
+
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* HEADER */}
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+          <div>
+
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý nhân viên
+            </h1>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Quản lý hồ sơ và thông tin nhân sự
+            </p>
+
+          </div>
+
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+          >
+            <UserPlus size={18} />
+            Thêm nhân viên
+          </button>
+
         </div>
-        <Button onClick={() => setModal("add")} className="gap-2 bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4" /> Thêm Nhân viên
-        </Button>
-      </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm tên hoặc mã NV..." className="pl-10" />
-      </div>
+        {/* CONTAINER */}
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
+
+          {/* SEARCH */}
+
+          <div className="p-4 border-b border-gray-50">
+
+            <div className="relative max-w-xl">
+
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm kiếm nhân viên..."
+                className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700"
+              />
+
+            </div>
+
+          </div>
+
+          {/* TABLE */}
+
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+
+            <table className="w-full text-left text-sm whitespace-nowrap">
+
+              <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
+
                 <tr>
-                  <th className="p-4 text-left font-medium text-gray-600">Mã NV</th>
-                  <th className="p-4 text-left font-medium text-gray-600">Họ Tên</th>
-                  <th className="p-4 text-left font-medium text-gray-600 hidden sm:table-cell">Phòng ban</th>
-                  <th className="p-4 text-left font-medium text-gray-600 hidden md:table-cell">Chức vụ</th>
-                  <th className="p-4 text-right font-medium text-gray-600 hidden lg:table-cell">Lương Cơ Bản</th>
-                  <th className="p-4 text-center font-medium text-gray-600">Thao tác</th>
+
+                  <th className="px-6 py-4">Code</th>
+                  <th className="px-6 py-4">Họ tên</th>
+                  <th className="px-6 py-4">Phòng ban</th>
+                  <th className="px-6 py-4">Chức vụ</th>
+                  <th className="px-6 py-4 text-right">Lương</th>
+                  <th className="px-6 py-4 text-center">Thao tác</th>
+
                 </tr>
+
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  <tr><td colSpan={6} className="p-10 text-center text-gray-400">Đang tải...</td></tr>
-                ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="p-10 text-center text-gray-400">Không có nhân viên nào.</td></tr>
-                ) : filtered.map(emp => (
-                  <tr key={emp.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4 font-mono text-xs font-semibold text-gray-600">{emp.code}</td>
-                    <td className="p-4 font-medium text-gray-900">{emp.user?.profile?.fullName || "N/A"}</td>
-                    <td className="p-4 text-gray-600 hidden sm:table-cell">{emp.department || "—"}</td>
-                    <td className="p-4 hidden md:table-cell">
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">{emp.position || "Nhân viên"}</Badge>
-                    </td>
-                    <td className="p-4 text-right font-semibold text-gray-800 hidden lg:table-cell">{emp.baseSalary?.toLocaleString("vi-VN")} ₫</td>
-                    <td className="p-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => openEditPosition(emp)} title="Đổi chức vụ/lương">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-600 hover:bg-purple-50" onClick={() => { setSelectedEmp(emp); setModal("history"); }} title="Lịch sử công tác">
-                          <History className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(emp.id)} title="Cho nghỉ việc">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+
+              <tbody className="divide-y divide-gray-50">
+
+                {loadingEmployees ? (
+
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                      Đang tải dữ liệu...
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* ===== MODAL THÊM NHÂN VIÊN ===== */}
-      {modal === "add" && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-lg font-bold">Thêm Nhân Viên Mới</h2>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Chọn User (tài khoản đã có)</label>
-                <select className="mt-1 w-full border rounded-md p-2 text-sm" onChange={e => setAddForm(f => ({ ...f, userId: e.target.value }))}>
-                  <option value="">-- Chọn User --</option>
-                  {users.map(u => <option key={u.id} value={u.id}>{u.email} ({u.profile?.fullName || "Chưa có tên"})</option>)}
-                </select>
-              </div>
-              <div><label className="text-sm font-medium text-gray-600">Phòng ban</label>
-                <Input className="mt-1" placeholder="Ví dụ: Kinh Doanh" onChange={e => setAddForm(f => ({ ...f, department: e.target.value }))} /></div>
-              <div><label className="text-sm font-medium text-gray-600">Chức vụ</label>
-                <Input className="mt-1" placeholder="Ví dụ: Nhân viên KD" onChange={e => setAddForm(f => ({ ...f, position: e.target.value }))} /></div>
-              <div><label className="text-sm font-medium text-gray-600">Lương cơ bản (VNĐ)</label>
-                <Input className="mt-1" type="number" placeholder="5000000" onChange={e => setAddForm(f => ({ ...f, baseSalary: e.target.value }))} /></div>
-              <div><label className="text-sm font-medium text-gray-600">Ngày vào làm</label>
-                <Input className="mt-1" type="date" onChange={e => setAddForm(f => ({ ...f, joinDate: e.target.value }))} /></div>
-              <div className="flex gap-2 pt-2">
-                <Button onClick={handleAdd} className="flex-1 bg-blue-600 hover:bg-blue-700">Thêm</Button>
-                <Button variant="outline" onClick={() => setModal(null)} className="flex-1">Huỷ</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                ) : filteredEmployees.length === 0 ? (
 
-      {/* ===== MODAL ĐỔI CHỨC VỤ / LƯƠNG ===== */}
-      {modal === "edit-position" && selectedEmp && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-lg font-bold">Cập Nhật Chức Vụ / Lương</h2>
-              <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3">⚠️ Thay đổi sẽ TỰ ĐỘNG lưu lịch sử công tác với thời điểm hiện tại.</p>
-              <div><label className="text-sm font-medium text-gray-600">Phòng ban mới</label>
-                <Input className="mt-1" value={posForm.department} onChange={e => setPosForm(f => ({ ...f, department: e.target.value }))} /></div>
-              <div><label className="text-sm font-medium text-gray-600">Chức vụ mới</label>
-                <Input className="mt-1" value={posForm.position} onChange={e => setPosForm(f => ({ ...f, position: e.target.value }))} /></div>
-              <div><label className="text-sm font-medium text-gray-600">Lương cơ bản mới (VNĐ)</label>
-                <Input className="mt-1" type="number" value={posForm.baseSalary} onChange={e => setPosForm(f => ({ ...f, baseSalary: e.target.value }))} /></div>
-              <div className="flex gap-2 pt-2">
-                <Button onClick={handleUpdatePosition} className="flex-1 bg-blue-600 hover:bg-blue-700">Lưu thay đổi</Button>
-                <Button variant="outline" onClick={() => setModal(null)} className="flex-1">Huỷ</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                      Không tìm thấy nhân viên.
+                    </td>
+                  </tr>
 
-      {/* ===== MODAL LỊCH SỬ CÔNG TÁC ===== */}
-      {modal === "history" && selectedEmp && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold">Lịch Sử Công Tác - {selectedEmp.user?.profile?.fullName || selectedEmp.code}</h2>
-                <Button variant="ghost" size="sm" onClick={() => setModal(null)}>✕</Button>
-              </div>
-              {(selectedEmp as any).jobHistories?.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">Chưa có lịch sử công tác.</p>
-              ) : (
-                <div className="space-y-3">
-                  {((selectedEmp as any).jobHistories || []).map((h: any, i: number) => (
-                    <div key={i} className="border rounded-lg p-4 bg-gray-50">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold text-gray-800">{h.position || "Nhân viên"}</p>
-                          <p className="text-sm text-gray-500 mt-0.5">{h.department || "Chưa phân công"}</p>
+                ) : (
+
+                  filteredEmployees.map((emp) => (
+
+                    <tr key={emp.id} className="hover:bg-gray-50/70 transition-colors group">
+
+                      <td className="px-6 py-4 font-mono text-gray-900">
+                        {emp.code}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {emp.user?.profile?.fullName || "—"}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {emp.department || "—"}
+                      </td>
+
+                      <td className="px-6 py-4">
+
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            POSITION_BADGE[emp.position] || 
+                            "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {emp.position || "—"}
+                        </span>
+
+                      </td>
+
+                      <td className="px-6 py-4 text-right text-gray-700 font-medium">
+                        {emp.baseSalary?.toLocaleString("vi-VN")} ₫
+                      </td>
+
+                      <td className="px-6 py-4 text-center">
+
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+
+                          <button
+                            onClick={() => setSelectedEmployee(emp)}
+                            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={18} />
+                          </button>
+
+                          <button
+                            onClick={() => openEditModal(emp)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Sửa nhân viên"
+                          >
+                            <Pencil size={18} />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDelete(emp.id, emp.user?.profile?.fullName)
+                            }
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            title="Xóa nhân viên"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+
                         </div>
-                        <p className="font-bold text-green-700 text-sm">{h.baseSalary?.toLocaleString("vi-VN")} ₫</p>
-                      </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(h.startDate).toLocaleDateString("vi-VN")} → {h.endDate ? new Date(h.endDate).toLocaleDateString("vi-VN") : "Hiện tại"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
         </div>
-      )}
+
+      </div>
+
+      {/* FORM MODAL */}
+
+      <EmployeeFormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        editingEmployee={editingEmployee}
+        onSubmit={handleSubmit}
+      />
+
+      {/* DETAIL MODAL */}
+
+      <EmployeeDetailModal
+        employee={selectedEmployee}
+        onClose={() => setSelectedEmployee(null)}
+      />
+
     </div>
-  );
+
+  )
+
 }

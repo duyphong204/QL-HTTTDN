@@ -2,7 +2,6 @@ import { z } from "zod"
 
 export const CreateEmployeeSchema = z.object({
     userId: z.string().uuid(),
-    code: z.string().min(3),
     department: z.string().optional(),
     position: z.string().optional(),
     baseSalary: z.number().positive(),
@@ -29,3 +28,12 @@ export const CreateLeaveRequestSchema = z
   )
 
 export type CreateLeaveRequestValues = z.infer<typeof CreateLeaveRequestSchema>
+
+export const UpdateProfileSchema = z.object({
+    fullName: z.string().min(3, "Họ tên phải từ 3 ký tự trở lên"),
+    phone: z.string().min(10, "Số điện thoại không hợp lệ").optional(),
+    address: z.string().optional(),
+    dateOfBirth: z.string().optional(),
+});
+
+export type UpdateProfileValues = z.infer<typeof UpdateProfileSchema>;

@@ -1,13 +1,30 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { DollarSign, Download, Users, CheckCircle2 } from "lucide-react";
+import { DollarSign, Users, CheckCircle2, Download } from "lucide-react";
 import { salaryApi } from "@/api/hr.api";
 import type { Salary } from "@/types/hr.type";
+
+
+const STATUS_BADGE = {
+  PAID: {
+    label: "Đã thanh toán",
+    color: "bg-green-100 text-green-600",
+  },
+  PENDING: {
+    label: "Chưa thanh toán",
+    color: "bg-yellow-100 text-yellow-600",
+  },
+} as const;
+
 
 export default function SalaryManagement() {
   const [salaries, setSalaries] = useState<Salary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState("2026-03");
+
+  useEffect(() => {
+    fetchSalaries();
+  }, []);
 
   const fetchSalaries = async () => {
     try {
@@ -15,15 +32,13 @@ export default function SalaryManagement() {
       const data = await salaryApi.getSalaries();
       setSalaries(data);
     } catch {
-      toast.error("Lỗi khi tải danh sách lương!");
+      toast.error("Lỗi khi tải bảng lương");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchSalaries();
-  }, []);
+  /* ================= FILTER ================= */
 
   const filteredSalaries = useMemo(() => {
     return salaries.filter((s) => {
@@ -31,6 +46,8 @@ export default function SalaryManagement() {
       return month === selectedMonth;
     });
   }, [salaries, selectedMonth]);
+
+  /* ================= SUMMARY ================= */
 
   const summary = useMemo(() => {
     let total = 0;
@@ -44,7 +61,7 @@ export default function SalaryManagement() {
     return {
       total: (total / 1000000).toFixed(1) + "M",
       count: filteredSalaries.length,
-      paidCount: paid,
+      paid,
     };
   }, [filteredSalaries]);
 
@@ -52,150 +69,204 @@ export default function SalaryManagement() {
     new Intl.NumberFormat("vi-VN").format(amount || 0) + " đ";
 
   const handleExport = () => {
-    toast.info("Chức năng xuất Excel đang phát triển");
+    toast.info("Xuất Excel đang phát triển");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Header */}
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold">Quản lý lương</h1>
-          <p className="text-sm text-gray-500">Xem bảng lương của nhân viên</p>
-        </div>
+        {/* HEADER */}
 
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-          <StatCard title="Tổng lương tháng" value={summary.total} icon={<DollarSign size={18} />} />
-          <StatCard title="Số nhân sự" value={summary.count} icon={<Users size={18} />} />
-          <StatCard
-            title="Đã thanh toán"
-            value={summary.paidCount}
-            subValue={summary.count}
-            icon={<CheckCircle2 size={18} />}
-          />
-        </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
-        {/* Table */}
-        <div className="bg-white rounded-xl border shadow-sm">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý lương
+            </h1>
 
-          {/* Filter */}
-          <div className="p-4 border-b flex flex-col md:flex-row md:items-center gap-3">
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="2026-01">Tháng 01/2026</option>
-              <option value="2026-02">Tháng 02/2026</option>
-              <option value="2026-03">Tháng 03/2026</option>
-            </select>
+            <p className="text-sm text-gray-500 mt-1">
+              Theo dõi bảng lương nhân viên
+            </p>
           </div>
 
-          {/* Table */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="h-10 px-4 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="2026-01">Tháng 01/2026</option>
+            <option value="2026-02">Tháng 02/2026</option>
+            <option value="2026-03">Tháng 03/2026</option>
+          </select>
+
+        </div>
+
+        {/* STATS */}
+
+        <div className="grid gap-4 md:grid-cols-3">
+
+          <StatCard
+            title="Tổng lương"
+            value={summary.total}
+            icon={<DollarSign size={18} />}
+          />
+
+          <StatCard
+            title="Nhân sự"
+            value={summary.count}
+            icon={<Users size={18} />}
+          />
+
+          <StatCard
+            title="Đã thanh toán"
+            value={`${summary.paid}/${summary.count}`}
+            icon={<CheckCircle2 size={18} />}
+          />
+
+        </div>
+
+        {/* TABLE CONTAINER */}
+
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
+
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-gray-50 text-gray-600">
+
+            <table className="w-full text-left text-sm whitespace-nowrap">
+
+              {/* TABLE HEADER */}
+
+              <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
                 <tr>
-                  <th className="px-4 py-3 text-left">Nhân viên</th>
-                  <th className="px-4 py-3 text-center">Lương cơ bản</th>
-                  <th className="px-4 py-3 text-center">Thưởng</th>
-                  <th className="px-4 py-3 text-center">Khấu trừ</th>
-                  <th className="px-4 py-3 text-center">Thực lĩnh</th>
-                  <th className="px-4 py-3 text-center">Trạng thái</th>
-                  <th className="px-4 py-3 text-center">Thao tác</th>
+                  <th className="px-6 py-4">Nhân viên</th>
+                  <th className="px-6 py-4 text-center">Lương cơ bản</th>
+                  <th className="px-6 py-4 text-center">Thưởng</th>
+                  <th className="px-6 py-4 text-center">Khấu trừ</th>
+                  <th className="px-6 py-4 text-center">Thực lĩnh</th>
+                  <th className="px-6 py-4 text-center">Trạng thái</th>
+                  <th className="px-6 py-4 text-center">Thao tác</th>
                 </tr>
               </thead>
 
-              <tbody>
+              {/* TABLE BODY */}
+
+              <tbody className="divide-y divide-gray-50">
+
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-10 text-gray-400">
-                      Đang tải dữ liệu...
-                    </td>
-                  </tr>
+                  <EmptyRow text="Đang tải dữ liệu..." />
                 ) : filteredSalaries.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center py-10 text-gray-400">
-                      Không có dữ liệu
-                    </td>
-                  </tr>
+                  <EmptyRow text="Không có dữ liệu bảng lương." />
                 ) : (
                   filteredSalaries.map((s) => (
-                    <tr key={s.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">
-                        {s.employee?.user?.profile?.fullName || "Chưa cập nhật"}
+                    <tr
+                      key={s.id}
+                      className="hover:bg-gray-50/70 transition-colors group"
+                    >
+
+                      <td className="px-6 py-4 font-semibold text-gray-900">
+                        {s.employee?.user?.profile?.fullName || "—"}
                       </td>
 
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center text-gray-600">
                         {formatCurrency(s.employee?.baseSalary || 0)}
                       </td>
 
-                      <td className="px-4 py-3 text-center text-green-600 font-medium">
+                      <td className="px-6 py-4 text-center text-green-600 font-medium">
                         +{formatCurrency(s.bonus || 0)}
                       </td>
 
-                      <td className="px-4 py-3 text-center text-red-600 font-medium">
+                      <td className="px-6 py-4 text-center text-red-600 font-medium">
                         -{formatCurrency(s.deduction || 0)}
                       </td>
 
-                      <td className="px-4 py-3 text-center font-bold">
+                      <td className="px-6 py-4 text-center font-semibold text-gray-900">
                         {formatCurrency(s.amount || 0)}
                       </td>
 
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
+
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === "PAID"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-yellow-100 text-yellow-600"
-                            }`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            STATUS_BADGE[
+                              s.status as keyof typeof STATUS_BADGE
+                            ]?.color
+                          }`}
                         >
-                          {s.status === "PAID"
-                            ? "Đã thanh toán"
-                            : "Chưa thanh toán"}
+                          {
+                            STATUS_BADGE[
+                              s.status as keyof typeof STATUS_BADGE
+                            ]?.label
+                          }
                         </span>
+
                       </td>
 
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={handleExport}
-                          className="p-2 hover:bg-gray-100 rounded-lg"
-                        >
-                          <Download size={16} />
-                        </button>
+                      <td className="px-6 py-4 text-center">
+
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+
+                          <button
+                            onClick={handleExport}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Xuất Excel"
+                          >
+                            <Download size={18} />
+                          </button>
+
+                        </div>
+
                       </td>
+
                     </tr>
                   ))
                 )}
+
               </tbody>
+
             </table>
+
           </div>
+
         </div>
 
-        {/* Info */}
-        <div className="bg-blue-50 rounded-xl p-5 text-sm space-y-2">
-          <h3 className="font-semibold">Cách tính lương</h3>
-          <p>• Lương thực lĩnh = Lương cơ bản + Thưởng - Khấu trừ</p>
-          <p>• Thưởng dựa trên hiệu suất công việc</p>
-          <p>• Khấu trừ gồm bảo hiểm, thuế và các khoản khác</p>
-        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, icon, subValue }: any) {
+/* ================= STAT CARD ================= */
+
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+}) {
   return (
-    <div className="bg-white border rounded-xl p-4 flex justify-between items-center">
+    <div className="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center">
+
       <div>
         <p className="text-sm text-gray-500">{title}</p>
-        <div className="flex items-end gap-1">
-          <span className="text-xl font-bold">{value}</span>
-          {subValue && <span className="text-xs text-gray-400">/{subValue}</span>}
-        </div>
+        <span className="text-xl font-bold text-gray-900">{value}</span>
       </div>
+
       <div className="text-blue-600">{icon}</div>
+
     </div>
+  );
+}
+
+/* ================= EMPTY ROW ================= */
+
+function EmptyRow({ text }: { text: string }) {
+  return (
+    <tr>
+      <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+        {text}
+      </td>
+    </tr>
   );
 }

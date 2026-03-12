@@ -29,10 +29,10 @@ export function SignupForm({
   } = useForm<RegisterValues>({
     resolver: zodResolver(RegisterSchema),
   })
-
+  const registerAction = useAuthStore(state => state.register)
   const onSubmit = async (data: RegisterValues) => {
     try {
-      await useAuthStore.getState().register(data.fullName, data.email, data.password)
+      await registerAction(data);
       navigate("/login")
     } catch (error) {
       console.log(error)

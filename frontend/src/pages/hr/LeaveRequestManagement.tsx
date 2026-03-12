@@ -1,118 +1,234 @@
-import { useEffect } from "react";
-import { useLeaveRequestStore } from "@/store/leaveRequest.store";
-import dayjs from "dayjs";
+import { useEffect } from "react"
+import dayjs from "dayjs"
+import { Check, X, RefreshCw } from "lucide-react"
+
+import { useHrStore } from "@/store/hr.store"
+
+const TYPE_LABEL: Record<string, string> = {
+  SICK: "Nghỉ Ốm",
+  ANNUAL: "Nghỉ Phép",
+  MATERNITY: "Thai Sản",
+  RESIGNATION: "Xin Nghỉ Việc"
+}
+
+const STATUS_BADGE = {
+  APPROVED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-600",
+  PENDING: "bg-yellow-100 text-yellow-700"
+}
 
 export default function LeaveRequestManagement() {
-    const leaveRequests       = useLeaveRequestStore((s) => s.leaveRequests);
-    const loading             = useLeaveRequestStore((s) => s.loading);
-    const fetchLeaveRequests  = useLeaveRequestStore((s) => s.fetchLeaveRequests);
-    const approveLeaveRequest = useLeaveRequestStore((s) => s.approveLeaveRequest);
 
-    useEffect(() => {
-        void fetchLeaveRequests();
-    }, [fetchLeaveRequests]);
+  const {
+    leaveRequests,
+    loadingLeaveRequests,
+    fetchLeaveRequests,
+    approveLeaveRequest
+  } = useHrStore()
 
-    const handleUpdateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
-        const msg = status === "APPROVED" ? "Xác nhận DUYỆT đơn này?" : "Xác nhận TỪ CHỐI đơn này?";
-        if (!confirm(msg)) return;
-        await approveLeaveRequest(id, status);
-    };
+  useEffect(() => {
+    fetchLeaveRequests()
+  }, [fetchLeaveRequests])
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'APPROVED': return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm border border-green-200">Đã Duyệt</span>;
-            case 'REJECTED': return <span className="bg-red-100 text-red-700 px-2 py-1 rounded-md text-sm border border-red-200">Từ Chối</span>;
-            default: return <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-sm border border-yellow-200">Chờ Duyệt</span>;
-        }
-    };
+  const handleUpdateStatus = async (
+    id: string,
+    status: "APPROVED" | "REJECTED"
+  ) => {
 
-    const getTypeLabel = (type: string) => {
-        const types: Record<string, string> = {
-            'SICK': 'Nghỉ Ốm',
-            'ANNUAL': 'Nghỉ Phép Tuần/Năm',
-            'MATERNITY': 'Nghỉ Thai Sản',
-            'RESIGNATION': 'Xin Nghỉ Việc',
-        };
-        return types[type] || type;
-    };
+    const message =
+      status === "APPROVED"
+        ? "Xác nhận duyệt đơn này?"
+        : "Xác nhận từ chối đơn này?"
 
-    return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Duyệt Đơn Nghỉ Phép / Nghỉ Việc</h1>
-                <button onClick={() => void fetchLeaveRequests()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-200 transition">
-                    Làm mới dữ liệu
-                </button>
-            </div>
+    if (!window.confirm(message)) return
 
-            {loading ? (
-                <div className="text-center p-10 text-gray-500">Đang tải dữ liệu...</div>
-            ) : (
-                <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-gray-50 border-b">
-                                    <th className="p-4 font-medium text-gray-600">Nhân viên</th>
-                                    <th className="p-4 font-medium text-gray-600">Loại đơn</th>
-                                    <th className="p-4 font-medium text-gray-600">Thời gian nghỉ</th>
-                                    <th className="p-4 font-medium text-gray-600">Lý do</th>
-                                    <th className="p-4 font-medium text-gray-600">Trạng thái</th>
-                                    <th className="p-4 font-medium text-gray-600 text-center">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {leaveRequests.map((req) => (
-                                    <tr key={req.id} className="border-b hover:bg-gray-50 transition">
-                                        <td className="p-4 font-medium">
-                                            {req.employee?.user?.profile?.fullName || req.employee?.code || 'N/A'}
-                                        </td>
-                                        <td className="p-4 font-semibold text-gray-700">
-                                            {getTypeLabel(req.type)}
-                                        </td>
-                                        <td className="p-4 text-sm text-gray-600">
-                                            {dayjs(req.startDate).format('DD/MM/YYYY')} - {dayjs(req.endDate).format('DD/MM/YYYY')}
-                                        </td>
-                                        <td className="p-4 truncate max-w-xs" title={req.reason}>
-                                            {req.reason}
-                                        </td>
-                                        <td className="p-4">
-                                            {getStatusBadge(req.status)}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {req.status === 'PENDING' ? (
-                                                <div className="flex gap-2 justify-center">
-                                                    <button
-                                                        onClick={() => void handleUpdateStatus(req.id, 'APPROVED')}
-                                                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-sm shadow-sm"
-                                                    >
-                                                        Duyệt
-                                                    </button>
-                                                    <button
-                                                        onClick={() => void handleUpdateStatus(req.id, 'REJECTED')}
-                                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition text-sm shadow-sm"
-                                                    >
-                                                        Từ chối
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm italic">Đã xử lý</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {leaveRequests.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="p-8 text-center text-gray-500">
-                                            Không có đơn xin phép nào.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
+    await approveLeaveRequest(id, status)
+  }
+
+  return (
+
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* HEADER */}
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý đơn nghỉ phép
+            </h1>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Duyệt đơn nghỉ phép và nghỉ việc của nhân viên
+            </p>
+          </div>
+
+          <button
+            onClick={fetchLeaveRequests}
+            className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium transition"
+          >
+            <RefreshCw size={16} />
+            Làm mới
+          </button>
+
         </div>
-    );
+
+
+        {/* TABLE CONTAINER */}
+
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+
+          <div className="overflow-x-auto">
+
+            <table className="w-full text-left text-sm whitespace-nowrap">
+
+              {/* TABLE HEADER */}
+
+              <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
+
+                <tr>
+                  <th className="px-6 py-4">Nhân viên</th>
+                  <th className="px-6 py-4">Thời gian gửi</th>
+                  <th className="px-6 py-4">Loại đơn</th>
+                  <th className="px-6 py-4">Thời gian nghỉ</th>
+                  <th className="px-6 py-4">Lý do</th>
+                  <th className="px-6 py-4">Trạng thái</th>
+                  <th className="px-6 py-4 text-center">Thao tác</th>
+                </tr>
+
+              </thead>
+
+
+              {/* TABLE BODY */}
+
+              <tbody className="divide-y divide-gray-50">
+
+                {loadingLeaveRequests ? (
+
+                  <tr>
+                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+
+                ) : leaveRequests.length === 0 ? (
+
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                      Không có đơn xin phép
+                    </td>
+                  </tr>
+
+                ) : (
+
+                  leaveRequests.map((req) => (
+
+                    <tr
+                      key={req.id}
+                      className="hover:bg-gray-50/70 transition-colors group"
+                    >
+
+                      {/* Employee */}
+
+                      <td className="px-6 py-4 font-medium text-gray-900">
+                        {req.employeeName || "—"}
+                      </td>
+                      {/* Created At */}
+                      <td className="px-6 py-4 text-gray-600">
+                        {dayjs(req.createdAt).format("DD/MM/YYYY HH:mm")}
+                      </td>
+
+                      {/* Type */}
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {TYPE_LABEL[req.type] || req.type}
+                      </td>
+
+
+                      {/* Date */}
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {dayjs(req.startDate).format("DD/MM/YYYY")} -{" "}
+                        {dayjs(req.endDate).format("DD/MM/YYYY")}
+                      </td>
+
+
+                      {/* Reason */}
+
+                      <td
+                        className="px-6 py-4 max-w-xs truncate text-gray-600"
+                        title={req.reason}
+                      >
+                        {req.reason}
+                      </td>
+
+
+                      {/* Status */}
+
+                      <td className="px-6 py-4">
+
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[req.status]}`}
+                        >
+                          {req.status}
+                        </span>
+
+                      </td>
+
+
+                      {/* Actions */}
+
+                      <td className="px-6 py-4 text-center">
+
+                        {req.status === "PENDING" ? (
+
+                          <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition">
+
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(req.id, "APPROVED")
+                              }
+                              className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-md transition"
+                              title="Duyệt đơn"
+                            >
+                              <Check size={18} />
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(req.id, "REJECTED")
+                              }
+                              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition"
+                              title="Từ chối đơn"
+                            >
+                              <X size={18} />
+                            </button>
+
+                          </div>
+
+                        ) : (
+
+                          <span className="text-gray-400 italic text-sm">
+                            Đã xử lý
+                          </span>
+
+                        )}
+
+                      </td>
+
+                    </tr>
+
+                  ))
+
+                )}
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

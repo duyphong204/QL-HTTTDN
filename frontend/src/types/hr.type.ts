@@ -10,15 +10,17 @@ export interface Employee extends BaseEntity {
     baseSalary: number
     joinDate: Date
     resignDate?: Date
+    jobHistories?: JobHistory[]
 }
 
 export interface CreateEmployeeDto {
-    userId: string
-    code: string
-    department?: string
-    position?: string
-    baseSalary: number
-    joinDate: Date
+  email: string
+  password: string
+  fullName: string
+  phone?: string
+  department?: string
+  position?: string
+  baseSalary: number
 }
 
 export interface UpdateProfileDto {
@@ -84,7 +86,7 @@ export interface UpdateSalaryDto {
 
 export interface LeaveRequest extends BaseEntity {
     employeeId: string
-    employee?: Employee
+    employeeName: string
     startDate: string
     endDate: string
     type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"

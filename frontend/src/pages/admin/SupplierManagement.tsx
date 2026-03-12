@@ -2,259 +2,210 @@ import { useEffect, useState } from "react";
 import { useSupplierStore } from "@/store/supplier.store";
 import type { Supplier } from "@/types/warehouse.type";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { SupplierFormModal } from "@/components/admin/SupplierFormModal";
+import type { CreateSupplierValues } from "@/schemas/supplier.schema";
 
-import {
-  CreateSupplierSchema,
-  type CreateSupplierValues,
-} from "@/schemas/supplier.schema";
-
-const SupplierManagement = () => {
-  const suppliers = useSupplierStore((s) => s.suppliers);
-  const isLoading = useSupplierStore((s) => s.isLoading);
-  const actions = useSupplierStore((s) => s.actions);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Supplier | null>(null);
-
+export default function SupplierManagement() {
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreateSupplierValues>({
-    resolver: zodResolver(CreateSupplierSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
+    suppliers,
+    isLoading,
+    actions: {
+      fetchSuppliers,
+      addSupplier,
+      updateSupplier,
+      deleteSupplier,
+      setFilters,
     },
-  });
+  } = useSupplierStore();
 
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+
+  // Fetch lần đầu
   useEffect(() => {
-    actions.fetchSuppliers();
-  }, []);
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
-  const openCreate = () => {
-    setEditing(null);
+  // Debounce search
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setFilters({ search });
+    }, 500);
 
-    reset({
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-    });
+    return () => clearTimeout(timeout);
+  }, [search, setFilters]);
 
-    setOpen(true);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
   };
 
-  const openEdit = (supplier: Supplier) => {
-    setEditing(supplier);
-
-    reset({
-      name: supplier.name || "",
-      email: supplier.email || "",
-      phone: supplier.phone || "",
-      address: supplier.address || "",
-    });
-
-    setOpen(true);
+  const openCreateModal = () => {
+    setEditingSupplier(null);
+    setModalOpen(true);
   };
 
-  const onSubmit = async (data: CreateSupplierValues) => {
-    if (editing) {
-      await actions.updateSupplier(editing.id, data);
-    } else {
-      await actions.addSupplier(data);
+  const openEditModal = (supplier: Supplier) => {
+    setEditingSupplier(supplier);
+    setModalOpen(true);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`Bạn có chắc muốn xóa nhà cung cấp: ${name}?`)) {
+      await deleteSupplier(id);
     }
-
-    setOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Xóa nhà cung cấp này?")) {
-      await actions.deleteSupplier(id);
+  const handleFormSubmit = async (data: CreateSupplierValues) => {
+    try {
+      if (editingSupplier) {
+        await updateSupplier(editingSupplier.id, data);
+      } else {
+        await addSupplier(data);
+      }
+
+      setModalOpen(false);
+    } catch (error) {
+      console.error(error);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Quản lý Nhà cung cấp</h1>
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý Nhà cung cấp
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Quản lý thông tin nhà cung cấp hàng hóa
+            </p>
+          </div>
 
-        <button
-          onClick={openCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-        >
-          + Thêm NCC
-        </button>
-      </div>
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+            Thêm Nhà cung cấp
+          </button>
+        </div>
 
-      {/* SEARCH */}
-      <input
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          actions.setFilters({ search: e.target.value });
-        }}
-        placeholder="Tìm kiếm nhà cung cấp..."
-        className="border rounded-lg px-4 py-2 w-full max-w-sm"
-      />
+        {/* DATA */}
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
 
-      {/* TABLE */}
-      <div className="border rounded-lg overflow-hidden">
+          {/* SEARCH */}
+          <div className="p-4 border-b border-gray-50">
+            <div className="relative max-w-xl">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-        <table className="w-full text-sm">
+              <input
+                type="text"
+                value={search}
+                onChange={handleSearch}
+                placeholder="Tìm kiếm nhà cung cấp..."
+                className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-700"
+              />
+            </div>
+          </div>
 
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">STT</th>
-              <th className="p-3 text-left">Tên NCC</th>
-              <th className="p-3 text-left">Điện thoại</th>
-              <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Địa chỉ</th>
-              <th className="p-3 text-right">Thao tác</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={6} className="text-center py-6">
-                  Đang tải...
-                </td>
-              </tr>
-            ) : suppliers.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-6">
-                  Không có dữ liệu
-                </td>
-              </tr>
-            ) : (
-              suppliers.map((s, index) => (
-                <tr key={s.id} className="border-t hover:bg-gray-50">
-
-                  <td className="p-3">{index + 1}</td>
-
-                  <td className="p-3 font-medium">
-                    {s.name}
-                  </td>
-
-                  <td className="p-3">{s.phone}</td>
-
-                  <td className="p-3">{s.email}</td>
-
-                  <td className="p-3">{s.address}</td>
-
-                  <td className="p-3 text-right space-x-2">
-
-                    <button
-                      onClick={() => openEdit(s)}
-                      className="text-blue-600"
-                    >
-                      Sửa
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="text-red-500"
-                    >
-                      Xóa
-                    </button>
-
-                  </td>
-
+          {/* TABLE */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">Tên NCC</th>
+                  <th className="px-6 py-4">Điện thoại</th>
+                  <th className="px-6 py-4">Email</th>
+                  <th className="px-6 py-4">Địa chỉ</th>
+                  <th className="px-6 py-4 text-center">Thao tác</th>
                 </tr>
-              ))
-            )}
-          </tbody>
+              </thead>
 
-        </table>
+              <tbody className="divide-y divide-gray-50">
 
+                {isLoading && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading && suppliers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                      Không tìm thấy nhà cung cấp nào.
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading &&
+                  suppliers.map((supplier) => (
+                    <tr
+                      key={supplier.id}
+                      className="hover:bg-gray-50 transition-colors group"
+                    >
+                      <td className="px-6 py-4 font-semibold text-gray-900">
+                        {supplier.name}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {supplier.phone || "—"}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {supplier.email || "—"}
+                      </td>
+
+                      <td className="px-6 py-4 text-gray-600">
+                        {supplier.address || "—"}
+                      </td>
+
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100">
+
+                          <button
+                            onClick={() => openEditModal(supplier)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"
+                          >
+                            <Pencil size={18} />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDelete(supplier.id, supplier.name)
+                            }
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* MODAL */}
-      {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-
-            <h2 className="text-lg font-semibold mb-4">
-              {editing ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp"}
-            </h2>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-              <div>
-                <label className="text-sm">Tên NCC</label>
-                <input
-                  {...register("name")}
-                  className="border w-full px-3 py-2 rounded"
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label>Email</label>
-                <input
-                  {...register("email")}
-                  className="border w-full px-3 py-2 rounded"
-                />
-              </div>
-
-              <div>
-                <label>Điện thoại</label>
-                <input
-                  {...register("phone")}
-                  className="border w-full px-3 py-2 rounded"
-                />
-              </div>
-
-              <div>
-                <label>Địa chỉ</label>
-                <input
-                  {...register("address")}
-                  className="border w-full px-3 py-2 rounded"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="px-4 py-2 border rounded"
-                >
-                  Hủy
-                </button>
-
-                <button
-                  type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  {editing ? "Cập nhật" : "Thêm"}
-                </button>
-
-              </div>
-
-            </form>
-
-          </div>
-
-        </div>
-      )}
-
+      <SupplierFormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        editingSupplier={editingSupplier}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   );
-};
-
-export default SupplierManagement;
+}

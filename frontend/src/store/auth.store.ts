@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { authApi } from "@/api/auth.api";
 import type { User } from "@/types/user.type";
+import type { LoginRequest, RegisterRequest } from "@/types/auth.type";
 import { setAccessToken } from "@/api/axios";
 import { toast } from "sonner";
 
@@ -9,12 +10,14 @@ interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
 
-    login: (email: string, password: string) => Promise<void>;
-    register: (fullName: string, email: string, password: string) => Promise<void>;
+    // Sửa thành nhận trực tiếp object data
+    login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
     fetchProfile: () => Promise<void>;
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>; 
 }
+
 const toErrorMessage = (error: unknown): string =>
     error instanceof Error ? error.message : "Lỗi không xác định";
 
@@ -23,10 +26,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     isAuthenticated: false,
     isLoading: true, 
 
-    login: async (email, password) => {
+    login: async (data) => {
         set({ isLoading: true });
         try {
-            const res = await authApi.login({ email, password });
+            const res = await authApi.login(data);
             setAccessToken(res.accessToken);
 
             set({
@@ -44,11 +47,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
     },
 
-    register: async (fullName, email, password) => {
+    register: async (data) => {
         try {
-            await authApi.register({ fullName, email, password });
+            await authApi.register(data);
             toast.success("Đăng ký thành công 🎉");
-            await get().login(email, password);
+            await get().login({ email: data.email, password: data.password });
         } catch (error: unknown) {
             const msg = toErrorMessage(error);
             toast.error(msg);
@@ -80,7 +83,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isAuthenticated: true,
                 isLoading : false                                                                                                                                         
             });
-        } catch(error) {
+        } catch(error : unknown) {
             setAccessToken(null);
             set({
                 user: null,
