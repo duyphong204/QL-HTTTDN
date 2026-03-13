@@ -80,7 +80,7 @@ export class AuthService {
   async login(dto: LoginDto, res: Response) {
     const user = await this.usersService.findByEmail(dto.email);
 
-    if (!user) {
+    if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
@@ -109,7 +109,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
-        fullName: user.profile?.fullName ?? null,
+        // fullName: user.profile?.fullName ?? null,
       },
     };
   }

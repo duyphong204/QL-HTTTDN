@@ -1,7 +1,15 @@
+import type { Role } from "@/types/auth.type";
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const { isAuthenticated, isLoading } = useAuthStore();
+
+const ProtectedRoute = ({
+    children,
+    roles,
+}: {
+    children: React.ReactNode;
+    roles?: Role[];
+}) => {
+    const { isAuthenticated, isLoading, user } = useAuthStore();
 
     if (isLoading) {
         return (
@@ -11,9 +19,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         );
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to={'/login'} replace />;
-    }
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (roles && user && !roles.includes(user.role)) return <Navigate to="/" replace />;
 
     return <>{children}</>;
 };

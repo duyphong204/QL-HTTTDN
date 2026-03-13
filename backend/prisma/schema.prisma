@@ -131,6 +131,9 @@ model Product {
   costPrice     Float     // Current cost price
   stockQuantity Int       @default(0)
   minStock      Int       @default(10)
+
+  imageUrl      String?
+
   categoryId    String
   category      Category  @relation(fields: [categoryId], references: [id])
   supplierId    String

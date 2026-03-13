@@ -61,7 +61,7 @@ export class EmployeesService {
       const employee = await tx.employee.create({
         data: {
           userId: user.id,
-          code: `NV${Date.now()}`,
+          code: await this.generateEmployeeCode(tx) ,
           department: dto.department,
           position: dto.position,
           baseSalary: dto.baseSalary,

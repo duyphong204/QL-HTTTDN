@@ -10,7 +10,6 @@ interface AuthState {
     isAuthenticated: boolean;
     isLoading: boolean;
 
-    // Sửa thành nhận trực tiếp object data
     login: (data: LoginRequest) => Promise<void>;
     register: (data: RegisterRequest) => Promise<void>;
     fetchProfile: () => Promise<void>;

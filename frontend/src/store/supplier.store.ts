@@ -23,6 +23,14 @@ interface SupplierState {
     };
 }
 
+const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+        return String((error as { message: unknown }).message);
+    }
+    return "Unknown error occurred";
+};
+
 export const useSupplierStore = create<SupplierState>((set, get) => ({
     suppliers: [],
     isLoading: false,
@@ -55,15 +63,16 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                 });
                 const suppliers = Array.isArray(response) ? response : response.data || [];
                 set({ suppliers, isLoading: false });
-            } catch (error: any) {
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
                 console.error("Error fetching suppliers:", error);
                 
                 set({
                     suppliers: [],
                     isLoading: false,
-                    error: error.message || "Failed to fetch suppliers",
-                })
-                toast.error("Lấy danh sách nhà cung cấp thất bại: " + (error.message || "Unknown error") );
+                    error: errorMessage || "Failed to fetch suppliers",
+                });
+                toast.error("Lấy danh sách nhà cung cấp thất bại: " + (errorMessage || "Unknown error"));
             }
         },
 
@@ -73,9 +82,10 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                 await supplierApi.createSupplier(data);
                 toast.success("Thêm nhà cung cấp thành công");
                 get().actions.fetchSuppliers();
-            } catch (error: any) {
-                set({ error: error.message, isLoading: false });
-                toast.error("Thêm nhà cung cấp thất bại: " + error.message);
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
+                set({ error: errorMessage, isLoading: false });
+                toast.error("Thêm nhà cung cấp thất bại: " + errorMessage);
                 throw error;
             }
         },
@@ -86,9 +96,10 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                 await supplierApi.updateSupplier(id, data);
                 toast.success("Cập nhật nhà cung cấp thành công");
                 get().actions.fetchSuppliers();
-            } catch (error: any) {
-                set({ error: error.message, isLoading: false });
-                toast.error("Cập nhật nhà cung cấp thất bại: " + error.message);
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
+                set({ error: errorMessage, isLoading: false });
+                toast.error("Cập nhật nhà cung cấp thất bại: " + errorMessage);
                 throw error;
             }
         },
@@ -102,9 +113,10 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                     suppliers: state.suppliers.filter((s) => s.id !== id),
                     isLoading: false,
                 }));
-            } catch (error: any) {
-                set({ error: error.message, isLoading: false });
-                toast.error("Xóa nhà cung cấp thất bại: " + error.message);
+            } catch (error: unknown) {
+                const errorMessage = getErrorMessage(error);
+                set({ error: errorMessage, isLoading: false });
+                toast.error("Xóa nhà cung cấp thất bại: " + errorMessage);
             }
         },
     },

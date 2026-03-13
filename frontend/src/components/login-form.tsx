@@ -33,7 +33,7 @@ export function LoginForm({
   const onSubmit = async (data: LoginValues) => {
     try {
       await login(data);
-      navigate("/")
+      navigate("/", { replace: true });
     }
     catch (error) {
       console.log(error)

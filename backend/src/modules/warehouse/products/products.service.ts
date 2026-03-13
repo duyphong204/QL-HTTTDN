@@ -1,55 +1,108 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateProductDto } from './dto/product.dto';
+import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
+import { Prisma } from '@prisma/client';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  QueryProductDto,
+} from './dto/product.dto';
 
 @Injectable()
-export class ProductsService {
-  constructor(private prisma: PrismaService) { }
-  async findAll(search?: string, categoryId?: string) {
-    return this.prisma.product.findMany({
-      where: {
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-        ...(categoryId && { categoryId }),
-      },
-      include: {
-        supplier: true,
-        category: true,
-      },
-    });
-  }
-  async create(dto: CreateProductDto) {
-    return this.prisma.product.create({ data: dto });
-  }
-  async remove(id: string) {
-    return this.prisma.product.delete({ where: { id } });
-  }
-  async update(id: string, dto: CreateProductDto) {
-    return this.prisma.product.update({ where: { id }, data: dto });
-  }
-  async getInventoryStatistics() {
-    // 1. Tổng số hàng đang tồn trong kho
-    const totalStock = await this.prisma.product.aggregate({
-      _sum: { stockQuantity: true }
-    });
+export class ProductService {
+  constructor(
+    private prisma: PrismaService,
+    private cloudinary: CloudinaryService,
+  ) {}
 
-    // 2. Tổng giá trị kho hàng (giá trị lưu kho dựa vào costPrice)
-    const allProducts = await this.prisma.product.findMany({ select: { stockQuantity: true, costPrice: true } });
-    const totalInventoryValue = allProducts.reduce((sum, p) => sum + (p.stockQuantity * p.costPrice), 0);
+  async findAll(query: QueryProductDto) {
+    const { search, categoryId, supplierId, page = 1, limit = 10 } = query;
+    const skip = (Number(page) - 1) * Number(limit);
 
-    // 3. Các sản phẩm sắp hết hàng (dưới minStock)
-    const lowStockProducts = await this.prisma.product.findMany({
-      where: { stockQuantity: { lte: this.prisma.product.fields.minStock } },
-      select: { id: true, name: true, stockQuantity: true, minStock: true }
-    });
+    const where: Prisma.ProductWhereInput = {};
+
+    if (search) {
+      where.name = { contains: search, mode: 'insensitive' };
+    }
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+    if (supplierId) {
+      where.supplierId = supplierId;
+    }
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          category: { select: { id: true, name: true } },
+          supplier: { select: { id: true, name: true } },
+        },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
     return {
-      totalStockItems: totalStock._sum.stockQuantity || 0,
-      totalInventoryValue,
-      lowStockAlerts: lowStockProducts
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
     };
+  }
+
+  async findOne(id: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        supplier: true,
+      },
+    });
+    if (!product) throw new NotFoundException('Product not found');
+    return product;
+  }
+
+  async create(dto: CreateProductDto, file?: Express.Multer.File) {
+    let imageUrl: string | undefined;
+
+    if (file) {
+      imageUrl = await this.cloudinary.uploadImage(file);
+    }
+
+    return this.prisma.product.create({
+      data: { ...dto, imageUrl },
+    });
+  }
+
+  async update(id: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+    const existing = await this.findOne(id);
+    let imageUrl = existing.imageUrl;
+
+    if (file) {
+      if (existing.imageUrl) {
+        await this.cloudinary.deleteImage(existing.imageUrl);
+      }
+      imageUrl = await this.cloudinary.uploadImage(file);
+    }
+
+    return this.prisma.product.update({
+      where: { id },
+      data: { ...dto, imageUrl },
+    });
+  }
+
+  async remove(id: string) {
+    const product = await this.findOne(id);
+
+    if (product.imageUrl) {
+      await this.cloudinary.deleteImage(product.imageUrl);
+    }
+
+    return this.prisma.product.delete({ where: { id } });
   }
 }

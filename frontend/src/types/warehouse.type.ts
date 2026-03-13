@@ -11,42 +11,67 @@ export interface Supplier extends BaseEntity {
     email?: string
     contactPerson?: string
 }
-
-export interface Product extends BaseEntity {
-    name: string
-    description?: string
-    price: number
-    costPrice: number
-    stockQuantity: number
-    minStock: number
-    categoryId: string
-    supplierId: string
-    category?: Category
-    supplier?: Supplier
-}
-
 export interface CreateProductDto {
-    name: string
-    description?: string
-    price: number
-    costPrice: number
-    stockQuantity: number
-    minStock: number
-    categoryId: string
-    supplierId: string
+  name: string
+  description?: string
+
+  price: number
+  costPrice: number
+
+  stockQuantity: number
+
+  categoryId: string
+  supplierId: string
+
+  image?: File
 }
 
 export interface UpdateProductDto {
-    name?: string
-    description?: string
-    price?: number
-    costPrice?: number
-    stockQuantity?: number
-    minStock?: number
-    categoryId?: string
-    supplierId?: string
+  name?: string
+  description?: string
+
+  price?: number
+  costPrice?: number
+
+  stockQuantity?: number
+
+  categoryId?: string
+  supplierId?: string
+
+  image?: File
+}
+export interface Product extends BaseEntity {
+  name: string
+  description?: string
+  price: number
+  costPrice: number
+  stockQuantity: number
+  imageUrl?: string
+
+  categoryId: string
+  supplierId: string
+
+  category?: Category
+  supplier?: Supplier
 }
 
+export interface ProductQuery {
+  search?: string
+  categoryId?: string
+  supplierId?: string
+  page?: number
+  limit?: number
+}
+
+export interface ProductResponse {
+  data: Product[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
 // Input khi tạo StockIn detail
 export interface StockInDetailInput {
     productId: string

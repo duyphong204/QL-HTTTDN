@@ -1,52 +1,68 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
   Post,
+  Delete,
+  Param,
+  Body,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ParseUUIDPipe,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
-import { ProductsService } from './products.service';
-import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ProductService } from './products.service';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  QueryProductDto,
+} from './dto/product.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
-@ApiTags('Products')
-@Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-export class ProductsController {
-  constructor(private readonly productsService: ProductsService) { }
+@Controller('products')
+export class ProductController {
+  constructor(private readonly productsService: ProductService) {}
+
   @Get()
-  async findAll(
-    @Query('search') search?: string,
-    @Query('categoryId') categoryId?: string,
-  ) {
-    return this.productsService.findAll(search, categoryId);
+  findAll(@Query() query: QueryProductDto) {
+    return this.productsService.findAll(query);
   }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.findOne(id);
+  }
+
   @Post()
-  @Roles(Role.ADMIN)
-  create(@Body() dto: CreateProductDto) {
-    return this.productsService.create(dto);
-  }
-  @Delete(':id')
-  @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(id);
-  }
-  @Patch(':id')
-  @Roles(Role.ADMIN)
-  update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
-    return this.productsService.update(id, dto);
-  }
-  @Get('statistics/inventory-report')
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  getInventoryStatistics() {
-    return this.productsService.getInventoryStatistics();
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() dto: CreateProductDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.productsService.create(dto, file);
+  }
+
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  @UseInterceptors(FileInterceptor('image'))
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProductDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.productsService.update(id, dto, file);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.remove(id);
   }
 }

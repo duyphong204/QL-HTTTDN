@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -79,4 +80,24 @@ export class UpdateProductDto {
   @IsString()
   @IsNotEmpty()
   supplierId: string;
+}
+
+export class QueryProductDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+  @IsOptional()
+  @IsString()
+  supplierId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  limit?: number = 10;
 }

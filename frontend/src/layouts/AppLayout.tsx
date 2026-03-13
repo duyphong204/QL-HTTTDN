@@ -1,124 +1,24 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import {
-    Users,
-    Package,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Building,
-    FileText,
-    ShoppingCart,
-    BarChart3,
-    Briefcase
-} from "lucide-react";
+import { LogOut, Menu, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
-import type { Role } from "@/types/auth.type";
+import { ROUTE_CONFIGS } from "@/routes/routes.config";
 
-interface MenuItem {
-    title: string;
-    href: string;
-    icon: any;
-    allowedRoles: Role[];
-}
-
-const AdminLayout = () => {
+const AppLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
     const { user, logout } = useAuthStore();
 
-    const menuItems: MenuItem[] = [
-        {
-            title: "Tổng quan",
-            href: "/admin/dashboard",
-            icon: LayoutDashboard,
-            allowedRoles: ["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-        },
-        {
-            title: "Quản lý User",
-            href: "/admin/users",
-            icon: Users,
-            allowedRoles: ["ADMIN"],
-        },
-        {
-            title: "Quản lý Nhân sự",
-            href: "/hr/employees",
-            icon: Users,
-            allowedRoles: ["HR_MANAGER"],
-        },
-        {
-            title: "xin nghỉ phép",
-            href: "/employee/leave-request",
-            icon: FileText,
-            allowedRoles: ["EMPLOYEE"],
-        },
-        {
-            title: "Hồ sơ cá nhân",
-            href: "/employee/profile",
-            icon: FileText,
-            allowedRoles: ["EMPLOYEE"],
-        },
-        {
-            title: "Duyệt đơn nghỉ",
-            href: "/hr/leave-requests",
-            icon: FileText,
-            allowedRoles: ["HR_MANAGER"],
-        },
-        {
-            title: "Quản lý Lương",
-            href: "/hr/salaries",
-            icon: FileText,
-            allowedRoles: ["HR_MANAGER"],
-        },
-        {
-            title: "Sản phẩm",
-            href: "/warehouse/products",
-            icon: Package,
-            allowedRoles: ["WAREHOUSE_MANAGER"],
-        },
-        {
-            title: "Nhà cung cấp",
-            href: "/warehouse/suppliers",
-            icon: Building,
-            allowedRoles: ["WAREHOUSE_MANAGER"],
-        },
-        {
-            title: "Phiếu nhập",
-            href: "/warehouse/import-slips",
-            icon: Package,
-            allowedRoles: ["WAREHOUSE_MANAGER"],
-        },
-        {
-            title: "Phiếu xuất",
-            href: "/sales/export-slips",
-            icon: ShoppingCart,
-            allowedRoles: ["SALES_MANAGER"],
-        },
-        {
-            title: "Báo cáo",
-            href: "/sales/reports",
-            icon: BarChart3,
-            allowedRoles: ["ADMIN", "SALES_MANAGER"],
-        },
-        {
-            title: "Bảng lương của tôi",
-            href: "/employee/salary",
-            icon: FileText,
-            allowedRoles: ["EMPLOYEE"],
-        },
-    ];
-
-    const filteredMenuItems = menuItems.filter(item =>
-        user && item.allowedRoles.includes(user.role)
+    const filteredMenuItems = ROUTE_CONFIGS.filter(
+        (r) => r.inSidebar && user && r.roles.includes(user.role)
     );
-    
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
-            {/* Lớp nền tối (Backdrop) cho mobile khi mở Sidebar */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 z-40 lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                     aria-hidden="true"
@@ -152,11 +52,11 @@ const AdminLayout = () => {
 
                 <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-64px)] scrollbar-hide">
                     {filteredMenuItems.map((item) => {
-                        const isActive = location.pathname.startsWith(item.href);
+                        const isActive = location.pathname.startsWith(item.path);
                         return (
                             <Link
-                                key={item.href}
-                                to={item.href}
+                                key={item.path}
+                                to={item.path}
                                 onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
@@ -209,4 +109,4 @@ const AdminLayout = () => {
     );
 };
 
-export default AdminLayout;
+export default AppLayout;
