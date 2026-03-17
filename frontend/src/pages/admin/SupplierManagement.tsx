@@ -26,7 +26,7 @@ export default function SupplierManagement() {
   // Fetch lần đầu
   useEffect(() => {
     fetchSuppliers();
-  }, [fetchSuppliers]);
+  }, []);
 
   // Debounce search
   useEffect(() => {

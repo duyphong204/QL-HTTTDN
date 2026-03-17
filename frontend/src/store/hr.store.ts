@@ -14,6 +14,7 @@ import type {
   CreateSalaryDto,
   UpdateSalaryDto
 } from "@/types/hr.type"
+
 interface HrStatistics {
   totalEmployees: number
   activeEmployees: number
@@ -30,10 +31,12 @@ interface HrState {
   employees: Employee[]
   leaveRequests: LeaveRequest[]
   salaries: Salary[]
+  selectedEmployee: Employee | null
 
   statistics: HrStatistics | null
 
   loadingEmployees: boolean
+  loadingEmployeeDetail: boolean
   loadingLeaveRequests: boolean
   loadingSalaries: boolean
   loadingStatistics: boolean
@@ -43,6 +46,8 @@ interface HrState {
   // =================
 
   fetchEmployees: () => Promise<void>
+  fetchEmployeeById: (id: string) => Promise<Employee | null>
+  clearSelectedEmployee: () => void
   createEmployee: (data: CreateEmployeeDto) => Promise<void>
   updateEmployee: (id: string, data: UpdateEmployeeDto) => Promise<void>
   deleteEmployee: (id: string) => Promise<void>
@@ -78,9 +83,11 @@ export const useHrStore = create<HrState>((set, get) => ({
   employees: [],
   leaveRequests: [],
   salaries: [],
+  selectedEmployee: null,
   statistics: null,
 
   loadingEmployees: false,
+  loadingEmployeeDetail: false,
   loadingLeaveRequests: false,
   loadingSalaries: false,
   loadingStatistics: false,
@@ -111,6 +118,38 @@ export const useHrStore = create<HrState>((set, get) => ({
     } finally {
       set({ loadingEmployees: false })
     }
+  },
+
+  fetchEmployeeById: async (id) => {
+
+    set({ loadingEmployeeDetail: true })
+
+    try {
+
+      const employee = await employeeApi.getEmployeeById(id)
+
+      set({
+        selectedEmployee: employee
+      })
+
+      return employee
+
+    } catch (error: any) {
+
+      toast.error(
+        error?.response?.data?.message ||
+        "Không thể tải chi tiết nhân viên"
+      )
+
+      return null
+
+    } finally {
+      set({ loadingEmployeeDetail: false })
+    }
+  },
+
+  clearSelectedEmployee: () => {
+    set({ selectedEmployee: null })
   },
 
   createEmployee: async (data) => {

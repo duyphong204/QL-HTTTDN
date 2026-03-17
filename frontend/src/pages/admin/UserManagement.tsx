@@ -41,7 +41,7 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {

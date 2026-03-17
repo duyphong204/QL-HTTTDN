@@ -37,8 +37,6 @@ export const useUserStore = create<UserState>((set, get) => ({
         set((state) => ({
             filters: { ...state.filters, ...newFilters },
         }));
-
-        get().fetchUsers();
     },
 
     fetchUsers: async () => {

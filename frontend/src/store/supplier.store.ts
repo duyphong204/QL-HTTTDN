@@ -47,7 +47,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
             set((state) => ({
                 filters: { ...state.filters, ...newFilters },
             }));
-            get().actions.fetchSuppliers();
+           // get().actions.fetchSuppliers();
         },
 
         fetchSuppliers: async () => {

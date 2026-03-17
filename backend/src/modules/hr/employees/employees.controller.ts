@@ -13,7 +13,6 @@ import {
 import { EmployeesService } from './employees.service';
 import {
   CreateEmployeeDto,
-  CreateEmployeeFromUserDto,
   UpdateEmployeeDto,
   UpdateProfileDto,
 } from './dto/employee.dto';
@@ -60,5 +59,10 @@ export class EmployeesController {
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   async remove(@Param('id') id: string) {
     return this.employeesService.remove(id);
+  }
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  async findOne(@Param('id') id: string) {
+    return this.employeesService.getEmployeeById(id);
   }
 }

@@ -128,13 +128,9 @@ export class EmployeesService {
             profile: {
               select: {
                 fullName: true,
+                phone: true,
               },
             },
-          },
-        },
-        jobHistories: {
-          orderBy: {
-            startDate: 'desc',
           },
         },
       },
@@ -198,6 +194,36 @@ export class EmployeesService {
       });
       return { message: 'Nhân sự đã được cho nghĩ việc' };
     });
+  }
+  async getEmployeeById(id: string) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            email: true,
+            profile: {
+              select: {
+                fullName: true,
+                phone: true,
+                address: true,
+                avatar: true,
+                dateOfBirth: true,
+              },
+            },
+          },
+        },
+        jobHistories: {
+          orderBy: {
+            startDate: 'desc',
+          },
+        },
+      },
+    });
+    if (!employee) {
+      throw new NotFoundException('Không tìm thấy nhân viên');
+    }
+    return employee;
   }
   async getHrStatistics() {
     const totalEmployees = await this.prisma.employee.count({
