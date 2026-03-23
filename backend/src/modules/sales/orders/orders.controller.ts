@@ -25,4 +25,23 @@ export class OrdersController {
     getSalesStatistics(@Query('month') month?: string, @Query('year') year?: string) {
         return this.ordersService.getSalesStatistics(month ? +month : undefined, year ? +year : undefined);
     }
+    @Get('stats')
+    @Roles(Role.ADMIN, Role.SALES_MANAGER)
+    getStats(
+        @Query('month') month?: string,
+        @Query('year') year?: string,
+    ) {
+        return this.ordersService.getSalesStatistics(
+            month ? Number(month) : undefined,
+            year ? Number(year) : undefined,
+        );
+    }
+    @Get('period')
+    @Roles(Role.ADMIN, Role.SALES_MANAGER)
+    getByPeriod(@Query('year') year: string, @Query('quarter') quarter?: string) {
+        return this.ordersService.getOrdersByPeriod(
+            Number(year),
+            quarter ? Number(quarter) : undefined,
+        );
+    }
 }

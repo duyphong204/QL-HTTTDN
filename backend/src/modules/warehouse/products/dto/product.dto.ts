@@ -9,37 +9,40 @@ import {
 } from 'class-validator';
 
 export class CreateProductDto {
-  @ApiProperty({ example: 'iPhone 15 Pro Max' })
+  @ApiProperty({ example: 'iPhone 15' })
   @IsString()
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })
   name: string;
 
-  @ApiProperty({ example: 'Sản phẩm cao cấp từ Apple', required: false })
+  @ApiProperty({ example: 'Sản phẩm cao cấp', required: false })
   @IsString()
   @IsOptional()
   description?: string;
 
   @ApiProperty({ example: 25000000 })
+  @Type(() => Number) 
   @IsNumber()
   @Min(0)
-  price: number; // Giá bán
+  price: number;
 
   @ApiProperty({ example: 22000000 })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  costPrice: number; // Giá nhập
+  costPrice: number;
 
   @ApiProperty({ example: 50 })
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  stockQuantity: number; // Số lượng tồn kho
+  stockQuantity: number;
 
-  @ApiProperty({ description: 'ID của danh mục sản phẩm' })
+  @ApiProperty({ description: 'ID thư mục' })
   @IsString()
   @IsNotEmpty()
   categoryId: string;
 
-  @ApiProperty({ description: 'ID của nhà cung cấp' })
+  @ApiProperty({ description: 'ID NCC' })
   @IsString()
   @IsNotEmpty()
   supplierId: string;

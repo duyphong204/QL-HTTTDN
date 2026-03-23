@@ -65,3 +65,11 @@ export interface UpdateOrderStatusDto {
 export interface CancelOrderDto {
     reason?: string
 }
+export interface SalesStats {
+    month: number
+    year: number
+    totalOrders: number
+    totalItemsSold: number
+    totalRevenue: number
+    totalProfit: number
+}

@@ -26,6 +26,10 @@ export const orderApi = {
         const res = await axiosInstance.patch<Order>(`/orders/${id}/cancel`, { reason });
         return res.data;
     },
+    getSalesStats: async (params: { month?: number; year?: number }) => {
+        const res = await axiosInstance.get('/orders/stats', { params });
+        return res.data;
+    },
 };
 
 export const cartApi = {

@@ -29,6 +29,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         inSidebar: true,
     },
     {
+        path: "/admin/report",
+        title: "Báo cáo tổng hợp",
+        icon: BarChart3,
+        roles: ["ADMIN"],
+        inSidebar: true,
+    },
+    {
         path: "/hr/employees",
         title: "Quản lý Nhân sự",
         icon: Users,
@@ -47,6 +54,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         title: "Quản lý Lương",
         icon: FileText,
         roles: ["HR_MANAGER"],
+        inSidebar: true,
+    },
+    {
+        path: "/warehouse/reports",
+        title: "Báo cáo kho",
+        icon: BarChart3,
+        roles: ["WAREHOUSE_MANAGER"],
         inSidebar: true,
     },
     {

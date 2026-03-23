@@ -3,7 +3,8 @@ import AdminLayout from '@/layouts/AppLayout';
 import HomePage from '@/pages/admin/HomePage';
 import UserManagement from '@/pages/admin/UserManagement';
 import SupplierManagement from '@/pages/admin/SupplierManagement';
-import ProductManagement from '@/pages/admin/ProductPage';
+// import ProductManagement from '@/pages/admin/ProductPage';
+import ProductManagement from '@/pages/warehouse/ProductManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes } from 'react-router-dom';
@@ -18,6 +19,12 @@ import LeaveRequestManagement from '@/pages/hr/LeaveRequestManagement';
 import MySalaryPage from '@/pages/employee/MySalaryPage';
 import ProfilePage from '@/pages/employee/ProfilePage';
 import { rolesFor } from "@/routes/routes.config";
+import ImportSlipManagement from '@/pages/warehouse/ImportSlipManagement';
+import ReportPage from '@/pages/admin/ReportPage';
+import WarehouseReportPage from '@/pages/warehouse/WarehouseReportPage';
+import ExportSlipManagement from '@/pages/sales/ExportSlipManagement';
+import SalesReportPage from '@/pages/sales/SalesReportPage';
+
 
 export const AppRouter = () => {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -39,6 +46,9 @@ export const AppRouter = () => {
 
           <Route path="/admin/users" element={
             <ProtectedRoute roles={rolesFor("/admin/users")}><UserManagement /></ProtectedRoute>
+          } />
+          <Route path="/admin/report" element={
+            <ProtectedRoute roles={rolesFor("/admin/report")}><ReportPage /></ProtectedRoute>
           } />
 
           <Route path="/hr/employees" element={
@@ -67,6 +77,19 @@ export const AppRouter = () => {
           <Route path="/warehouse/suppliers" element={
             <ProtectedRoute roles={rolesFor("/warehouse/suppliers")}><SupplierManagement /></ProtectedRoute>
           } />
+          <Route path="/warehouse/import-slips" element={
+            <ProtectedRoute roles={rolesFor("/warehouse/import-slips")}><ImportSlipManagement /></ProtectedRoute>
+          } />
+          <Route path="/warehouse/reports" element={
+            <ProtectedRoute roles={rolesFor("/warehouse/reports")}><WarehouseReportPage /></ProtectedRoute>
+          } />
+          <Route path="/sales/export-slips" element={
+            <ProtectedRoute roles={rolesFor("/sales/export-slips")}><ExportSlipManagement /></ProtectedRoute>
+          } />
+          <Route path="/sales/reports" element={
+            <ProtectedRoute roles={rolesFor("/sales/reports")}><SalesReportPage /></ProtectedRoute>
+          } />
+
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

@@ -34,7 +34,7 @@ export const userApi = {
     await axiosInstance.delete(`/users/${id}`);
   },
 
-  changeRole: async (id: string, role: Role) => {
+  changeRole: async (id: string, role: string) => {
     const res = await axiosInstance.patch<User>(`/users/${id}/role`, { role });
     return res.data;
   },

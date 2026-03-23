@@ -47,7 +47,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
             set((state) => ({
                 filters: { ...state.filters, ...newFilters },
             }));
-           // get().actions.fetchSuppliers();
+            get().actions.fetchSuppliers();
         },
 
         fetchSuppliers: async () => {
@@ -66,7 +66,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
                 console.error("Error fetching suppliers:", error);
-                
+
                 set({
                     suppliers: [],
                     isLoading: false,

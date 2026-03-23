@@ -114,6 +114,10 @@ export const productApi = {
   deleteProduct: async (id: string) => {
     await axiosInstance.delete('/products/' + id);
   },
+  getReport: async (params?: { month?: number; year?: number }) => {
+    const res = await axiosInstance.get('/products/report/stats', { params });
+    return res.data;
+  },
 };
 
 export const stockInApi = {

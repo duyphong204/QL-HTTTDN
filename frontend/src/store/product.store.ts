@@ -54,11 +54,12 @@ export const useProductStore = create<ProductState>((set, get) => ({
   },
 
   setFilters: (newFilters) => {
+    const isPageChange = 'page' in newFilters;
     set((state) => ({
       filters: {
         ...state.filters,
         ...newFilters,
-        page: 1,
+        page: isPageChange ? (newFilters.page ?? 1) : 1,
       },
     }));
     get().fetchProducts();

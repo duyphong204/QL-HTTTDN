@@ -103,4 +103,15 @@ export const useUserStore = create<UserState>((set, get) => ({
             throw err;
         }
     },
+    // Thêm vào interface và create():
+    updateUserRole: async (id: string, role: string) => {
+        try {
+            await userApi.changeRole(id, role);
+            toast.success('Cập nhật quyền thành công');
+            get().fetchUsers();
+        } catch {
+            toast.error('Cập nhật quyền thất bại');
+        }
+    },
+
 }));

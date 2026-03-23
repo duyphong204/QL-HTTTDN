@@ -1,32 +1,34 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Request,
-  UseGuards,
+  Controller, Get, Post, Param, Body,
+  UseGuards, Request, ParseUUIDPipe,
 } from '@nestjs/common';
 import { StockInService } from './stock-in.service';
-import { Roles } from 'src/modules/auth/decorators/roles.decorator';
-import { Role } from 'src/common/enums/role.enum';
 import { CreateStockInDto } from './dto/stock-in.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
-import { ApiTags } from '@nestjs/swagger';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { Role } from 'src/common/enums/role.enum';
 
-@ApiTags('StockIn')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('stock-in')
+@Controller('stock-ins')
 export class StockInController {
-  constructor(private readonly stockInService: StockInService) {}
-  @Post()
-  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  create(@Body() dto: CreateStockInDto, @Request() req: any) {
-    return this.stockInService.createStockIn(dto, req.user.userId);
-  }
+  constructor(private readonly stockInService: StockInService) { }
+
   @Get()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   findAll() {
     return this.stockInService.findAll();
+  }
+
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.stockInService.findOne(id);
+  }
+
+  @Post()
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  create(@Body() dto: CreateStockInDto, @Request() req: any) {
+    return this.stockInService.createStockIn(dto, req.user.id);
   }
 }

@@ -13,7 +13,7 @@ export class ProductService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
-  ) {}
+  ) { }
 
   async findAll(query: QueryProductDto) {
     const { search, categoryId, supplierId, page = 1, limit = 10 } = query;
@@ -104,5 +104,45 @@ export class ProductService {
     }
 
     return this.prisma.product.delete({ where: { id } });
+  }
+  async getWarehouseReport(month?: number, year?: number) {
+    const currentYear = year || new Date().getFullYear();
+    const where: Prisma.StockInWhereInput = {};
+    if (month && year) {
+      where.date = {
+        gte: new Date(currentYear, month - 1, 1),
+        lte: new Date(currentYear, month, 0, 23, 59, 59),
+      };
+    } else if (year) {
+      where.date = {
+        gte: new Date(currentYear, 0, 1),
+        lte: new Date(currentYear, 11, 31, 23, 59, 59),
+      };
+    }
+    const stockIns = await this.prisma.stockIn.findMany({
+      where,
+      include: { details: true },
+    });
+    const totalImportValue = stockIns.reduce((s, si) => s + si.totalAmount, 0);
+    const totalImportQuantity = stockIns.reduce(
+      (s, si) => s + si.details.reduce((sq, d) => sq + d.quantity, 0), 0
+    );
+    const stockAggregate = await this.prisma.product.aggregate({
+      _sum: { stockQuantity: true },
+      _count: { id: true },
+    });
+    const lowStockProducts = await this.prisma.product.findMany({
+      where: { stockQuantity: { lte: this.prisma.product.fields.minStock } },
+      select: { id: true, name: true, stockQuantity: true, minStock: true },
+    });
+    return {
+      period: { month, year: currentYear },
+      totalStockIns: stockIns.length,
+      totalImportValue,
+      totalImportQuantity,
+      totalProductTypes: stockAggregate._count.id,
+      totalStockQuantity: stockAggregate._sum.stockQuantity || 0,
+      lowStockProducts,
+    };
   }
 }

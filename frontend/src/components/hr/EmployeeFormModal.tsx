@@ -1,81 +1,101 @@
-import { useState } from "react"
-import type { CreateEmployeeDto, Employee } from "@/types/hr.type"
+import { useState, useEffect } from "react"
+import type { CreateEmployeeDto, UpdateEmployeeDto, Employee } from "@/types/hr.type"
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: CreateEmployeeDto) => void
+  onSubmit: (data: CreateEmployeeDto | UpdateEmployeeDto) => void
   editingEmployee?: Employee | null
 }
 
-export function EmployeeFormModal({ isOpen, onClose, onSubmit }: Props) {
-
-  const [form, setForm] = useState<CreateEmployeeDto>({
-    email: "",
-    password: "",
-    fullName: "",
-    department: "",
-    position: "",
-    baseSalary: 0
+export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }: Props) {
+  const [form, setForm] = useState<any>({
+    email: "", password: "", fullName: "", department: "", position: "", baseSalary: 0
   })
+
+  // Load dữ liệu khi mở form sửa
+  useEffect(() => {
+    if (editingEmployee) {
+      setForm({
+        fullName: editingEmployee.user?.profile?.fullName || "",
+        department: editingEmployee.department || "",
+        position: editingEmployee.position || "",
+        baseSalary: editingEmployee.baseSalary || 0
+      })
+    } else {
+      setForm({ email: "", password: "", fullName: "", department: "", position: "", baseSalary: 0 })
+    }
+  }, [editingEmployee, isOpen])
 
   if (!isOpen) return null
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const { name, value } = e.target
-
-    setForm({
-      ...form,
-      [name]: name === "baseSalary" ? Number(value) : value
-    })
-
+    setForm({ ...form, [name]: name === "baseSalary" ? Number(value) : value })
   }
 
   const submit = (e: React.FormEvent) => {
-
     e.preventDefault()
     onSubmit(form)
-
   }
 
   return (
-
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
-      <div className="bg-white p-6 rounded-xl w-100 space-y-4">
-
-        <h2 className="text-lg font-semibold">
-          Thêm nhân viên
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          {editingEmployee ? "Thay đổi phòng ban / chức vụ / lương" : "Thêm nhân viên mới"}
         </h2>
+        {editingEmployee && (
+          <div className="mb-4 p-3 bg-blue-50 text-blue-700 text-sm rounded-lg border border-blue-100">
+            Lưu ý: Thay đổi chức vụ hoặc lương lúc này sẽ hệ thống sẽ tự động chốt lịch sử cũ (end date) và tạo mốc lịch sử mới bắt đầu từ hôm nay.
+          </div>
+        )}
 
-        <form onSubmit={submit} className="space-y-3">
+        <form onSubmit={submit} className="space-y-4">
+          {!editingEmployee && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email đăng nhập *</label>
+                <input required name="email" type="email" value={form.email} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu *</label>
+                <input required name="password" type="password" value={form.password} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+              </div>
+            </>
+          )}
 
-          <input name="fullName" placeholder="Họ tên" onChange={handleChange} className="input" />
-          <input name="email" placeholder="Email" onChange={handleChange} className="input" />
-          <input name="password" placeholder="Password" type="password" onChange={handleChange} className="input" />
-          <input name="department" placeholder="Phòng ban" onChange={handleChange} className="input" />
-          <input name="position" placeholder="Chức vụ" onChange={handleChange} className="input" />
-          <input name="baseSalary" placeholder="Lương" type="number" onChange={handleChange} className="input" />
-
-          <div className="flex justify-end gap-2 pt-3">
-
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg">
-              Huỷ
-            </button>
-
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-              Lưu
-            </button>
-
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
+            <input required name="fullName" value={form.fullName} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" disabled={!!editingEmployee} />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phòng ban</label>
+              <input required name="department" value={form.department} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Chức vụ</label>
+              <input required name="position" value={form.position} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mức lương cơ bản (VNĐ) *</label>
+            <input required name="baseSalary" type="number" min={0} value={form.baseSalary} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+            <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              Huỷ
+            </button>
+            <button type="submit" className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              {editingEmployee ? "Lưu thay đổi" : "Tạo nhân viên"}
+            </button>
+          </div>
         </form>
-
       </div>
-
     </div>
-
   )
-
 }

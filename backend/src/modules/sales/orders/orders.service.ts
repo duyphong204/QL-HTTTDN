@@ -116,4 +116,39 @@ export class OrdersService {
             totalProfit: totalRevenue - totalCost
         };
     }
+    async getOrdersByPeriod(year: number, quarter?: number) {
+        let startDate: Date, endDate: Date;
+        if (quarter) {
+            const startMonth = (quarter - 1) * 3;
+            startDate = new Date(year, startMonth, 1);
+            endDate = new Date(year, startMonth + 3, 0, 23, 59, 59);
+        } else {
+            startDate = new Date(year, 0, 1);
+            endDate = new Date(year, 11, 31, 23, 59, 59);
+        }
+        const orders = await this.prisma.order.findMany({
+            where: {
+                createdAt: { gte: startDate, lte: endDate },
+                status: 'COMPLETED',
+            },
+            include: { details: true },
+            orderBy: { createdAt: 'desc' },
+        });
+        let totalRevenue = 0, totalCost = 0, totalItems = 0;
+        for (const o of orders) {
+            totalRevenue += o.totalAmount;
+            for (const d of o.details) {
+                totalItems += d.quantity;
+                totalCost += d.costPrice * d.quantity;
+            }
+        }
+        return {
+            period: { year, quarter },
+            totalOrders: orders.length,
+            totalItemsSold: totalItems,
+            totalRevenue,
+            totalProfit: totalRevenue - totalCost,
+            orders,
+        };
+    }
 }

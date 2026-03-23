@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
@@ -20,10 +21,10 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('suppliers')
 export class SuppliersController {
-  constructor(private readonly suppliersService: SuppliersService) {}
+  constructor(private readonly suppliersService: SuppliersService) { }
   @Get()
-  findAll() {
-    return this.suppliersService.findAll();
+  findAll(@Query('search') search?: string) {
+    return this.suppliersService.findAll(search);
   }
   @Post()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
