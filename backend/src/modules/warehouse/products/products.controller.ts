@@ -27,16 +27,23 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productsService: ProductService) { }
+  constructor(private readonly productsService: ProductService) {}
 
   @Get()
   findAll(@Query() query: QueryProductDto) {
     return this.productsService.findAll(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.productsService.findOne(id);
+  @Get('report/stats')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  getWarehouseReport(
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    return this.productsService.getWarehouseReport(
+      month ? Number(month) : undefined,
+      year ? Number(year) : undefined,
+    );
   }
 
   @Post()
@@ -66,15 +73,8 @@ export class ProductController {
     return this.productsService.remove(id);
   }
 
-  @Get('report/stats')
-  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  getWarehouseReport(
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    return this.productsService.getWarehouseReport(
-      month ? Number(month) : undefined,
-      year ? Number(year) : undefined,
-    );
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.findOne(id);
   }
 }

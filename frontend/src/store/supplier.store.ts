@@ -5,6 +5,12 @@ import { toast } from "sonner";
 
 interface SupplierState {
     suppliers: Supplier[];
+    meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    } | null;
     isLoading: boolean;
     error: string | null;
     filters: {
@@ -33,14 +39,15 @@ const getErrorMessage = (error: unknown): string => {
 
 export const useSupplierStore = create<SupplierState>((set, get) => ({
     suppliers: [],
+    meta: null,
     isLoading: false,
     error: null,
     filters: {
         page: 1,
         limit: 10,
         search: "",
-        sortBy: "createdAt",
-        sortOrder: "desc",
+        sortBy: "name",
+        sortOrder: "asc",
     },
     actions: {
         setFilters: (newFilters) => {
@@ -62,7 +69,11 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
                     sortOrder: filters.sortOrder
                 });
                 const suppliers = Array.isArray(response) ? response : response.data || [];
-                set({ suppliers, isLoading: false });
+                set({
+                    suppliers,
+                    meta: Array.isArray(response) ? null : response.meta,
+                    isLoading: false,
+                });
             } catch (error: unknown) {
                 const errorMessage = getErrorMessage(error);
                 console.error("Error fetching suppliers:", error);

@@ -67,13 +67,36 @@ export default function ProductManagement() {
                 {/* Search */}
                 <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
                     <div className="p-4 border-b border-gray-50">
-                        <div className="relative max-w-xl">
-                            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input
-                                placeholder="Tìm theo tên sản phẩm..."
-                                onChange={(e) => setFilters({ search: e.target.value, page: 1 })}
-                                className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700"
-                            />
+                        <div className="flex flex-col md:flex-row md:items-center gap-3">
+                            <div className="relative max-w-xl flex-1">
+                                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    placeholder="Tìm theo tên sản phẩm..."
+                                    value={filters.search ?? ''}
+                                    onChange={(e) => setFilters({ search: e.target.value, page: 1 })}
+                                    className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={filters.sortBy ?? 'name'}
+                                    onChange={(e) => setFilters({ sortBy: e.target.value as 'name' | 'price' | 'costPrice' | 'stockQuantity', page: 1 })}
+                                    className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                >
+                                    <option value="name">Sắp xếp: Tên</option>
+                                    <option value="price">Sắp xếp: Giá bán</option>
+                                    <option value="costPrice">Sắp xếp: Giá nhập</option>
+                                    <option value="stockQuantity">Sắp xếp: Tồn kho</option>
+                                </select>
+                                <select
+                                    value={filters.sortOrder ?? 'asc'}
+                                    onChange={(e) => setFilters({ sortOrder: e.target.value as 'asc' | 'desc', page: 1 })}
+                                    className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                >
+                                    <option value="asc">Tăng dần</option>
+                                    <option value="desc">Giảm dần</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 

@@ -9,7 +9,9 @@ import type { CreateSupplierValues } from "@/schemas/supplier.schema";
 export default function SupplierManagement() {
   const {
     suppliers,
+    meta,
     isLoading,
+    filters,
     actions: {
       fetchSuppliers,
       addSupplier,
@@ -26,12 +28,12 @@ export default function SupplierManagement() {
   // Fetch lần đầu
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+  }, [fetchSuppliers]);
 
   // Debounce search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setFilters({ search });
+      setFilters({ search, page: 1 });
     }, 500);
 
     return () => clearTimeout(timeout);
@@ -100,7 +102,8 @@ export default function SupplierManagement() {
 
           {/* SEARCH */}
           <div className="p-4 border-b border-gray-50">
-            <div className="relative max-w-xl">
+            <div className="grid gap-3 md:grid-cols-12">
+              <div className="relative md:col-span-8">
               <Search
                 size={18}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -113,6 +116,23 @@ export default function SupplierManagement() {
                 placeholder="Tìm kiếm nhà cung cấp..."
                 className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition text-gray-700"
               />
+              </div>
+
+              <div className="md:col-span-4">
+                <select
+                  value={`${filters.sortBy}:${filters.sortOrder}`}
+                  onChange={(e) => {
+                    const [sortBy, sortOrder] = e.target.value.split(":") as [string, "asc" | "desc"];
+                    setFilters({ sortBy, sortOrder, page: 1 });
+                  }}
+                  className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="name:asc">Tên A-Z</option>
+                  <option value="name:desc">Tên Z-A</option>
+                  <option value="email:asc">Email A-Z</option>
+                  <option value="email:desc">Email Z-A</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -195,6 +215,27 @@ export default function SupplierManagement() {
 
               </tbody>
             </table>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-gray-50 px-4 py-3 text-sm">
+            <span className="text-gray-500">Tổng: {meta?.total ?? 0} nhà cung cấp</span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={(meta?.page ?? 1) <= 1}
+                onClick={() => setFilters({ page: (meta?.page ?? 1) - 1 })}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-700 disabled:opacity-40"
+              >
+                Trước
+              </button>
+              <span className="text-gray-600">Trang {meta?.page ?? 1}/{meta?.totalPages ?? 1}</span>
+              <button
+                disabled={(meta?.page ?? 1) >= (meta?.totalPages ?? 1)}
+                onClick={() => setFilters({ page: (meta?.page ?? 1) + 1 })}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-700 disabled:opacity-40"
+              >
+                Tiếp
+              </button>
+            </div>
           </div>
         </div>
       </div>

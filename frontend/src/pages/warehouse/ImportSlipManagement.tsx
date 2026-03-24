@@ -1,16 +1,24 @@
 // frontend/src/pages/warehouse/ImportSlipManagement.tsx
 import { useEffect, useState } from 'react'
-import { stockInApi, productApi, supplierApi } from '@/api/warehouse.api'
-import type { StockIn, Product, Supplier, CreateStockInDto, StockInDetailInput } from '@/types/warehouse.type'
-import { Plus, Trash2, FileText, Eye } from 'lucide-react'
+import { useStockInStore } from '@/store/stockIn.store'
+import type { CreateStockInDto, StockInDetailInput } from '@/types/warehouse.type'
+import { Plus, Trash2, Eye } from 'lucide-react'
 
 export default function ImportSlipManagement() {
-    const [stockIns, setStockIns] = useState<StockIn[]>([])
-    const [products, setProducts] = useState<Product[]>([])
-    const [suppliers, setSuppliers] = useState<Supplier[]>([])
-    const [loading, setLoading] = useState(false)
+    const {
+        stockIns,
+        products,
+        suppliers,
+        isLoading,
+        selectedStockIn,
+        fetchStockIns,
+        fetchReferenceData,
+        fetchStockInById,
+        clearSelectedStockIn,
+        createTicket,
+    } = useStockInStore()
+
     const [formOpen, setFormOpen] = useState(false)
-    const [detailItem, setDetailItem] = useState<StockIn | null>(null)
 
     // Form state
     const [supplierId, setSupplierId] = useState('')
@@ -18,23 +26,9 @@ export default function ImportSlipManagement() {
         { productId: '', quantity: 1, price: 0 }
     ])
 
-    const fetchData = async () => {
-        setLoading(true)
-        try {
-            const [slips, prods, sups] = await Promise.all([
-                stockInApi.getStockIns(),
-                productApi.getProducts({ limit: 100 }),
-                supplierApi.getSuppliers({ limit: 100 }),
-            ])
-            setStockIns(slips)
-            setProducts(prods.data ?? prods)
-            setSuppliers(sups.data ?? sups)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => { fetchData() }, [])
+    useEffect(() => {
+        void Promise.all([fetchStockIns(), fetchReferenceData()])
+    }, [fetchStockIns, fetchReferenceData])
 
     const addDetailRow = () =>
         setDetails(prev => [...prev, { productId: '', quantity: 1, price: 0 }])
@@ -50,16 +44,14 @@ export default function ImportSlipManagement() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const dto: CreateStockInDto = { supplierId, details }
-        await stockInApi.createStockIn(dto)
+        await createTicket(dto)
         setFormOpen(false)
         setSupplierId('')
         setDetails([{ productId: '', quantity: 1, price: 0 }])
-        fetchData()
     }
 
     const handleViewDetail = async (id: string) => {
-        const slip = await stockInApi.getStockInById(id)
-        setDetailItem(slip)
+        await fetchStockInById(id)
     }
 
     return (
@@ -93,7 +85,7 @@ export default function ImportSlipManagement() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {loading ? (
+                                {isLoading ? (
                                     <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Đang tải...</td></tr>
                                 ) : stockIns.length === 0 ? (
                                     <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Chưa có phiếu nhập nào.</td></tr>
@@ -199,15 +191,15 @@ export default function ImportSlipManagement() {
             )}
 
             {/* Detail Modal */}
-            {detailItem && (
+            {selectedStockIn && (
                 <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between p-6 border-b border-gray-100">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900">Chi tiết phiếu nhập</h2>
-                                <p className="text-xs text-gray-500 mt-0.5">NCC: {detailItem.supplier?.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">NCC: {selectedStockIn.supplier?.name}</p>
                             </div>
-                            <button onClick={() => setDetailItem(null)} className="p-1.5 hover:bg-gray-100 rounded-lg">✕</button>
+                            <button onClick={clearSelectedStockIn} className="p-1.5 hover:bg-gray-100 rounded-lg">✕</button>
                         </div>
                         <div className="p-6 space-y-4">
                             <table className="w-full text-sm">
@@ -220,7 +212,7 @@ export default function ImportSlipManagement() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {detailItem.details?.map((d) => (
+                                    {selectedStockIn.details?.map((d) => (
                                         <tr key={d.id}>
                                             <td className="py-3 text-gray-700">{d.product?.name || d.productId}</td>
                                             <td className="py-3 text-center">{d.quantity}</td>
@@ -233,7 +225,7 @@ export default function ImportSlipManagement() {
                                     <tr>
                                         <td colSpan={3} className="pt-3 font-semibold text-gray-700">Tổng cộng</td>
                                         <td className="pt-3 text-right font-bold text-blue-600 text-base">
-                                            {detailItem.totalAmount.toLocaleString('vi-VN')}đ
+                                            {selectedStockIn.totalAmount.toLocaleString('vi-VN')}đ
                                         </td>
                                     </tr>
                                 </tfoot>

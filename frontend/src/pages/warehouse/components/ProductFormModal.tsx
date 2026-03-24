@@ -16,6 +16,7 @@ export function ProductFormModal({ isOpen, onClose, editingProduct, categories, 
     const isEdit = !!editingProduct
     const [loading, setLoading] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const [objectPreviewUrl, setObjectPreviewUrl] = useState<string | null>(null)
     const fileRef = useRef<HTMLInputElement>(null)
 
     const [form, setForm] = useState<CreateProductDto>({
@@ -41,6 +42,14 @@ export function ProductFormModal({ isOpen, onClose, editingProduct, categories, 
         }
     }, [editingProduct, isOpen])
 
+    useEffect(() => {
+        return () => {
+            if (objectPreviewUrl) {
+                URL.revokeObjectURL(objectPreviewUrl)
+            }
+        }
+    }, [objectPreviewUrl])
+
     if (!isOpen) return null
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -51,8 +60,13 @@ export function ProductFormModal({ isOpen, onClose, editingProduct, categories, 
     const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
+        if (objectPreviewUrl) {
+            URL.revokeObjectURL(objectPreviewUrl)
+        }
+        const nextPreviewUrl = URL.createObjectURL(file)
         setForm(prev => ({ ...prev, image: file }))
-        setImagePreview(URL.createObjectURL(file))
+        setImagePreview(nextPreviewUrl)
+        setObjectPreviewUrl(nextPreviewUrl)
     }
 
     const handleSubmit = async (e: React.FormEvent) => {

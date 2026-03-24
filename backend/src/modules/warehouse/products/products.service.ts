@@ -13,10 +13,20 @@ export class ProductService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
-  ) { }
+  ) {}
 
   async findAll(query: QueryProductDto) {
-    const { search, categoryId, supplierId, page = 1, limit = 10 } = query;
+    const {
+      search,
+      categoryId,
+      supplierId,
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortOrder = 'asc',
+    } = query;
+    const normalizedSortOrder: Prisma.SortOrder =
+      sortOrder === 'desc' ? 'desc' : 'asc';
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: Prisma.ProductWhereInput = {};
@@ -30,6 +40,16 @@ export class ProductService {
     if (supplierId) {
       where.supplierId = supplierId;
     }
+
+    const orderBy: Prisma.ProductOrderByWithRelationInput =
+      sortBy === 'price'
+        ? { price: normalizedSortOrder }
+        : sortBy === 'costPrice'
+          ? { costPrice: normalizedSortOrder }
+          : sortBy === 'stockQuantity'
+            ? { stockQuantity: normalizedSortOrder }
+            : { name: normalizedSortOrder };
+
     const [data, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
@@ -39,7 +59,7 @@ export class ProductService {
           category: { select: { id: true, name: true } },
           supplier: { select: { id: true, name: true } },
         },
-        orderBy: { name: 'asc' },
+        orderBy,
       }),
       this.prisma.product.count({ where }),
     ]);
@@ -125,16 +145,26 @@ export class ProductService {
     });
     const totalImportValue = stockIns.reduce((s, si) => s + si.totalAmount, 0);
     const totalImportQuantity = stockIns.reduce(
-      (s, si) => s + si.details.reduce((sq, d) => sq + d.quantity, 0), 0
+      (s, si) => s + si.details.reduce((sq, d) => sq + d.quantity, 0),
+      0,
     );
     const stockAggregate = await this.prisma.product.aggregate({
       _sum: { stockQuantity: true },
       _count: { id: true },
     });
-    const lowStockProducts = await this.prisma.product.findMany({
-      where: { stockQuantity: { lte: this.prisma.product.fields.minStock } },
-      select: { id: true, name: true, stockQuantity: true, minStock: true },
-    });
+    const lowStockProducts = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        stockQuantity: number;
+        minStock: number;
+      }>
+    >`
+      SELECT id, name, "stockQuantity", "minStock"
+      FROM "Product"
+      WHERE "stockQuantity" <= "minStock"
+      ORDER BY "stockQuantity" ASC
+    `;
     return {
       period: { month, year: currentYear },
       totalStockIns: stockIns.length,

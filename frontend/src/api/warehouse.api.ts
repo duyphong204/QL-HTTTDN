@@ -12,6 +12,16 @@ import type {
   ProductResponse,
 } from '@/types/warehouse.type';
 
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
   const formData = new FormData();
 
@@ -60,7 +70,7 @@ export const supplierApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }) => {
-    const res = await axiosInstance.get('/suppliers', { params });
+    const res = await axiosInstance.get<PaginatedResponse<Supplier>>('/suppliers', { params });
     return res.data;
   },
 
@@ -97,17 +107,13 @@ export const productApi = {
 
   createProduct: async (data: CreateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.post<Product>('/products', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await axiosInstance.post<Product>('/products', formData);
     return res.data;
   },
 
   updateProduct: async (id: string, data: UpdateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.patch<Product>('/products/' + id, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await axiosInstance.patch<Product>('/products/' + id, formData);
     return res.data;
   },
 

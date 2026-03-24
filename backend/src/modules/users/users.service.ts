@@ -6,7 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma, Role } from '@prisma/client';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { CreateUserDto, QueryUsersDto, UpdateUserDto } from './dto/user.dto';
 
 const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
   id: true,
@@ -32,12 +32,58 @@ const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      where: { isActive: true, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
-      select: USER_SAFE_SELECT,
-    });
+  async findAll(query: QueryUsersDto) {
+    const {
+      search,
+      role,
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      isActive,
+    } = query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const where: Prisma.UserWhereInput = {
+      deletedAt: null,
+      ...(typeof isActive === 'boolean' ? { isActive } : {}),
+      ...(role ? { role } : {}),
+      ...(search
+        ? {
+            OR: [
+              { email: { contains: search, mode: 'insensitive' } },
+              {
+                profile: {
+                  fullName: { contains: search, mode: 'insensitive' },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+        select: USER_SAFE_SELECT,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    };
   }
 
   async findByEmail(email: string) {

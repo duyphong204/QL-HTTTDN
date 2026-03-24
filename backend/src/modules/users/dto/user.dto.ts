@@ -2,8 +2,11 @@ import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
+  IsIn,
+  IsInt,
   IsOptional,
   IsString,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -49,4 +52,38 @@ export class UpdateUserDto {
   @ValidateNested()
   @Type(() => UpdateProfileDto)
   profile?: UpdateProfileDto;
+}
+
+export class QueryUsersDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsEnum(Role)
+  role?: Role;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number = 10;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'email', 'role'])
+  sortBy?: 'createdAt' | 'email' | 'role' = 'createdAt';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'desc';
+
+  @IsOptional()
+  @Type(() => Boolean)
+  isActive?: boolean;
 }

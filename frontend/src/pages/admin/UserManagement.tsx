@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserStore } from "@/store/user.store";
 import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
 import { UserFormModal } from "./components/UserFormModal";
@@ -18,6 +18,7 @@ type UserFormValues = {
 export default function UserManagement() {
   const {
     users,
+    meta,
     isLoading,
     fetchUsers,
     addUser,
@@ -36,16 +37,13 @@ export default function UserManagement() {
     fetchUsers();
   }, [fetchUsers, filters]);
 
-  const filteredUsers = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase();
-    if (!keyword) return users;
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setFilters({ search: searchTerm.trim(), page: 1 });
+    }, 300);
 
-    return users.filter((user) => {
-      const email = user.email?.toLowerCase() ?? "";
-      const fullName = user.profile?.fullName?.toLowerCase() ?? "";
-      return email.includes(keyword) || fullName.includes(keyword);
-    });
-  }, [users, searchTerm]);
+    return () => clearTimeout(timeout);
+  }, [searchTerm, setFilters]);
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -130,6 +128,7 @@ export default function UserManagement() {
                 onChange={(e) =>
                   setFilters({
                     role: (e.target.value || undefined) as Role | undefined,
+                    page: 1,
                   })
                 }
                 className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -140,6 +139,22 @@ export default function UserManagement() {
                     {config.label}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-4">
+              <select
+                value={`${filters.sortBy}:${filters.sortOrder}`}
+                onChange={(e) => {
+                  const [sortBy, sortOrder] = e.target.value.split(":") as ["createdAt" | "email" | "role", "asc" | "desc"];
+                  setFilters({ sortBy, sortOrder, page: 1 });
+                }}
+                className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value="createdAt:desc">Mới nhất</option>
+                <option value="createdAt:asc">Cũ nhất</option>
+                <option value="email:asc">Email A-Z</option>
+                <option value="email:desc">Email Z-A</option>
               </select>
             </div>
           </div>
@@ -163,14 +178,14 @@ export default function UserManagement() {
                       Đang tải dữ liệu...
                     </td>
                   </tr>
-                ) : filteredUsers.length === 0 ? (
+                ) : users.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                       Không tìm thấy user nào phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  users.map((user) => (
                     <tr
                       key={user.id}
                       className="group transition-colors hover:bg-gray-50/70"
@@ -220,6 +235,32 @@ export default function UserManagement() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-gray-50 px-4 py-3 text-sm">
+            <span className="text-gray-500">
+              Tổng: {meta?.total ?? 0} user
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={(filters.page ?? 1) <= 1}
+                onClick={() => setFilters({ page: (filters.page ?? 1) - 1 })}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-700 disabled:opacity-40"
+              >
+                Trước
+              </button>
+              <span className="text-gray-600">
+                Trang {meta?.page ?? 1}/{meta?.totalPages ?? 1}
+              </span>
+              <button
+                disabled={(filters.page ?? 1) >= (meta?.totalPages ?? 1)}
+                onClick={() => setFilters({ page: (filters.page ?? 1) + 1 })}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-gray-700 disabled:opacity-40"
+              >
+                Tiếp
+              </button>
+            </div>
           </div>
         </div>
       </div>

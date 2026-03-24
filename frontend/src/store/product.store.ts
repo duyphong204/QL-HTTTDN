@@ -39,6 +39,8 @@ export const useProductStore = create<ProductState>((set, get) => ({
     search: '',
     categoryId: '',
     supplierId: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
   },
 
   isLoading: false,
@@ -77,8 +79,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
       await productApi.createProduct(data);
       toast.success('Thêm sản phẩm thành công');
       await get().fetchProducts();
-    } catch {
+    } catch (error) {
       toast.error('Thêm sản phẩm thất bại');
+      throw error;
     }
   },
 
@@ -87,8 +90,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
       await productApi.updateProduct(id, data);
       toast.success('Cập nhật sản phẩm thành công');
       await get().fetchProducts();
-    } catch {
+    } catch (error) {
       toast.error('Cập nhật sản phẩm thất bại');
+      throw error;
     }
   },
 

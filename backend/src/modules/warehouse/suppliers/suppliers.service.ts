@@ -1,25 +1,59 @@
 // backend/src/modules/warehouse/suppliers/suppliers.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
+import {
+  CreateSupplierDto,
+  QuerySupplierDto,
+  UpdateSupplierDto,
+} from './dto/supplier.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SuppliersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async findAll(search?: string) {
-    return this.prisma.supplier.findMany({
-      where: search
-        ? {
+  async findAll(query: QuerySupplierDto) {
+    const {
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortOrder = 'asc',
+    } = query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const where: Prisma.SupplierWhereInput = search
+      ? {
           OR: [
             { name: { contains: search, mode: 'insensitive' } },
             { phone: { contains: search, mode: 'insensitive' } },
             { email: { contains: search, mode: 'insensitive' } },
+            { address: { contains: search, mode: 'insensitive' } },
           ],
         }
-        : undefined,
-      orderBy: { name: 'asc' },
-    });
+      : {};
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.supplier.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    };
   }
 
   async create(dto: CreateSupplierDto) {

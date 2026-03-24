@@ -9,10 +9,21 @@ type UserFilters = {
     limit: number;
     search: string;
     role?: Role;
+    sortBy: "createdAt" | "email" | "role";
+    sortOrder: "asc" | "desc";
+    isActive?: boolean;
+};
+
+type UserMeta = {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 };
 
 type UserState = {
     users: User[];
+    meta: UserMeta | null;
     isLoading: boolean;
     error: string | null;
     filters: UserFilters;
@@ -31,9 +42,16 @@ const getErrorMessage = (error: unknown): string =>
 
 export const useUserStore = create<UserState>((set, get) => ({
     users: [],
+    meta: null,
     isLoading: false,
     error: null,
-    filters: { page: 1, limit: 10, search: "" },
+    filters: {
+        page: 1,
+        limit: 10,
+        search: "",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+    },
     searchTerm: "",
 
     setFilters: (newFilters) => {
@@ -50,8 +68,11 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const { filters } = get();
-            const users = await userApi.getUsers(filters);
-            set({ users });
+            const response = await userApi.getUsers(filters);
+            set({
+                users: response.data,
+                meta: response.meta,
+            });
         } catch (err: unknown) {
             const message = getErrorMessage(err);
             set({ error: message });

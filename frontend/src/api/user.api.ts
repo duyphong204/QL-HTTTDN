@@ -7,11 +7,24 @@ export interface GetUsersParams {
   limit?: number;
   search?: string;
   role?: Role;
+  sortBy?: "createdAt" | "email" | "role";
+  sortOrder?: "asc" | "desc";
+  isActive?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export const userApi = {
   getUsers: async (params?: GetUsersParams) => {
-    const res = await axiosInstance.get<User[]>("/users", { params });
+    const res = await axiosInstance.get<PaginatedResponse<User>>("/users", { params });
     return res.data;
   },
 

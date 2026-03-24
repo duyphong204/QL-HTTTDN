@@ -63,6 +63,8 @@ export interface ProductQuery {
   supplierId?: string
   page?: number
   limit?: number
+  sortBy?: "name" | "price" | "costPrice" | "stockQuantity"
+  sortOrder?: "asc" | "desc"
 }
 
 export interface ProductResponse {

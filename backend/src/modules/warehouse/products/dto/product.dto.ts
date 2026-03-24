@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -20,7 +21,7 @@ export class CreateProductDto {
   description?: string;
 
   @ApiProperty({ example: 25000000 })
-  @Type(() => Number) 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   price: number;
@@ -50,9 +51,10 @@ export class CreateProductDto {
 
 export class UpdateProductDto {
   @ApiProperty({ example: 'iPhone 15 Pro Max' })
+  @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })
-  name: string;
+  name?: string;
 
   @ApiProperty({ example: 'Sản phẩm cao cấp từ Apple', required: false })
   @IsString()
@@ -60,29 +62,37 @@ export class UpdateProductDto {
   description?: string;
 
   @ApiProperty({ example: 25000000 })
+  @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  price: number; // Giá bán
+  price?: number; // Giá bán
 
   @ApiProperty({ example: 22000000 })
+  @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  costPrice: number; // Giá nhập
+  costPrice?: number; // Giá nhập
 
   @ApiProperty({ example: 50 })
+  @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
-  stockQuantity: number; // Số lượng tồn kho
+  stockQuantity?: number; // Số lượng tồn kho
 
   @ApiProperty({ description: 'ID của danh mục sản phẩm' })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  categoryId: string;
+  categoryId?: string;
 
   @ApiProperty({ description: 'ID của nhà cung cấp' })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  supplierId: string;
+  supplierId?: string;
 }
 
 export class QueryProductDto {
@@ -103,4 +113,12 @@ export class QueryProductDto {
   @IsOptional()
   @Type(() => Number)
   limit?: number = 10;
+
+  @IsOptional()
+  @IsIn(['name', 'price', 'costPrice', 'stockQuantity'])
+  sortBy?: 'name' | 'price' | 'costPrice' | 'stockQuantity' = 'name';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'asc';
 }
