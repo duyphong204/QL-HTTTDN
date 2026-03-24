@@ -1,42 +1,78 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { ROLE_OPTIONS } from "@/constants/role"
+import type { Role } from "@/types/auth.type"
 import type { CreateEmployeeDto, UpdateEmployeeDto, Employee } from "@/types/hr.type"
+
+type EmployeeFormState = {
+  email: string
+  password: string
+  fullName: string
+  department: string
+  position: Role | ""
+  baseSalary: number
+}
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: CreateEmployeeDto | UpdateEmployeeDto) => void
+  onSubmit: (data: CreateEmployeeDto | UpdateEmployeeDto) => Promise<void>
   editingEmployee?: Employee | null
 }
 
 export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }: Props) {
-  const [form, setForm] = useState<any>({
-    email: "", password: "", fullName: "", department: "", position: "", baseSalary: 0
-  })
-
-  // Load dữ liệu khi mở form sửa
-  useEffect(() => {
-    if (editingEmployee) {
-      setForm({
+  const initialForm: EmployeeFormState = editingEmployee
+    ? {
+        email: "",
+        password: "",
         fullName: editingEmployee.user?.profile?.fullName || "",
         department: editingEmployee.department || "",
         position: editingEmployee.position || "",
-        baseSalary: editingEmployee.baseSalary || 0
-      })
-    } else {
-      setForm({ email: "", password: "", fullName: "", department: "", position: "", baseSalary: 0 })
-    }
-  }, [editingEmployee, isOpen])
+        baseSalary: editingEmployee.baseSalary || 0,
+      }
+    : {
+        email: "",
+        password: "",
+        fullName: "",
+        department: "",
+        position: "",
+        baseSalary: 0,
+      }
+
+  const [form, setForm] = useState<EmployeeFormState>({
+    ...initialForm,
+  })
 
   if (!isOpen) return null
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: name === "baseSalary" ? Number(value) : value })
   }
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(form)
+
+    if (editingEmployee) {
+      const payload: UpdateEmployeeDto = {
+        department: form.department,
+        position: form.position || undefined,
+        baseSalary: form.baseSalary,
+      }
+
+      await onSubmit(payload)
+      return
+    }
+
+    const payload: CreateEmployeeDto = {
+      email: form.email,
+      password: form.password,
+      fullName: form.fullName,
+      department: form.department,
+      position: form.position || undefined,
+      baseSalary: form.baseSalary,
+    }
+
+    await onSubmit(payload)
   }
 
   return (
@@ -76,8 +112,15 @@ export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }
               <input required name="department" value={form.department} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Chức vụ</label>
-              <input required name="position" value={form.position} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quyền / Chức vụ</label>
+              <select required name="position" value={form.position} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white">
+                <option value="" disabled>Chọn quyền</option>
+                {ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

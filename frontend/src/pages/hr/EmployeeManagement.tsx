@@ -3,18 +3,12 @@ import { useHrStore } from "@/store/hr.store"
 
 import { Search, UserPlus, Pencil, Trash2, Eye } from "lucide-react"
 
-import { EmployeeFormModal } from "@/components/hr/EmployeeFormModal"
-import { EmployeeDetailModal } from "@/components/hr/EmployeeDetailModal"
+import { EmployeeFormModal } from "./components/EmployeeFormModal"
+import { EmployeeDetailModal } from "./components/EmployeeDetailModal"
 
 import type { Employee } from "@/types/hr.type"
-import type { CreateEmployeeDto } from "@/types/hr.type"
-
-const POSITION_BADGE: Record<string, string> = {
-  "HR Manager": "bg-blue-100 text-blue-600",
-  "Developer": "bg-purple-100 text-purple-600",
-  "Accountant": "bg-emerald-100 text-emerald-600",
-  "Sales": "bg-orange-100 text-orange-600",
-}
+import type { CreateEmployeeDto, UpdateEmployeeDto } from "@/types/hr.type"
+import { ROLE_BADGE } from "@/constants/role"
 
 export default function EmployeeManagement() {
   const {
@@ -67,11 +61,11 @@ export default function EmployeeManagement() {
     }
   }
 
-  const handleSubmit = async (data: CreateEmployeeDto) => {
+  const handleSubmit = async (data: CreateEmployeeDto | UpdateEmployeeDto) => {
     if (editingEmployee) {
-      await updateEmployee(editingEmployee.id, data)
+      await updateEmployee(editingEmployee.id, data as UpdateEmployeeDto)
     } else {
-      await createEmployee(data)
+      await createEmployee(data as CreateEmployeeDto)
     }
 
     setModalOpen(false)
@@ -162,11 +156,11 @@ export default function EmployeeManagement() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            POSITION_BADGE[emp.position || ""] ||
+                            ROLE_BADGE[emp.position || "EMPLOYEE"]?.color ||
                             "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          {emp.position || "—"}
+                          {emp.position ? ROLE_BADGE[emp.position]?.label || emp.position : "—"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
@@ -215,6 +209,7 @@ export default function EmployeeManagement() {
       </div>
 
       <EmployeeFormModal
+        key={editingEmployee?.id || "create-employee"}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         editingEmployee={editingEmployee}

@@ -1,38 +1,32 @@
 // frontend/src/pages/warehouse/ProductManagement.tsx
 import { useEffect, useState } from 'react'
-import { categoryApi, supplierApi } from '@/api/warehouse.api'
 import { useProductStore } from '@/store/product.store'
 import type {
-    Product, Category, Supplier,
+    Product,
     CreateProductDto, UpdateProductDto,
 } from '@/types/warehouse.type'
 import { Plus, Pencil, Trash2, Search, Package, RefreshCw } from 'lucide-react'
-import { ProductFormModal } from '@/components/warehouse/ProductFormModal'
+import { ProductFormModal } from './components/ProductFormModal'
 
 export default function ProductManagement() {
 
     const {
         products, isLoading, meta, filters,
-        fetchProducts, setFilters, createProduct, updateProduct, deleteProduct
+        categories, suppliers,
+        fetchProducts, fetchCategories, fetchSuppliers,
+        setFilters, createProduct, updateProduct, deleteProduct
     } = useProductStore()
-
-    const [categories, setCategories] = useState<Category[]>([])
-    const [suppliers, setSuppliers] = useState<Supplier[]>([])
 
     const [modalOpen, setModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
     useEffect(() => {
         fetchProducts()
-    }, [filters, fetchProducts])
+    }, [fetchProducts])
 
     useEffect(() => {
-        Promise.all([categoryApi.getCategories(), supplierApi.getSuppliers()])
-            .then(([cats, sups]) => {
-                setCategories(cats)
-                setSuppliers(sups.data ?? sups)
-            })
-    }, [])
+        void Promise.all([fetchCategories(), fetchSuppliers()])
+    }, [fetchCategories, fetchSuppliers])
 
     const openCreateModal = () => { setEditingProduct(null); setModalOpen(true) }
     const openEditModal = (p: Product) => { setEditingProduct(p); setModalOpen(true) }
@@ -49,7 +43,6 @@ export default function ProductManagement() {
             await createProduct(data as CreateProductDto)
         }
         setModalOpen(false)
-        fetchProducts()
     }
 
     return (

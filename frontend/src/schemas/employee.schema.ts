@@ -3,7 +3,14 @@ import { z } from "zod"
 export const CreateEmployeeSchema = z.object({
     userId: z.string().uuid(),
     department: z.string().optional(),
-    position: z.string().optional(),
+    position: z.enum([
+      "ADMIN",
+      "HR_MANAGER",
+      "WAREHOUSE_MANAGER",
+      "SALES_MANAGER",
+      "EMPLOYEE",
+      "CUSTOMER",
+    ]).optional(),
     baseSalary: z.number().positive(),
     joinDate: z.coerce.date(),
 })

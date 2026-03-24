@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form"
+import { LoginForm } from "./components/login-form"
 import { useAuthStore } from "@/store/auth.store"
 import { Navigate } from "react-router-dom"
 

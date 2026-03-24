@@ -22,6 +22,14 @@ interface HrStatistics {
   totalSalary: number
 }
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return "Lỗi không xác định"
+}
+
 interface HrState {
 
   // =================
@@ -108,12 +116,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         employees: data
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải danh sách nhân viên"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải danh sách nhân viên")
 
     } finally {
       set({ loadingEmployees: false })
@@ -134,12 +139,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       return employee
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải chi tiết nhân viên"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải chi tiết nhân viên")
 
       return null
 
@@ -164,12 +166,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Thêm nhân sự thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Thêm nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Thêm nhân sự thất bại")
 
       throw error
     }
@@ -189,12 +188,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Cập nhật nhân sự thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Cập nhật nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Cập nhật nhân sự thất bại")
 
       throw error
     }
@@ -214,12 +210,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Đã xóa nhân sự")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Xóa nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Xóa nhân sự thất bại")
     }
   },
 
@@ -239,12 +232,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         leaveRequests: data
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải đơn nghỉ phép"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải đơn nghỉ phép")
 
     } finally {
       set({ loadingLeaveRequests: false })
@@ -271,12 +261,9 @@ export const useHrStore = create<HrState>((set, get) => ({
           : "Đã từ chối đơn nghỉ"
       )
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Duyệt đơn thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Duyệt đơn thất bại")
     }
   },
 
@@ -296,12 +283,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         salaries: data
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải bảng lương"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải bảng lương")
 
     } finally {
       set({ loadingSalaries: false })
@@ -318,12 +302,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       await get().fetchSalaries()
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Tính lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Tính lương thất bại")
     }
   },
 
@@ -339,12 +320,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Tạo bảng lương thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Tạo bảng lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Tạo bảng lương thất bại")
     }
   },
 
@@ -362,12 +340,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Cập nhật bảng lương thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Cập nhật bảng lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Cập nhật bảng lương thất bại")
     }
   },
 

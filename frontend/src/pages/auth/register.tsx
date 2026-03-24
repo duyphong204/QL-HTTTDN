@@ -1,4 +1,4 @@
-import { SignupForm } from "@/components/signup-form"
+import { SignupForm } from "./components/signup-form"
 import { useAuthStore } from "@/store/auth.store"
 import { Navigate } from "react-router-dom"
 

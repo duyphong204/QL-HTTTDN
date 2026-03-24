@@ -3,7 +3,7 @@ import { useSupplierStore } from "@/store/supplier.store";
 import type { Supplier } from "@/types/warehouse.type";
 
 import { Search, Plus, Pencil, Trash2 } from "lucide-react";
-import { SupplierFormModal } from "@/components/admin/SupplierFormModal";
+import { SupplierFormModal } from "./components/SupplierFormModal";
 import type { CreateSupplierValues } from "@/schemas/supplier.schema";
 
 export default function SupplierManagement() {

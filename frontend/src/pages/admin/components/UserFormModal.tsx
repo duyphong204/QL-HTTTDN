@@ -5,15 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateUserSchema, UpdateUserSchema} from "@/schemas/user.schema";
 import type { User } from "@/types/user.type";
 import type { Role } from "@/types/auth.type";
-
-const ROLE_CONFIG = {
-  ADMIN: "Quản trị viên",
-  HR_MANAGER: "Quản lý Nhân sự",
-  WAREHOUSE_MANAGER: "Quản lý Kho",
-  SALES_MANAGER: "Quản lý Kinh doanh",
-  EMPLOYEE: "Nhân viên",
-  CUSTOMER: "Khách hàng",
-} as const;
+import { ROLE_OPTIONS } from "@/constants/role";
 
 type UserFormValues = {
   email: string;
@@ -142,9 +134,9 @@ export function UserFormModal({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Vai trò</label>
             <select className="w-full h-11 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg" {...register("role")}>
-              {Object.entries(ROLE_CONFIG).map(([key, label]) => (
-                <option key={key} value={key}>
-                  {label}
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>

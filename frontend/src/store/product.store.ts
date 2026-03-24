@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
-import { productApi } from '@/api/warehouse.api';
+import { categoryApi, productApi, supplierApi } from '@/api/warehouse.api';
 
 import type {
   Product,
@@ -8,24 +8,31 @@ import type {
   ProductResponse,
   CreateProductDto,
   UpdateProductDto,
+  Category,
 } from '@/types/warehouse.type';
+import type { Supplier } from '@/types/supplier.type';
 
 interface ProductState {
   products: Product[];
   meta?: ProductResponse['meta'];
   filters: ProductQuery;
   isLoading: boolean;
+  categories: Category[];
+  suppliers: Supplier[];
   fetchProducts: () => Promise<void>;
   setFilters: (filters: Partial<ProductQuery>) => void;
   createProduct: (data: CreateProductDto) => Promise<void>;
   updateProduct: (id: string, data: UpdateProductDto) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  fetchCategories: () => Promise<void>;
+  fetchSuppliers: () => Promise<void>;
 }
 
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
   meta: undefined,
-
+  categories: [],
+  suppliers: [],
   filters: {
     page: 1,
     limit: 10,
@@ -92,6 +99,23 @@ export const useProductStore = create<ProductState>((set, get) => ({
       await get().fetchProducts();
     } catch {
       toast.error('Xóa sản phẩm thất bại');
+    }
+  },
+  fetchCategories: async () => {
+    try {
+      const data = await categoryApi.getCategories();
+      set({ categories: data });
+    } catch {
+      toast.error("Không thể tải danh mục");
+    }
+  },
+
+  fetchSuppliers: async () => {
+    try {
+      const data = await supplierApi.getSuppliers();
+      set({ suppliers: Array.isArray(data) ? data : data.data ?? [] });
+    } catch {
+      toast.error("Không thể tải nhà cung cấp");
     }
   },
 }));

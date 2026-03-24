@@ -16,8 +16,10 @@ type UserState = {
     isLoading: boolean;
     error: string | null;
     filters: UserFilters;
+    searchTerm: string;
 
     setFilters: (filters: Partial<UserFilters>) => void;
+    setSearchTerm: (value: string) => void;
     fetchUsers: () => Promise<void>;
     addUser: (data: CreateUserDto) => Promise<void>;
     updateUser: (id: string, data: UpdateUserDto) => Promise<void>;
@@ -32,11 +34,16 @@ export const useUserStore = create<UserState>((set, get) => ({
     isLoading: false,
     error: null,
     filters: { page: 1, limit: 10, search: "" },
+    searchTerm: "",
 
     setFilters: (newFilters) => {
         set((state) => ({
             filters: { ...state.filters, ...newFilters },
         }));
+    },
+
+    setSearchTerm: (value) => {
+        set({ searchTerm: value });
     },
 
     fetchUsers: async () => {

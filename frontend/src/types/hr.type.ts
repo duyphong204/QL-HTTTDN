@@ -1,4 +1,5 @@
 import type { BaseEntity } from "./common.type"
+import type { Role } from "./auth.type"
 import type { User } from "./user.type"
 
 export interface Employee extends BaseEntity {
@@ -6,7 +7,7 @@ export interface Employee extends BaseEntity {
     user?: User
     code: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     joinDate: Date
     resignDate?: Date
@@ -19,7 +20,7 @@ export interface CreateEmployeeDto {
   fullName: string
   phone?: string
   department?: string
-  position?: string
+    position?: Role
   baseSalary: number
 }
 
@@ -27,14 +28,14 @@ export interface UpdateProfileDto {
     fullName?: string;
     phone?: string;
     address?: string;
-    position?: string;
+    position?: Role;
     department?: string;
 }
 
 export interface UpdateEmployeeDto {
     code?: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary?: number
     resignDate?: Date
 }
@@ -43,7 +44,7 @@ export interface JobHistory extends BaseEntity {
     employeeId: string
     employee?: Employee
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     startDate: Date
     endDate?: Date
@@ -52,7 +53,7 @@ export interface JobHistory extends BaseEntity {
 export interface CreateJobHistoryDto {
     employeeId: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     startDate: Date
 }

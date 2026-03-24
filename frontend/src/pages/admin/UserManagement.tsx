@@ -1,18 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUserStore } from "@/store/user.store";
 import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
-import { UserFormModal } from "@/components/admin/UserFormModal";
+import { UserFormModal } from "./components/UserFormModal";
 import type { Role } from "@/types/auth.type";
 import type { User } from "@/types/user.type";
-
-const ROLE_BADGE = {
-  ADMIN: { label: "Quản trị viên", color: "bg-red-100 text-red-600" },
-  HR_MANAGER: { label: "Quản lý Nhân sự", color: "bg-blue-100 text-blue-600" },
-  WAREHOUSE_MANAGER: { label: "Quản lý Kho", color: "bg-emerald-100 text-emerald-600" },
-  SALES_MANAGER: { label: "Quản lý Kinh doanh", color: "bg-purple-100 text-purple-600" },
-  EMPLOYEE: { label: "Nhân viên", color: "bg-gray-100 text-gray-700" },
-  CUSTOMER: { label: "Khách hàng", color: "bg-gray-100 text-gray-500" },
-} as const;
+import { ROLE_BADGE } from "@/constants/role"
 
 type UserFormValues = {
   email: string;
@@ -33,23 +25,27 @@ export default function UserManagement() {
     deleteUser,
     setFilters,
     filters,
+    searchTerm,
+    setSearchTerm,
   } = useUserStore();
 
-  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers, filters]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setFilters({ search });
-    }, 350);
+  const filteredUsers = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) return users;
 
-    return () => clearTimeout(timeout);
-  }, [search, setFilters]);
+    return users.filter((user) => {
+      const email = user.email?.toLowerCase() ?? "";
+      const fullName = user.profile?.fullName?.toLowerCase() ?? "";
+      return email.includes(keyword) || fullName.includes(keyword);
+    });
+  }, [users, searchTerm]);
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -121,8 +117,8 @@ export default function UserManagement() {
               />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Tìm theo email hoặc họ tên..."
                 className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 pl-11 pr-4 text-sm text-gray-700 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
@@ -167,14 +163,14 @@ export default function UserManagement() {
                       Đang tải dữ liệu...
                     </td>
                   </tr>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
                       Không tìm thấy user nào phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  filteredUsers.map((user) => (
                     <tr
                       key={user.id}
                       className="group transition-colors hover:bg-gray-50/70"
