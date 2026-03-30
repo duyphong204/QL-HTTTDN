@@ -16,11 +16,11 @@ import SalaryManagement from '@/pages/hr/SalaryManagement';
 import LeaveRequestPage from '@/pages/employee/EmployeeLeaveRequestPage';
 import EmployeeManagement from '@/pages/hr/EmployeeManagement';
 import LeaveRequestManagement from '@/pages/hr/LeaveRequestManagement';
+import HrStatisticsPage from '@/pages/hr/HrStatisticsPage';
 import MySalaryPage from '@/pages/employee/MySalaryPage';
 import ProfilePage from '@/pages/employee/ProfilePage';
 import { rolesFor } from "@/routes/routes.config";
 import ImportSlipManagement from '@/pages/warehouse/ImportSlipManagement';
-import ReportPage from '@/pages/admin/ReportPage';
 import WarehouseReportPage from '@/pages/warehouse/WarehouseReportPage';
 import ExportSlipManagement from '@/pages/sales/ExportSlipManagement';
 import SalesReportPage from '@/pages/sales/SalesReportPage';
@@ -48,7 +48,7 @@ export const AppRouter = () => {
             <ProtectedRoute roles={rolesFor("/admin/users")}><UserManagement /></ProtectedRoute>
           } />
           <Route path="/admin/report" element={
-            <ProtectedRoute roles={rolesFor("/admin/report")}><ReportPage /></ProtectedRoute>
+            <ProtectedRoute roles={rolesFor("/admin/report")}><SalesReportPage /></ProtectedRoute>
           } />
 
           <Route path="/hr/employees" element={
@@ -59,6 +59,9 @@ export const AppRouter = () => {
           } />
           <Route path="/hr/leave-requests" element={
             <ProtectedRoute roles={rolesFor("/hr/leave-requests")}><LeaveRequestManagement /></ProtectedRoute>
+          } />
+          <Route path="/hr/statistics" element={
+            <ProtectedRoute roles={rolesFor("/hr/statistics")}><HrStatisticsPage /></ProtectedRoute>
           } />
 
           <Route path="/employee/leave-request" element={

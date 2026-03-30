@@ -1,26 +1,45 @@
 // frontend/src/pages/sales/ExportSlipManagement.tsx
 import { useEffect, useState } from 'react'
 import { useSalesStore } from '@/store/sales.store'
-import { productApi } from '@/api/warehouse.api'
-import type { Product } from '@/types/warehouse.type'
 import { Plus, Trash2, FileText } from 'lucide-react'
+import { DataTableToolbar } from '@/components/common/DataTableToolbar'
+import { PaginationControls } from '@/components/common/PaginationControls'
+import { useClientTable } from '@/hooks/useClientTable'
 
 const formatCurrency = (n: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
 
 export default function ExportSlipManagement() {
-    const { orders, isLoading, fetchOrders, createExportSlip } = useSalesStore()
-    const [products, setProducts] = useState<Product[]>([])
+    const {
+        orders,
+        productOptions,
+        isLoading,
+        isLoadingProducts,
+        fetchOrders,
+        fetchProductOptions,
+        createExportSlip,
+    } = useSalesStore()
     const [formOpen, setFormOpen] = useState(false)
     const [fullName, setFullName] = useState('')
     const [phone, setPhone] = useState('')
     const [address, setAddress] = useState('')
     const [items, setItems] = useState([{ productId: '', quantity: 1 }])
 
+    const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
+        data: orders,
+        pageSize: 10,
+        searchFn: (order, keyword) => {
+            const orderCode = order.id.slice(0, 8).toLowerCase()
+            const name = order.fullName.toLowerCase()
+            const phoneValue = order.phone.toLowerCase()
+            return orderCode.includes(keyword) || name.includes(keyword) || phoneValue.includes(keyword)
+        },
+    })
+
     useEffect(() => {
         fetchOrders()
-        productApi.getProducts({ limit: 200 }).then(res => setProducts(res.data ?? res))
-    }, [fetchOrders])
+        fetchProductOptions()
+    }, [fetchOrders, fetchProductOptions])
 
     const addItem = () => setItems(prev => [...prev, { productId: '', quantity: 1 }])
     const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i))
@@ -29,7 +48,7 @@ export default function ExportSlipManagement() {
 
     const calcTotal = () =>
         items.reduce((sum, item) => {
-            const p = products.find(x => x.id === item.productId)
+            const p = productOptions.find(x => x.id === item.productId)
             return sum + (p?.price || 0) * item.quantity
         }, 0)
 
@@ -58,6 +77,12 @@ export default function ExportSlipManagement() {
                 </div>
 
                 <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    <DataTableToolbar
+                        searchValue={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        searchPlaceholder="Tìm theo mã phiếu, khách hàng, số điện thoại..."
+                    />
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
@@ -73,9 +98,9 @@ export default function ExportSlipManagement() {
                             <tbody className="divide-y divide-gray-50">
                                 {isLoading ? (
                                     <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Đang tải...</td></tr>
-                                ) : orders.length === 0 ? (
+                                ) : pagedData.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Chưa có phiếu xuất nào.</td></tr>
-                                ) : orders.map(o => (
+                                ) : pagedData.map(o => (
                                     <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
                                         <td className="px-6 py-4 font-mono text-gray-900">{o.id.slice(0, 8).toUpperCase()}</td>
                                         <td className="px-6 py-4 font-medium text-gray-800">{o.fullName}</td>
@@ -90,6 +115,13 @@ export default function ExportSlipManagement() {
                             </tbody>
                         </table>
                     </div>
+
+                    <PaginationControls
+                        meta={meta}
+                        currentPage={page}
+                        isLoading={isLoading}
+                        onPageChange={setPage}
+                    />
                 </div>
             </div>
 
@@ -133,7 +165,7 @@ export default function ExportSlipManagement() {
                                             <select value={item.productId} onChange={e => updateItem(i, 'productId', e.target.value)} required
                                                 className="flex-1 h-9 px-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500">
                                                 <option value="">Chọn sản phẩm</option>
-                                                {products.map(p => (
+                                                {productOptions.map(p => (
                                                     <option key={p.id} value={p.id}>{p.name} (Tồn: {p.stockQuantity})</option>
                                                 ))}
                                             </select>
@@ -155,6 +187,10 @@ export default function ExportSlipManagement() {
                                 <span className="text-sm font-medium text-gray-700">Tổng giá trị xuất:</span>
                                 <span className="text-xl font-bold text-blue-600">{formatCurrency(calcTotal())}</span>
                             </div>
+
+                            {isLoadingProducts && (
+                                <p className="text-xs text-gray-500">Đang tải danh sách sản phẩm...</p>
+                            )}
 
                             <div className="flex justify-end gap-3">
                                 <button type="button" onClick={() => setFormOpen(false)}

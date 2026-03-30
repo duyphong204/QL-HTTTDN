@@ -11,10 +11,16 @@ import type {
     CreateSalaryDto,
     UpdateSalaryDto,
 } from "@/types/hr.type"
+import type { BaseFilters, PaginatedResponse } from "@/types/common.type"
+
+type EmployeeFilters = BaseFilters & {
+    department?: string;
+    position?: string;
+};
 
 export const employeeApi = {
-    getEmployees: async () => {
-        const res = await axiosInstance.get<Employee[]>("/employees");
+    getEmployees: async (params?: EmployeeFilters) => {
+        const res = await axiosInstance.get<PaginatedResponse<Employee>>("/employees", { params });
         return res.data;
     },
 
@@ -44,8 +50,8 @@ export const employeeApi = {
         const res = await axiosInstance.patch('/employees/me', data);
         return res.data;
     },
-    getHrStatistics: async () => {
-        const res = await axiosInstance.get('/employees/statistics/hr-report');
+    getHrStatistics: async (params?: { month?: number; year?: number }) => {
+        const res = await axiosInstance.get('/employees/statistics/hr-report', { params });
         return res.data;
     },
 };
@@ -80,8 +86,8 @@ export const leaveRequestApi = {
 };
 
 export const salaryApi = {
-    getSalaries: async () => {
-        const res = await axiosInstance.get<Salary[]>("/salaries");
+    getSalaries: async (params?: { month?: number; year?: number }) => {
+        const res = await axiosInstance.get<Salary[]>("/salaries", { params });
         return res.data;
     },
 
@@ -100,6 +106,10 @@ export const salaryApi = {
     },
     calculateSalary: async (data: CreateSalaryDto) => {
         const res = await axiosInstance.post('/salaries/calculate', data);
+        return res.data;
+    },
+    calculateAllSalaries: async (data: { month: number; year: number }) => {
+        const res = await axiosInstance.post('/salaries/calculate-all', data);
         return res.data;
     },
 };

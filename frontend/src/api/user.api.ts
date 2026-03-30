@@ -1,25 +1,13 @@
 import { axiosInstance } from "./axios";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
 import type { Role } from "@/types/auth.type";
+import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.type";
 
-export interface GetUsersParams {
-  page?: number;
-  limit?: number;
-  search?: string;
+export interface GetUsersParams extends Partial<BaseFilters> {
   role?: Role;
   sortBy?: "createdAt" | "email" | "role";
-  sortOrder?: "asc" | "desc";
+  sortOrder?: SortOrder;
   isActive?: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
 }
 
 export const userApi = {

@@ -3,34 +3,23 @@ import { userApi } from "@/api/user.api";
 import { toast } from "sonner";
 import type { Role } from "@/types/auth.type";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
 
-type UserFilters = {
-    page: number;
-    limit: number;
-    search: string;
+type UserFilters = BaseFilters & {
     role?: Role;
     sortBy: "createdAt" | "email" | "role";
-    sortOrder: "asc" | "desc";
+    sortOrder: SortOrder;
     isActive?: boolean;
-};
-
-type UserMeta = {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
 };
 
 type UserState = {
     users: User[];
-    meta: UserMeta | null;
+    meta: PaginationMeta | null;
     isLoading: boolean;
     error: string | null;
     filters: UserFilters;
-    searchTerm: string;
 
     setFilters: (filters: Partial<UserFilters>) => void;
-    setSearchTerm: (value: string) => void;
     fetchUsers: () => Promise<void>;
     addUser: (data: CreateUserDto) => Promise<void>;
     updateUser: (id: string, data: UpdateUserDto) => Promise<void>;
@@ -52,16 +41,16 @@ export const useUserStore = create<UserState>((set, get) => ({
         sortBy: "createdAt",
         sortOrder: "desc",
     },
-    searchTerm: "",
 
     setFilters: (newFilters) => {
+        const isPageChange = "page" in newFilters;
         set((state) => ({
-            filters: { ...state.filters, ...newFilters },
+            filters: {
+                ...state.filters,
+                ...newFilters,
+                page: isPageChange ? (newFilters.page ?? 1) : 1,
+            },
         }));
-    },
-
-    setSearchTerm: (value) => {
-        set({ searchTerm: value });
     },
 
     fetchUsers: async () => {
@@ -129,16 +118,6 @@ export const useUserStore = create<UserState>((set, get) => ({
             set({ error: message });
             toast.error(message);
             throw err;
-        }
-    },
-    // Thêm vào interface và create():
-    updateUserRole: async (id: string, role: string) => {
-        try {
-            await userApi.changeRole(id, role);
-            toast.success('Cập nhật quyền thành công');
-            get().fetchUsers();
-        } catch {
-            toast.error('Cập nhật quyền thất bại');
         }
     },
 

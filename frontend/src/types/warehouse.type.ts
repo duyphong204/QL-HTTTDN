@@ -1,4 +1,5 @@
 import type { BaseEntity } from "./common.type"
+import type { PaginatedResponse } from "./common.type"
 
 export interface Category extends BaseEntity {
   name: string
@@ -67,15 +68,7 @@ export interface ProductQuery {
   sortOrder?: "asc" | "desc"
 }
 
-export interface ProductResponse {
-  data: Product[]
-  meta: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
-}
+export type ProductResponse = PaginatedResponse<Product>
 // Input khi tạo StockIn detail
 export interface StockInDetailInput {
   productId: string

@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { useStockInStore } from '@/store/stockIn.store'
 import type { CreateStockInDto, StockInDetailInput } from '@/types/warehouse.type'
 import { Plus, Trash2, Eye } from 'lucide-react'
+import { DataTableToolbar } from '@/components/common/DataTableToolbar'
+import { PaginationControls } from '@/components/common/PaginationControls'
+import { useClientTable } from '@/hooks/useClientTable'
 
 export default function ImportSlipManagement() {
     const {
@@ -25,6 +28,16 @@ export default function ImportSlipManagement() {
     const [details, setDetails] = useState<StockInDetailInput[]>([
         { productId: '', quantity: 1, price: 0 }
     ])
+
+    const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
+        data: stockIns,
+        pageSize: 10,
+        searchFn: (slip, keyword) => {
+            const slipCode = slip.id.slice(0, 8).toLowerCase()
+            const supplierName = slip.supplier?.name?.toLowerCase() ?? ''
+            return slipCode.includes(keyword) || supplierName.includes(keyword)
+        },
+    })
 
     useEffect(() => {
         void Promise.all([fetchStockIns(), fetchReferenceData()])
@@ -73,6 +86,12 @@ export default function ImportSlipManagement() {
 
                 {/* Table */}
                 <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    <DataTableToolbar
+                        searchValue={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        searchPlaceholder="Tìm theo mã phiếu hoặc nhà cung cấp..."
+                    />
+
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
@@ -87,9 +106,9 @@ export default function ImportSlipManagement() {
                             <tbody className="divide-y divide-gray-50">
                                 {isLoading ? (
                                     <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Đang tải...</td></tr>
-                                ) : stockIns.length === 0 ? (
+                                ) : pagedData.length === 0 ? (
                                     <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400">Chưa có phiếu nhập nào.</td></tr>
-                                ) : stockIns.map((slip) => (
+                                ) : pagedData.map((slip) => (
                                     <tr key={slip.id} className="hover:bg-gray-50/70 transition-colors group">
                                         <td className="px-6 py-4 font-mono text-gray-900">{slip.id.slice(0, 8).toUpperCase()}</td>
                                         <td className="px-6 py-4 text-gray-700">{slip.supplier?.name || '—'}</td>
@@ -113,6 +132,13 @@ export default function ImportSlipManagement() {
                             </tbody>
                         </table>
                     </div>
+
+                    <PaginationControls
+                        meta={meta}
+                        currentPage={page}
+                        isLoading={isLoading}
+                        onPageChange={setPage}
+                    />
                 </div>
             </div>
 

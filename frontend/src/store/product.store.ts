@@ -4,23 +4,41 @@ import { categoryApi, productApi, supplierApi } from '@/api/warehouse.api';
 
 import type {
   Product,
-  ProductQuery,
   ProductResponse,
   CreateProductDto,
   UpdateProductDto,
   Category,
+  Supplier,
 } from '@/types/warehouse.type';
-import type { Supplier } from '@/types/supplier.type';
+import type { BaseFilters, SortOrder } from '@/types/common.type';
+
+type ProductFilters = BaseFilters & {
+  categoryId?: string;
+  supplierId?: string;
+  sortBy: 'name' | 'price' | 'costPrice' | 'stockQuantity';
+  sortOrder: SortOrder;
+};
 
 interface ProductState {
   products: Product[];
   meta?: ProductResponse['meta'];
-  filters: ProductQuery;
+  filters: ProductFilters;
+  report: {
+    period: { month?: number; year: number };
+    totalStockIns: number;
+    totalImportValue: number;
+    totalImportQuantity: number;
+    totalProductTypes: number;
+    totalStockQuantity: number;
+    lowStockProducts: { id: string; name: string; stockQuantity: number; minStock: number }[];
+  } | null;
   isLoading: boolean;
+  isLoadingReport: boolean;
   categories: Category[];
   suppliers: Supplier[];
   fetchProducts: () => Promise<void>;
-  setFilters: (filters: Partial<ProductQuery>) => void;
+  fetchReport: (params?: { month?: number; year?: number }) => Promise<void>;
+  setFilters: (filters: Partial<ProductFilters>) => void;
   createProduct: (data: CreateProductDto) => Promise<void>;
   updateProduct: (id: string, data: UpdateProductDto) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -31,6 +49,7 @@ interface ProductState {
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
   meta: undefined,
+  report: null,
   categories: [],
   suppliers: [],
   filters: {
@@ -44,6 +63,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
   },
 
   isLoading: false,
+  isLoadingReport: false,
 
   fetchProducts: async () => {
     try {
@@ -62,6 +82,17 @@ export const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
+  fetchReport: async (params) => {
+    try {
+      set({ isLoadingReport: true });
+      const data = await productApi.getReport(params);
+      set({ report: data, isLoadingReport: false });
+    } catch {
+      toast.error('Không thể tải báo cáo kho');
+      set({ isLoadingReport: false });
+    }
+  },
+
   setFilters: (newFilters) => {
     const isPageChange = 'page' in newFilters;
     set((state) => ({
@@ -71,7 +102,6 @@ export const useProductStore = create<ProductState>((set, get) => ({
         page: isPageChange ? (newFilters.page ?? 1) : 1,
       },
     }));
-    get().fetchProducts();
   },
 
   createProduct: async (data) => {

@@ -15,13 +15,13 @@ export interface Employee extends BaseEntity {
 }
 
 export interface CreateEmployeeDto {
-  email: string
-  password: string
-  fullName: string
-  phone?: string
-  department?: string
+    email: string
+    password: string
+    fullName: string
+    phone?: string
+    department?: string
     position?: Role
-  baseSalary: number
+    baseSalary: number
 }
 
 export interface UpdateProfileDto {
@@ -73,9 +73,9 @@ export interface CreateSalaryDto {
     employeeId: string
     month: number
     year: number
-    amount: number
     bonus?: number
     deduction?: number
+    status: 'PAID' | 'PENDING'
 }
 
 export interface UpdateSalaryDto {
@@ -86,8 +86,8 @@ export interface UpdateSalaryDto {
 }
 
 export interface LeaveRequest extends BaseEntity {
-    employeeId: string
-    employeeName: string
+    employeeId?: string
+    employeeName?: string
     startDate: string
     endDate: string
     type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"

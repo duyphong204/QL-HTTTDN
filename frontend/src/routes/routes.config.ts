@@ -57,6 +57,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         inSidebar: true,
     },
     {
+        path: "/hr/statistics",
+        title: "Thống kê Nhân sự",
+        icon: BarChart3,
+        roles: ["HR_MANAGER"],
+        inSidebar: true,
+    },
+    {
         path: "/warehouse/reports",
         title: "Báo cáo kho",
         icon: BarChart3,

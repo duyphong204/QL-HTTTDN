@@ -30,6 +30,11 @@ export const orderApi = {
         const res = await axiosInstance.get('/orders/stats', { params });
         return res.data;
     },
+
+    getSalesStatsByPeriod: async (params: { year: number; quarter?: number }) => {
+        const res = await axiosInstance.get('/orders/period', { params });
+        return res.data;
+    },
 };
 
 export const cartApi = {

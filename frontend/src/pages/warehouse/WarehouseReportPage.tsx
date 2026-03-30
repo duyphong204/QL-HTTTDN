@@ -1,6 +1,6 @@
 // frontend/src/pages/warehouse/WarehouseReportPage.tsx
 import { useEffect, useState } from 'react'
-import { productApi } from '@/api/warehouse.api'
+import { useProductStore } from '@/store/product.store'
 import { BarChart3, Package, AlertTriangle, TrendingDown, Printer } from 'lucide-react'
 
 const formatCurrency = (n: number) =>
@@ -10,29 +10,17 @@ const currentYear = new Date().getFullYear()
 const YEARS = [currentYear, currentYear - 1, currentYear - 2]
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
-interface WarehouseReport {
-    period: { month?: number; year: number }
-    totalStockIns: number
-    totalImportValue: number
-    totalImportQuantity: number
-    totalProductTypes: number
-    totalStockQuantity: number
-    lowStockProducts: { id: string; name: string; stockQuantity: number; minStock: number }[]
-}
-
 export default function WarehouseReportPage() {
-    const [report, setReport] = useState<WarehouseReport | null>(null)
-    const [loading, setLoading] = useState(false)
+    const { report, isLoadingReport, fetchReport } = useProductStore()
     const [month, setMonth] = useState('')
     const [year, setYear] = useState(String(currentYear))
 
     useEffect(() => {
-        setLoading(true)
-        productApi.getReport({
+        fetchReport({
             month: month ? Number(month) : undefined,
             year: Number(year),
-        }).then(setReport).finally(() => setLoading(false))
-    }, [month, year])
+        })
+    }, [month, year, fetchReport])
 
     return (
         <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
@@ -63,7 +51,7 @@ export default function WarehouseReportPage() {
                     </select>
                 </div>
 
-                {loading ? (
+                {isLoadingReport ? (
                     <div className="text-center py-20 text-gray-400">Đang tải báo cáo...</div>
                 ) : report && (
                     <>

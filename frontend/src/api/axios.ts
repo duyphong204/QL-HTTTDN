@@ -28,6 +28,11 @@ export const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+    if (config.data instanceof FormData && config.headers) {
+      // Let browser attach multipart boundary automatically.
+      delete config.headers["Content-Type"];
+    }
+
         if (accessToken && config.headers) {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }

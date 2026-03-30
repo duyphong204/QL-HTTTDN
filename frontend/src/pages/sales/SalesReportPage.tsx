@@ -13,18 +13,21 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 type PeriodType = 'month' | 'quarter' | 'year'
 
 export default function SalesReportPage() {
-    const { stats, isLoadingStats, fetchStats } = useSalesStore()
+    const { stats, isLoadingStats, fetchStats, fetchStatsByPeriod } = useSalesStore()
     const [periodType, setPeriodType] = useState<PeriodType>('month')
     const [month, setMonth] = useState(String(new Date().getMonth() + 1))
+    const [quarter, setQuarter] = useState('1')
     const [year, setYear] = useState(String(currentYear))
 
     useEffect(() => {
         if (periodType === 'month') {
             fetchStats({ month: Number(month), year: Number(year) })
+        } else if (periodType === 'quarter') {
+            fetchStatsByPeriod({ year: Number(year), quarter: Number(quarter) })
         } else {
-            fetchStats({ year: Number(year) })
+            fetchStatsByPeriod({ year: Number(year) })
         }
-    }, [periodType, month, year])
+    }, [periodType, month, quarter, year, fetchStats, fetchStatsByPeriod])
 
     return (
         <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
@@ -58,6 +61,16 @@ export default function SalesReportPage() {
                         <select value={month} onChange={e => setMonth(e.target.value)}
                             className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
                             {MONTHS.map(m => <option key={m} value={m}>Tháng {m}</option>)}
+                        </select>
+                    )}
+
+                    {periodType === 'quarter' && (
+                        <select value={quarter} onChange={e => setQuarter(e.target.value)}
+                            className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
+                            <option value="1">Quý 1</option>
+                            <option value="2">Quý 2</option>
+                            <option value="3">Quý 3</option>
+                            <option value="4">Quý 4</option>
                         </select>
                     )}
 

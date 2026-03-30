@@ -1,9 +1,10 @@
-import type { CreateSupplierDto, UpdateSupplierDto } from '@/types/supplier.type';
 import { axiosInstance } from './axios';
 import type {
   Product,
   Category,
   Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
   StockIn,
   CreateProductDto,
   UpdateProductDto,
@@ -11,16 +12,7 @@ import type {
   ProductQuery,
   ProductResponse,
 } from '@/types/warehouse.type';
-
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.type';
 
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
   const formData = new FormData();
@@ -63,12 +55,9 @@ export const categoryApi = {
 };
 
 export const supplierApi = {
-  getSuppliers: async (params?: {
-    search?: string;
-    page?: number;
-    limit?: number;
+  getSuppliers: async (params?: Partial<BaseFilters> & {
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: SortOrder;
   }) => {
     const res = await axiosInstance.get<PaginatedResponse<Supplier>>('/suppliers', { params });
     return res.data;

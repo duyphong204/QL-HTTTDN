@@ -66,8 +66,12 @@ export interface CancelOrderDto {
     reason?: string
 }
 export interface SalesStats {
-    month: number
-    year: number
+    month?: number
+    year?: number
+    period?: {
+        year: number
+        quarter?: number
+    }
     totalOrders: number
     totalItemsSold: number
     totalRevenue: number
