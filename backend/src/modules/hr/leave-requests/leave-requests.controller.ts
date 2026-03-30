@@ -24,7 +24,7 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('leave-requests')
 export class LeaveRequestsController {
-  constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
+  constructor(private readonly leaveRequestsService: LeaveRequestsService) { }
   @Roles(Role.EMPLOYEE)
   @Post()
   async create(@Request() req: any, @Body() dto: CreateLeaveDto) {
@@ -49,7 +49,8 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.findAll();
   }
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.leaveRequestsService.delete(id);
+  @Roles(Role.EMPLOYEE)
+  async delete(@Param('id') id: string, @Request() req: any) {
+    return this.leaveRequestsService.delete(id, req.user.id);
   }
 }

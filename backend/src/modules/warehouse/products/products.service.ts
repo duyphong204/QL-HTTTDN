@@ -7,6 +7,10 @@ import {
   UpdateProductDto,
   QueryProductDto,
 } from './dto/product.dto';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from 'src/common/utils/pagination.helper';
 
 @Injectable()
 export class ProductService {
@@ -27,7 +31,7 @@ export class ProductService {
     } = query;
     const normalizedSortOrder: Prisma.SortOrder =
       sortOrder === 'desc' ? 'desc' : 'asc';
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = calculatePaginationSkip(page, limit);
 
     const where: Prisma.ProductWhereInput = {};
 
@@ -64,15 +68,7 @@ export class ProductService {
       this.prisma.product.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
-      },
-    };
+    return buildPaginatedResponse(data, total, page, limit);
   }
 
   async findOne(id: string) {

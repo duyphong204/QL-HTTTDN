@@ -1,16 +1,35 @@
-
 import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
 
 @Injectable()
 export class CloudinaryService {
+  private extractPublicIdFromUrl(imageUrl: string): string | null {
+    try {
+      const parsed = new URL(imageUrl);
+      // Typical shape: /.../upload/v1234567890/products/filename.ext
+      const match = parsed.pathname.match(
+        /\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+$/,
+      );
+      return match?.[1] ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   async uploadImage(file: Express.Multer.File): Promise<string> {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
-        { folder: 'products' },
+        {
+          folder: 'products',
+          resource_type: 'image',
+          quality: 'auto',
+          fetch_format: 'auto',
+        },
         (error, result: UploadApiResponse) => {
-          if (error) return reject(error);
+          if (error) {
+            return reject(new Error(error.message));
+          }
           resolve(result.secure_url);
         },
       );
@@ -19,10 +38,10 @@ export class CloudinaryService {
   }
 
   async deleteImage(imageUrl: string): Promise<void> {
-    // Extract public_id from URL
-    const parts = imageUrl.split('/');
-    const filename = parts[parts.length - 1].split('.')[0];
-    const publicId = `products/${filename}`;
+    const publicId = this.extractPublicIdFromUrl(imageUrl);
+    if (!publicId) {
+      return;
+    }
     await cloudinary.uploader.destroy(publicId);
   }
 }

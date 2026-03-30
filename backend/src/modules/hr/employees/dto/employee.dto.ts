@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEmail,
@@ -8,29 +9,22 @@ import {
   Min,
 } from 'class-validator';
 export class UpdateProfileDto {
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  fullName?: string;
-
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   address?: string;
 
+  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  position?: string;
+  avatar?: string;
 
-  @IsString()
-  @IsOptional()
-  department?: string;
-
+  @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
   dateOfBirth?: string;
@@ -91,4 +85,43 @@ export class CreateEmployeeDto {
 
   @IsNumber()
   baseSalary: number;
+}
+
+export class QueryEmployeeDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiProperty({ required: false, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  page?: number;
+
+  @ApiProperty({ required: false, default: 10 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number;
+
+  @ApiProperty({ required: false, default: 'code' })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiProperty({ required: false, default: 'asc', enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc';
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  department?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  position?: string;
 }

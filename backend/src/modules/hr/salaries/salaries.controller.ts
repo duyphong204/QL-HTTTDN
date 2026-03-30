@@ -11,7 +11,11 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
-import { CreateSalaryDto, UpdateSalaryDto } from './dto/salary.dto';
+import {
+  CalculateAllSalaryDto,
+  CreateSalaryDto,
+  UpdateSalaryDto,
+} from './dto/salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -31,6 +35,13 @@ export class SalariesController {
   create(@Body() dto: CreateSalaryDto) {
     return this.salariesService.calculateSalary(dto);
   }
+
+  @Post('calculate-all')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  calculateAll(@Body() dto: CalculateAllSalaryDto) {
+    return this.salariesService.calculateAllForMonth(dto.month, dto.year);
+  }
+
   @Get('me')
   getMySalaries(
     @Request() req: any,

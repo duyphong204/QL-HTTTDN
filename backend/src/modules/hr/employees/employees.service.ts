@@ -1,14 +1,35 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   UpdateEmployeeDto,
   UpdateProfileDto,
   CreateEmployeeDto,
+  QueryEmployeeDto,
 } from './dto/employee.dto';
 import { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from 'src/common/utils/pagination.helper';
 @Injectable()
 export class EmployeesService {
   constructor(private prisma: PrismaService) {}
+
+  private async assertEmployeeNotAdminByUserId(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (user?.role === 'ADMIN') {
+      throw new ForbiddenException('Không được thao tác trên tài khoản ADMIN');
+    }
+  }
 
   async updateMe(userId: string, dto: UpdateProfileDto) {
     const employee = await this.prisma.employee.findUnique({
@@ -19,7 +40,12 @@ export class EmployeesService {
     }
     return this.prisma.profile.update({
       where: { userId },
-      data: dto,
+      data: {
+        phone: dto.phone,
+        address: dto.address,
+        avatar: dto.avatar,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+      },
     });
   }
   private async generateEmployeeCode(
@@ -41,11 +67,22 @@ export class EmployeesService {
   }
 
   async create(dto: CreateEmployeeDto) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { role: true },
+    });
+
+    if (existingUser?.role === 'ADMIN') {
+      throw new ForbiddenException('Không được thao tác trên tài khoản ADMIN');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: dto.email,
-          password: dto.password,
+          password: hashedPassword,
           role: 'EMPLOYEE',
         },
       });
@@ -61,7 +98,7 @@ export class EmployeesService {
       const employee = await tx.employee.create({
         data: {
           userId: user.id,
-          code: await this.generateEmployeeCode(tx) ,
+          code: await this.generateEmployeeCode(tx),
           department: dto.department,
           position: dto.position,
           baseSalary: dto.baseSalary,
@@ -96,6 +133,7 @@ export class EmployeesService {
         user: {
           select: {
             email: true,
+            role: true,
             profile: {
               select: {
                 fullName: true,
@@ -116,25 +154,76 @@ export class EmployeesService {
 
     return employee;
   }
-  async findAll() {
-    return this.prisma.employee.findMany({
-      where: {
-        resignDate: null,
-      },
-      include: {
-        user: {
-          select: {
-            email: true,
-            profile: {
-              select: {
-                fullName: true,
-                phone: true,
+  async findAll(query?: QueryEmployeeDto) {
+    const {
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'code',
+      sortOrder = 'asc',
+      department,
+      position,
+    } = query || {};
+
+    const allowedSortBy = ['code', 'department', 'position', 'joinDate'] as const;
+    const normalizedSortBy = allowedSortBy.includes(sortBy as (typeof allowedSortBy)[number])
+      ? sortBy
+      : 'code';
+    const normalizedSortOrder: Prisma.SortOrder =
+      sortOrder === 'desc' ? 'desc' : 'asc';
+
+    const skip = calculatePaginationSkip(page, limit);
+
+    const where: Prisma.EmployeeWhereInput = {
+      resignDate: null,
+      ...(search && {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' } },
+          {
+            user: {
+              email: { contains: search, mode: 'insensitive' },
+            },
+          },
+          {
+            user: {
+              profile: {
+                fullName: { contains: search, mode: 'insensitive' },
+              },
+            },
+          },
+        ],
+      }),
+      ...(department && { department }),
+      ...(position && { position }),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.employee.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          user: {
+            select: {
+              email: true,
+              profile: {
+                select: {
+                  fullName: true,
+                  phone: true,
+                  avatar: true,
+                },
               },
             },
           },
         },
-      },
-    });
+        orderBy: {
+          [normalizedSortBy]: normalizedSortOrder,
+        },
+      }),
+      this.prisma.employee.count({ where }),
+    ]);
+
+    return buildPaginatedResponse(data, total, page, limit);
   }
   //  cập nhật chức vụ/lương
   async update(id: string, dto: UpdateEmployeeDto) {
@@ -144,6 +233,9 @@ export class EmployeesService {
     if (!currentEmployee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
+
+    await this.assertEmployeeNotAdminByUserId(currentEmployee.userId);
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Kết thúc job hiện tại
       await tx.jobHistory.updateMany({
@@ -179,7 +271,15 @@ export class EmployeesService {
     if (!employee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
+
+    await this.assertEmployeeNotAdminByUserId(employee.userId);
+
     return this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: employee.userId },
+        data: { isActive: false },
+      });
+
       await tx.employee.update({
         where: { id },
         data: { resignDate: new Date() },
@@ -188,11 +288,8 @@ export class EmployeesService {
         where: { employeeId: id, endDate: null },
         data: { endDate: new Date() },
       });
-      await tx.user.update({
-        where: { id: employee.userId },
-        data: { role: 'CUSTOMER' },
-      });
-      return { message: 'Nhân sự đã được cho nghĩ việc' };
+      // ← KHÔNG đổi role. Giữ nguyên để lịch sử rõ ràng
+      return { message: 'Nhân sự đã được cho nghỉ việc' };
     });
   }
   async getEmployeeById(id: string) {
@@ -226,6 +323,15 @@ export class EmployeesService {
     return employee;
   }
   async getHrStatistics() {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    return this.getHrStatisticsWithFilter(currentMonth, currentYear);
+  }
+
+  async getHrStatisticsWithFilter(month?: number, year?: number) {
+    const currentMonth = month ?? new Date().getMonth() + 1;
+    const currentYear = year ?? new Date().getFullYear();
+
     const totalEmployees = await this.prisma.employee.count({
       where: { resignDate: null },
     });
@@ -233,16 +339,20 @@ export class EmployeesService {
       where: { resignDate: { not: null } },
     });
 
-    // Tổng lương phải trả tháng hiện tại
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+    const salaryWhere = { month: currentMonth, year: currentYear };
     const salaryAggregate = await this.prisma.salary.aggregate({
-      where: { month: currentMonth, year: currentYear },
+      where: salaryWhere,
       _sum: { amount: true, bonus: true, deduction: true },
     });
+
+    const headcount = await this.prisma.salary.count({
+      where: salaryWhere,
+    });
+
     return {
       totalEmployees,
       totalResigned,
+      headcount,
       salaryMonth: currentMonth,
       salaryYear: currentYear,
       totalSalaryPaid: salaryAggregate._sum.amount || 0,

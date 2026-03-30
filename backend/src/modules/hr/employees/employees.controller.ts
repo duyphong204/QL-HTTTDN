@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
   UsePipes,
@@ -15,6 +16,7 @@ import {
   CreateEmployeeDto,
   UpdateEmployeeDto,
   UpdateProfileDto,
+  QueryEmployeeDto,
 } from './dto/employee.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
@@ -33,8 +35,11 @@ export class EmployeesController {
   }
   @Get('statistics/hr-report')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  getHrStatistics() {
-    return this.employeesService.getHrStatistics();
+  getHrStatistics(@Query('month') month?: string, @Query('year') year?: string) {
+    return this.employeesService.getHrStatisticsWithFilter(
+      month ? Number(month) : undefined,
+      year ? Number(year) : undefined,
+    );
   }
   @Patch('me') //Nhân viên tự sửa thông tin
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
@@ -47,8 +52,8 @@ export class EmployeesController {
   }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async findAll() {
-    return this.employeesService.findAll();
+  async findAll(@Query() query?: QueryEmployeeDto) {
+    return this.employeesService.findAll(query);
   }
   @Patch(':id')
   @Roles(Role.ADMIN, Role.HR_MANAGER)

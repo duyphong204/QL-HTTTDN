@@ -46,3 +46,15 @@ export class UpdateSalaryDto {
   @IsEnum(SalaryStatus)
   status: SalaryStatus;
 }
+
+export class CalculateAllSalaryDto {
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  @Min(1)
+  @Max(12)
+  month: number;
+
+  @ApiProperty({ example: 2026 })
+  @IsNumber()
+  year: number;
+}

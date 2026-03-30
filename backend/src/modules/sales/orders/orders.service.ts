@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+    Injectable,
+    BadRequestException,
+    NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Prisma } from '@prisma/client';
@@ -6,6 +10,46 @@ import { Prisma } from '@prisma/client';
 @Injectable()
 export class OrdersService {
     constructor(private prisma: PrismaService) { }
+
+    async getOrders() {
+        return this.prisma.order.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                details: true,
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async getOrderById(id: string) {
+        const order = await this.prisma.order.findUnique({
+            where: { id },
+            include: {
+                details: {
+                    include: {
+                        product: true,
+                    },
+                },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+
+        if (!order) {
+            throw new NotFoundException('Không tìm thấy đơn hàng');
+        }
+
+        return order;
+    }
 
     async createOrder(userId: string, dto: CreateOrderDto) {
         return this.prisma.$transaction(async (tx) => {
@@ -66,6 +110,56 @@ export class OrdersService {
                 include: {
                     details: true
                 }
+            });
+        });
+    }
+
+    async updateOrderStatus(id: string, status: string) {
+        const order = await this.prisma.order.findUnique({ where: { id } });
+
+        if (!order) {
+            throw new NotFoundException('Không tìm thấy đơn hàng');
+        }
+
+        return this.prisma.order.update({
+            where: { id },
+            data: { status },
+            include: {
+                details: true,
+            },
+        });
+    }
+
+    async cancelOrder(id: string, _reason?: string) {
+        const order = await this.prisma.order.findUnique({
+            where: { id },
+            include: { details: true },
+        });
+
+        if (!order) {
+            throw new NotFoundException('Không tìm thấy đơn hàng');
+        }
+
+        if (order.status === 'CANCELLED') {
+            return order;
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            for (const detail of order.details) {
+                await tx.product.update({
+                    where: { id: detail.productId },
+                    data: {
+                        stockQuantity: {
+                            increment: detail.quantity,
+                        },
+                    },
+                });
+            }
+
+            return tx.order.update({
+                where: { id },
+                data: { status: 'CANCELLED' },
+                include: { details: true },
             });
         });
     }

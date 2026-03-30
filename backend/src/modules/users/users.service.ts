@@ -7,6 +7,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma, Role } from '@prisma/client';
 import { CreateUserDto, QueryUsersDto, UpdateUserDto } from './dto/user.dto';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from 'src/common/utils/pagination.helper';
 
 const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
   id: true,
@@ -43,7 +47,7 @@ export class UsersService {
       isActive,
     } = query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = calculatePaginationSkip(page, limit);
     const where: Prisma.UserWhereInput = {
       deletedAt: null,
       ...(typeof isActive === 'boolean' ? { isActive } : {}),
@@ -75,15 +79,7 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
-      },
-    };
+    return buildPaginatedResponse(data, total, page, limit);
   }
 
   async findByEmail(email: string) {

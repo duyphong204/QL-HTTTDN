@@ -7,6 +7,10 @@ import {
   UpdateSupplierDto,
 } from './dto/supplier.dto';
 import { Prisma } from '@prisma/client';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from 'src/common/utils/pagination.helper';
 
 @Injectable()
 export class SuppliersService {
@@ -21,7 +25,7 @@ export class SuppliersService {
       sortOrder = 'asc',
     } = query;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = calculatePaginationSkip(page, limit);
     const where: Prisma.SupplierWhereInput = search
       ? {
           OR: [
@@ -45,15 +49,7 @@ export class SuppliersService {
       this.prisma.supplier.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
-      },
-    };
+    return buildPaginatedResponse(data, total, page, limit);
   }
 
   async create(dto: CreateSupplierDto) {
