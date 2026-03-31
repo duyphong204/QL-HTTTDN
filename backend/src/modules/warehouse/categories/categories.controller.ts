@@ -9,7 +9,6 @@ import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
 @ApiTags('Categories')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
@@ -19,6 +18,7 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   create(@Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);

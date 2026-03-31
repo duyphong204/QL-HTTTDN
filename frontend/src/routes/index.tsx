@@ -6,9 +6,9 @@ import SupplierManagement from '@/pages/admin/SupplierManagement';
 import ProductManagement from '@/pages/admin/ProductPage';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { Toaster } from 'sonner';
 import NotFoundPage from '@/pages/NotFoundPage';
 import SalaryManagement from '@/pages/hr/SalaryManagement';
@@ -18,13 +18,30 @@ import LeaveRequestManagement from '@/pages/hr/LeaveRequestManagement';
 import MySalaryPage from '@/pages/employee/MySalaryPage';
 import ProfilePage from '@/pages/employee/ProfilePage';
 import { rolesFor } from "@/routes/routes.config";
-
+// IMPORT CUSTOMER PAGES
+import ShopHome from '@/pages/customer/ShopHome';
+import ProductList from '@/pages/customer/ProductList';
+import ProductDetail from '@/pages/customer/ProductDetail';
+import CartPage from '@/pages/customer/CartPage';
+import CheckoutPage from '@/pages/customer/CheckoutPage';
+import CustomerOrders from '@/pages/customer/CustomerOrders';
+import ShopLayout from '@/layouts/ShopLayout';
+import OrderSuccess from '@/pages/customer/OrderSuccess';
+import PaymentReturn from '@/pages/customer/PaymentReturn';
+import Profile from '@/pages/customer/Profile';
+import About from '@/pages/customer/About';
+import Contact from '@/pages/customer/Contact';
 export const AppRouter = () => {
   const checkAuth = useAuthStore((state) => state.checkAuth);
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname, location.search]);
 
   return (
     <>
@@ -33,7 +50,6 @@ export const AppRouter = () => {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-          <Route path="/" element={<HomePage />} />
           <Route path="/admin" element={<HomePage />} />
           <Route path="/admin/dashboard" element={<HomePage />} />
 
@@ -68,7 +84,31 @@ export const AppRouter = () => {
             <ProtectedRoute roles={rolesFor("/warehouse/suppliers")}><SupplierManagement /></ProtectedRoute>
           } />
         </Route>
-
+          {/* Customer Routes */}
+        <Route path="/" element={<ShopLayout />}>
+          <Route index element={<ShopHome />} />
+          <Route path="products" element={<ProductList />} />
+          <Route path="products/:id" element={<ProductDetail />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={
+            <ProtectedRoute><CheckoutPage /></ProtectedRoute>
+          } />
+          <Route path="orders" element={
+            <ProtectedRoute><CustomerOrders /></ProtectedRoute>
+          } />
+          <Route path="orders/:id" element={
+            <ProtectedRoute><CustomerOrders /></ProtectedRoute>
+          } />
+          <Route path="profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
+          <Route path="order-success/:id" element={
+            <ProtectedRoute><OrderSuccess /></ProtectedRoute>
+          } />
+          <Route path="payment-return" element={<PaymentReturn />} />
+          <Route path="about" element={<About />} />
+          <Route path="contact" element={<Contact />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Toaster position="top-right" richColors />

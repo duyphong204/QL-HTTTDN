@@ -4,104 +4,136 @@ import type { User } from "@/types/user.type";
 import type { LoginRequest, RegisterRequest } from "@/types/auth.type";
 import { setAccessToken } from "@/api/axios";
 import { toast } from "sonner";
+import { useCartStore } from "./cart.store";
 
 interface AuthState {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 
-    login: (data: LoginRequest) => Promise<void>;
-    register: (data: RegisterRequest) => Promise<void>;
-    fetchProfile: () => Promise<void>;
-    logout: () => Promise<void>;
-    checkAuth: () => Promise<void>; 
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
+  fetchProfile: () => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 const toErrorMessage = (error: unknown): string =>
-    error instanceof Error ? error.message : "Lỗi không xác định";
+  error instanceof Error ? error.message : "Lỗi không xác định";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true, 
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
 
-    login: async (data) => {
-        set({ isLoading: true });
-        try {
-            const res = await authApi.login(data);
-            setAccessToken(res.accessToken);
+  // 🔥 LOGIN
+  login: async (data) => {
+    set({ isLoading: true });
 
-            set({
-                user: res.user,
-                isAuthenticated: true,
-                isLoading: false,
-            });
+    try {
+      const res = await authApi.login(data);
+      setAccessToken(res.accessToken);
 
-            toast.success("Đăng nhập thành công 🎉");
-        } catch (error: unknown) {
-            const msg = toErrorMessage(error); 
-            toast.error(msg);
-            set({ isLoading: false });
-            throw error;
-        }
-    },
+      set({
+        user: res.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
 
-    register: async (data) => {
-        try {
-            await authApi.register(data);
-            toast.success("Đăng ký thành công 🎉");
-            await get().login({ email: data.email, password: data.password });
-        } catch (error: unknown) {
-            const msg = toErrorMessage(error);
-            toast.error(msg);
-            throw error;
-        }
-    },
+      // ✅ xử lý cart SAU khi có user
+      const cart = useCartStore.getState();
+      cart.mergeGuestToUser(res.user.id);
 
-    fetchProfile: async () => {
-        try {
-            const user = await authApi.getProfile();
-            set({ user, isAuthenticated: true });
-        } catch (error: unknown) {
-                const msg = toErrorMessage(error);
-                toast.error(msg);
-                set({ user: null, isAuthenticated: false });
-        }
-    },
+      toast.success("Đăng nhập thành công 🎉");
+    } catch (error: unknown) {
+      const msg = toErrorMessage(error);
+      toast.error(msg);
+      set({ isLoading: false });
+      throw error;
+    }
+  },
 
-    checkAuth: async () => {
-        set({ isLoading: true });
-        try {
-            const { accessToken } = await authApi.refresh();
-            setAccessToken(accessToken);
+  // 🔥 REGISTER
+  register: async (data) => {
+    try {
+      await authApi.register(data);
+      toast.success("Đăng ký thành công 🎉");
 
-            const user = await authApi.getProfile();
+      await get().login({
+        email: data.email,
+        password: data.password,
+      });
+    } catch (error: unknown) {
+      const msg = toErrorMessage(error);
+      toast.error(msg);
+      throw error;
+    }
+  },
 
-            set({
-                user,
-                isAuthenticated: true,
-                isLoading : false                                                                                                                                         
-            });
-        } catch(error : unknown) {
-            setAccessToken(null);
-            set({
-                user: null,
-                isAuthenticated: false
-            });
-        } finally {
-            set({ isLoading: false });
-        }
-    },
+  // 🔥 FETCH PROFILE
+  fetchProfile: async () => {
+    try {
+      const user = await authApi.getProfile();
 
-    logout: async () => {
-        try {
-            await authApi.logout();
-            toast.success("Đã đăng xuất 👋");
-        } catch (error: unknown) {
-            toast.error("Đăng xuất thất bại");
-        }
+      set({ user, isAuthenticated: true });
 
-        setAccessToken(null);
-        set({ user: null, isAuthenticated: false });
-    },
+      // load cart theo user
+      const cart = useCartStore.getState();
+      cart.setOwner(user.id);
+    } catch (error: unknown) {
+      set({ user: null, isAuthenticated: false });
+    }
+  },
+
+  // 🔥 CHECK AUTH (quan trọng nhất khi reload)
+  checkAuth: async () => {
+    set({ isLoading: true });
+
+    try {
+      const { accessToken } = await authApi.refresh();
+      setAccessToken(accessToken);
+
+      const user = await authApi.getProfile();
+
+      set({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      // ✅ load cart theo user
+      const cart = useCartStore.getState();
+      cart.setOwner(user.id);
+    } catch (error: unknown) {
+      setAccessToken(null);
+
+      set({
+        user: null,
+        isAuthenticated: false,
+      });
+
+      // 👉 fallback về guest
+      const cart = useCartStore.getState();
+      cart.setOwner("guest");
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  // 🔥 LOGOUT
+  logout: async () => {
+    try {
+      await authApi.logout();
+      toast.success("Đã đăng xuất 👋");
+    } catch {
+      toast.error("Đăng xuất thất bại");
+    }
+
+    setAccessToken(null);
+    set({ user: null, isAuthenticated: false });
+
+    // ✅ chuyển về guest cart
+    const cart = useCartStore.getState();
+    cart.setOwner("guest");
+  },
 }));

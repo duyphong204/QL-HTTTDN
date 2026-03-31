@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -92,6 +93,22 @@ export class QueryProductDto {
   @IsOptional()
   @IsString()
   supplierId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @IsOptional()
+  @IsIn(['featured', 'price-low', 'price-high', 'newest'])
+  sortBy?: 'featured' | 'price-low' | 'price-high' | 'newest' = 'featured';
 
   @IsOptional()
   @Type(() => Number)

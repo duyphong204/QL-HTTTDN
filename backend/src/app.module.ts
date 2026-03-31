@@ -8,8 +8,19 @@ import { UsersModule } from './modules/users/users.module';
 import { HRModule } from './modules/hr/hr.module';
 import { LoggingMiddleware } from './middlware/logging/logging.middleware';
 
+import { OrderModule } from './modules/sales/orders/order.module';
+import { PaymentsModule } from './modules/sales/payments/payments.module';
+
 @Module({
-  imports: [WarehouseModule, PrismaModule, AuthModule, UsersModule, HRModule],
+  imports: [
+    WarehouseModule,
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    HRModule,
+    OrderModule,
+    PaymentsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -20,15 +20,15 @@ enum Role {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
+  id               String    @id @default(uuid())
+  email            String    @unique
   password         String
-  role             Role     @default(CUSTOMER)
+  role             Role      @default(CUSTOMER)
   refreshTokenHash String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  isActive         Boolean  @default(true)   
-  deletedAt        DateTime? 
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  isActive         Boolean   @default(true)
+  deletedAt        DateTime?
 
   profile  Profile?
   employee Employee?
@@ -38,9 +38,9 @@ model User {
 }
 
 model Profile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id])
   fullName    String
   phone       String?
   address     String?
@@ -51,32 +51,32 @@ model Profile {
 // --- HR MODULE ---
 
 model Employee {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
-  code         String   @unique // Mã nhân viên (ví dụ: NV001)
-  
-  department   String?  // Gộp trực tiếp: Kinh doanh, Kho, Nhân sự...
-  position     String?  // Gộp trực tiếp: Trưởng phòng, Nhân viên, Kế toán...
-  
-  baseSalary   Float
-  joinDate     DateTime @default(now())
-  resignDate   DateTime?
-  
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+  code   String @unique // Mã nhân viên (ví dụ: NV001)
+
+  department String? // Gộp trực tiếp: Kinh doanh, Kho, Nhân sự...
+  position   String? // Gộp trực tiếp: Trưởng phòng, Nhân viên, Kế toán...
+
+  baseSalary Float
+  joinDate   DateTime  @default(now())
+  resignDate DateTime?
+
   salaries      Salary[]
   leaveRequests LeaveRequest[]
   jobHistories  JobHistory[]
 }
 
 model JobHistory {
-  id           String   @id @default(uuid())
-  employeeId   String
-  employee     Employee @relation(fields: [employeeId], references: [id])
-  department   String?
-  position     String?
-  baseSalary   Float
-  startDate    DateTime @default(now())
-  endDate      DateTime?
+  id         String    @id @default(uuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  department String?
+  position   String?
+  baseSalary Float
+  startDate  DateTime  @default(now())
+  endDate    DateTime?
 }
 
 model Salary {
@@ -86,23 +86,23 @@ model Salary {
   month      Int
   year       Int
   amount     Float
-  bonus      Float   @default(0)
-  deduction  Float   @default(0)
-  status     String   // PAID, PENDING
+  bonus      Float    @default(0)
+  deduction  Float    @default(0)
+  status     String // PAID, PENDING
   createdAt  DateTime @default(now())
 }
 
 model LeaveRequest {
-  id         String   @id @default(uuid())
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  startDate  DateTime
-  endDate    DateTime
-  type       String   // SICK, ANNUAL, MATERNITY
-  reason     String
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  id           String   @id @default(uuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  type         String // SICK, ANNUAL, MATERNITY
+  reason       String
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
   approvedById String?
-  createdAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
 }
 
 // --- WAREHOUSE MODULE ---
@@ -114,31 +114,31 @@ model Category {
 }
 
 model Supplier {
-  id        String    @id @default(uuid())
-  name      String
-  address   String?
-  phone     String?
-  email     String?
-  products  Product[]
-  stockIns  StockIn[]
+  id       String    @id @default(uuid())
+  name     String
+  address  String?
+  phone    String?
+  email    String?
+  products Product[]
+  stockIns StockIn[]
 }
 
 model Product {
-  id            String    @id @default(uuid())
+  id            String  @id @default(uuid())
   name          String
   description   String?
-  price         Float     // Current selling price
-  costPrice     Float     // Current cost price
-  stockQuantity Int       @default(0)
-  minStock      Int       @default(10)
+  price         Float // Current selling price
+  costPrice     Float // Current cost price
+  stockQuantity Int     @default(0)
+  minStock      Int     @default(10)
 
-  imageUrl      String?
+  imageUrl String?
 
-  categoryId    String
-  category      Category  @relation(fields: [categoryId], references: [id])
-  supplierId    String
-  supplier      Supplier  @relation(fields: [supplierId], references: [id])
-  
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
   stockInDetails StockInDetail[]
   orderDetails   OrderDetail[]
   cartItems      CartItem[]
@@ -151,8 +151,8 @@ model StockIn {
   date        DateTime @default(now())
   totalAmount Float
   createdById String?
-  
-  details     StockInDetail[]
+
+  details StockInDetail[]
 }
 
 model StockInDetail {
@@ -162,7 +162,7 @@ model StockInDetail {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float   // Historical cost price
+  price     Float // Historical cost price
 }
 
 // --- SALES & ECOMMERCE ---
@@ -186,19 +186,37 @@ model CartItem {
 }
 
 model Order {
-  id          String   @id @default(uuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
-  fullName    String
-  phone       String
-  address     String
-  totalAmount Float
-  status      String   @default("PENDING") // PENDING, APPROVED, SHIPPING, COMPLETED, CANCELLED
-  paymentMethod String @default("COD")
-  paymentStatus String @default("UNPAID")
-  createdAt   DateTime @default(now())
-  
-  details     OrderDetail[]
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  fullName      String
+  phone         String
+  address       String
+  totalAmount   Float
+  status        String   @default("PENDING") // PENDING, APPROVED, SHIPPING, COMPLETED, CANCELLED
+  paymentMethod String   @default("COD")
+  paymentStatus String   @default("UNPAID")
+  createdAt     DateTime @default(now())
+
+  details             OrderDetail[]
+  paymentTransactions PaymentTransaction[]
+}
+
+model PaymentTransaction {
+  id            String    @id @default(uuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id])
+  provider      String
+  providerTxnId String?   @unique
+  amount        Float
+  status        String    @default("PENDING")
+  rawPayload    Json?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([status])
 }
 
 model OrderDetail {
@@ -208,8 +226,8 @@ model OrderDetail {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Float   // Selling price at time of sale
-  costPrice Float   // Cost price at time of sale for profit calculation
+  price     Float // Selling price at time of sale
+  costPrice Float // Cost price at time of sale for profit calculation
 }
 
 model SystemLog {
@@ -220,4 +238,3 @@ model SystemLog {
   details   String?
   createdAt DateTime @default(now())
 }
-

@@ -1,54 +1,79 @@
-import { axiosInstance } from "./axios"
-import type { Order, CreateOrderDto, Cart, CartItem, AddToCartDto } from "@/types/sales.type"
+import { axiosInstance } from "./axios";
+import type {
+  Order,
+  CreateOrderDto,
+  CreateOrderResponse,
+  VerifyPaymentReturnResponse,
+  Cart,
+  CartItem,
+  AddToCartDto,
+} from "@/types/sales.type";
 
 export const orderApi = {
-    getOrders: async () => {
-        const res = await axiosInstance.get<Order[]>("/orders");
-        return res.data;
-    },
+  getOrders: async () => {
+    const res = await axiosInstance.get<Order[]>("/orders");
+    return res.data;
+  },
 
-    getOrderById: async (id: string) => {
-        const res = await axiosInstance.get<Order>(`/orders/${id}`);
-        return res.data;
-    },
+  getOrderById: async (id: string) => {
+    const res = await axiosInstance.get<Order>(`/orders/${id}`);
+    return res.data;
+  },
 
-    createOrder: async (data: CreateOrderDto) => {
-        const res = await axiosInstance.post<Order>("/orders", data);
-        return res.data;
-    },
+  getMyOrders: async () => {
+    const res = await axiosInstance.get<Order[]>("/orders/me");
+    return res.data;
+  },
+  createOrder: async (data: CreateOrderDto) => {
+    const res = await axiosInstance.post<CreateOrderResponse>("/orders", data);
+    return res.data;
+  },
 
-    updateOrderStatus: async (id: string, status: string) => {
-        const res = await axiosInstance.patch<Order>(`/orders/${id}/status`, { status });
-        return res.data;
-    },
+  verifyVnpayReturn: async (params: URLSearchParams) => {
+    const res = await axiosInstance.get<VerifyPaymentReturnResponse>(
+      `/payments/vnpay/verify-return?${params.toString()}`,
+    );
+    return res.data;
+  },
 
-    cancelOrder: async (id: string, reason?: string) => {
-        const res = await axiosInstance.patch<Order>(`/orders/${id}/cancel`, { reason });
-        return res.data;
-    },
+  updateOrderStatus: async (id: string, status: string) => {
+    const res = await axiosInstance.patch<Order>(`/orders/${id}/status`, {
+      status,
+    });
+    return res.data;
+  },
+
+  cancelOrder: async (id: string, reason?: string) => {
+    const res = await axiosInstance.patch<Order>(`/orders/${id}/cancel`, {
+      reason,
+    });
+    return res.data;
+  },
 };
 
 export const cartApi = {
-    getCart: async () => {
-        const res = await axiosInstance.get<Cart>("/cart");
-        return res.data;
-    },
+  getCart: async () => {
+    const res = await axiosInstance.get<Cart>("/cart");
+    return res.data;
+  },
 
-    addToCart: async (data: AddToCartDto) => {
-        const res = await axiosInstance.post<CartItem>("/cart/items", data);
-        return res.data;
-    },
+  addToCart: async (data: AddToCartDto) => {
+    const res = await axiosInstance.post<CartItem>("/cart/items", data);
+    return res.data;
+  },
 
-    updateCartItem: async (itemId: string, quantity: number) => {
-        const res = await axiosInstance.patch<CartItem>(`/cart/items/${itemId}`, { quantity });
-        return res.data;
-    },
+  updateCartItem: async (itemId: string, quantity: number) => {
+    const res = await axiosInstance.patch<CartItem>(`/cart/items/${itemId}`, {
+      quantity,
+    });
+    return res.data;
+  },
 
-    removeCartItem: async (itemId: string) => {
-        await axiosInstance.delete(`/cart/items/${itemId}`);
-    },
+  removeCartItem: async (itemId: string) => {
+    await axiosInstance.delete(`/cart/items/${itemId}`);
+  },
 
-    clearCart: async () => {
-        await axiosInstance.post("/cart/clear");
-    },
+  clearCart: async () => {
+    await axiosInstance.post("/cart/clear");
+  },
 };

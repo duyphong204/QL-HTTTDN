@@ -24,7 +24,6 @@ import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
@@ -40,6 +39,7 @@ export class ProductController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   @UseInterceptors(FileInterceptor('image'))
   create(
@@ -50,6 +50,7 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   @UseInterceptors(FileInterceptor('image'))
   update(
@@ -61,6 +62,7 @@ export class ProductController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);

@@ -1,123 +1,126 @@
-import type { BaseEntity } from "./common.type"
+import type { BaseEntity } from "./common.type";
 
 export interface Category extends BaseEntity {
-    name: string
+  name: string;
 }
 
 export interface Supplier extends BaseEntity {
-    name: string
-    address?: string
-    phone?: string
-    email?: string
-    contactPerson?: string
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  contactPerson?: string;
 }
 export interface CreateProductDto {
-  name: string
-  description?: string
+  name: string;
+  description?: string;
 
-  price: number
-  costPrice: number
+  price: number;
+  costPrice: number;
 
-  stockQuantity: number
+  stockQuantity: number;
 
-  categoryId: string
-  supplierId: string
+  categoryId: string;
+  supplierId: string;
 
-  image?: File
+  image?: File;
 }
 
 export interface UpdateProductDto {
-  name?: string
-  description?: string
+  name?: string;
+  description?: string;
 
-  price?: number
-  costPrice?: number
+  price?: number;
+  costPrice?: number;
 
-  stockQuantity?: number
+  stockQuantity?: number;
 
-  categoryId?: string
-  supplierId?: string
+  categoryId?: string;
+  supplierId?: string;
 
-  image?: File
+  image?: File;
 }
 export interface Product extends BaseEntity {
-  name: string
-  description?: string
-  price: number
-  costPrice: number
-  stockQuantity: number
-  imageUrl?: string
+  name: string;
+  description?: string;
+  price: number;
+  costPrice: number;
+  stockQuantity: number;
+  imageUrl?: string;
 
-  categoryId: string
-  supplierId: string
+  categoryId: string;
+  supplierId: string;
 
-  category?: Category
-  supplier?: Supplier
+  category?: Category;
+  supplier?: Supplier;
 }
 
 export interface ProductQuery {
-  search?: string
-  categoryId?: string
-  supplierId?: string
-  page?: number
-  limit?: number
+  search?: string;
+  categoryId?: string;
+  supplierId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: "featured" | "price-low" | "price-high" | "newest";
+  page?: number;
+  limit?: number;
 }
 
 export interface ProductResponse {
-  data: Product[]
+  data: Product[];
   meta: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 // Input khi tạo StockIn detail
 export interface StockInDetailInput {
-    productId: string
-    quantity: number
-    price: number
+  productId: string;
+  quantity: number;
+  price: number;
 }
 
 // Response khi lấy StockIn detail
 export interface StockInDetail extends BaseEntity {
-    stockInId: string
-    productId: string
-    product?: Product
-    quantity: number
-    price: number
+  stockInId: string;
+  productId: string;
+  product?: Product;
+  quantity: number;
+  price: number;
 }
 
 export interface CreateStockInDto {
-    supplierId: string
-    date?: Date
-    details: StockInDetailInput[]
+  supplierId: string;
+  date?: Date;
+  details: StockInDetailInput[];
 }
 
 export interface UpdateStockInDto {
-    supplierId?: string
-    date?: Date
-    details?: StockInDetailInput[]
+  supplierId?: string;
+  date?: Date;
+  details?: StockInDetailInput[];
 }
 
 export interface StockIn extends BaseEntity {
-    date: Date
-    totalAmount: number
-    supplierId: string
-    createdById?: string
-    supplier?: Supplier
-    details?: StockInDetail[]
+  date: Date;
+  totalAmount: number;
+  supplierId: string;
+  createdById?: string;
+  supplier?: Supplier;
+  details?: StockInDetail[];
 }
 export interface CreateSupplierDto {
-    name: string;
-    phone?: string;
-    email?: string;
-    address?: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
 }
 
 export interface UpdateSupplierDto {
-    name?: string;
-    phone?: string;
-    email?: string;
-    address?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
 }
