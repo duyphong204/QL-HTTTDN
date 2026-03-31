@@ -1,25 +1,34 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
-class StockInDetailDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+// backend/src/modules/warehouse/stock-in/dto/stock-in.dto.ts
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+
+export class StockInDetailDto {
+  @IsUUID()
   productId: string;
-  @ApiProperty()
+
   @IsNumber()
-  @Min(1)
+  @IsPositive()
   quantity: number;
-  @ApiProperty()
+
   @IsNumber()
-  @Min(0)
-  price: number; // Giá nhập tại thời điểm này
+  @IsPositive()
+  price: number; // Giá nhập (historical cost price)
 }
+
 export class CreateStockInDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   supplierId: string;
-  @ApiProperty({ type: [StockInDetailDto] })
+
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StockInDetailDto)
   details: StockInDetailDto[];
 }

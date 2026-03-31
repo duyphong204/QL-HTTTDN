@@ -14,12 +14,29 @@ import type {
   CreateSalaryDto,
   UpdateSalaryDto
 } from "@/types/hr.type"
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type"
 
 interface HrStatistics {
   totalEmployees: number
-  activeEmployees: number
-  resignedEmployees: number
-  totalSalary: number
+  totalResigned: number
+  headcount: number
+  salaryMonth: number
+  salaryYear: number
+  totalSalaryPaid: number
+  totalBonus: number
+}
+
+type EmployeeFilters = BaseFilters & {
+  department?: string;
+  position?: string;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return "Lỗi không xác định"
 }
 
 interface HrState {
@@ -29,6 +46,8 @@ interface HrState {
   // =================
 
   employees: Employee[]
+  meta: PaginationMeta | null
+  filters: EmployeeFilters
   leaveRequests: LeaveRequest[]
   salaries: Salary[]
   selectedEmployee: Employee | null
@@ -45,6 +64,7 @@ interface HrState {
   // EMPLOYEE
   // =================
 
+  setFilters: (filters: Partial<EmployeeFilters>) => void
   fetchEmployees: () => Promise<void>
   fetchEmployeeById: (id: string) => Promise<Employee | null>
   clearSelectedEmployee: () => void
@@ -66,7 +86,8 @@ interface HrState {
   // SALARY
   // =================
 
-  fetchSalaries: () => Promise<void>
+  fetchSalaries: (params?: { month?: number; year?: number }) => Promise<void>
+  calculateAllSalaries: (data: { month: number; year: number }) => Promise<void>
   calculateSalary: (data: CreateSalaryDto) => Promise<void>
   createSalary: (data: CreateSalaryDto) => Promise<void>
   updateSalary: (id: string, data: UpdateSalaryDto) => Promise<void>
@@ -75,12 +96,22 @@ interface HrState {
   // STATISTICS
   // =================
 
-  fetchStatistics: () => Promise<void>
+  fetchStatistics: (params?: { month?: number; year?: number }) => Promise<void>
 }
 
 export const useHrStore = create<HrState>((set, get) => ({
 
   employees: [],
+  meta: null,
+  filters: {
+    page: 1,
+    limit: 10,
+    search: "",
+    sortBy: "code",
+    sortOrder: "asc" as SortOrder,
+    department: "",
+    position: "",
+  },
   leaveRequests: [],
   salaries: [],
   selectedEmployee: null,
@@ -96,24 +127,42 @@ export const useHrStore = create<HrState>((set, get) => ({
   // EMPLOYEES
   // =================
 
+  setFilters: (newFilters) => {
+    const isPageChange = 'page' in newFilters;
+    set((state) => ({
+      filters: {
+        ...state.filters,
+        ...newFilters,
+        page: isPageChange ? (newFilters.page ?? 1) : 1,
+      },
+    }));
+  },
+
   fetchEmployees: async () => {
 
     set({ loadingEmployees: true })
 
     try {
 
-      const data = await employeeApi.getEmployees()
-
-      set({
-        employees: data
+      const { filters } = get()
+      const response = await employeeApi.getEmployees({
+        page: filters.page,
+        limit: filters.limit,
+        search: filters.search,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder as SortOrder,
+        department: filters.department,
+        position: filters.position,
       })
 
-    } catch (error: any) {
+      set({
+        employees: response.data,
+        meta: response.meta,
+      })
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải danh sách nhân viên"
-      )
+    } catch (error: unknown) {
+
+      toast.error(getErrorMessage(error) || "Không thể tải danh sách nhân viên")
 
     } finally {
       set({ loadingEmployees: false })
@@ -134,12 +183,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       return employee
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải chi tiết nhân viên"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải chi tiết nhân viên")
 
       return null
 
@@ -164,12 +210,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Thêm nhân sự thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Thêm nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Thêm nhân sự thất bại")
 
       throw error
     }
@@ -189,12 +232,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Cập nhật nhân sự thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Cập nhật nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Cập nhật nhân sự thất bại")
 
       throw error
     }
@@ -214,12 +254,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Đã xóa nhân sự")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Xóa nhân sự thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Xóa nhân sự thất bại")
     }
   },
 
@@ -239,12 +276,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         leaveRequests: data
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải đơn nghỉ phép"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải đơn nghỉ phép")
 
     } finally {
       set({ loadingLeaveRequests: false })
@@ -271,12 +305,9 @@ export const useHrStore = create<HrState>((set, get) => ({
           : "Đã từ chối đơn nghỉ"
       )
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Duyệt đơn thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Duyệt đơn thất bại")
     }
   },
 
@@ -284,27 +315,37 @@ export const useHrStore = create<HrState>((set, get) => ({
   // SALARY
   // =================
 
-  fetchSalaries: async () => {
+  fetchSalaries: async (params) => {
 
     set({ loadingSalaries: true })
 
     try {
 
-      const data = await salaryApi.getSalaries()
+      const data = await salaryApi.getSalaries(params)
 
       set({
         salaries: data
       })
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Không thể tải bảng lương"
-      )
+      toast.error(getErrorMessage(error) || "Không thể tải bảng lương")
 
     } finally {
       set({ loadingSalaries: false })
+    }
+  },
+
+  calculateAllSalaries: async (data) => {
+    try {
+      await salaryApi.calculateAllSalaries(data)
+
+      toast.success("Đã tính lương tháng cho toàn bộ nhân sự active")
+
+      await get().fetchSalaries(data)
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || "Không thể tính lương hàng loạt")
+      throw error
     }
   },
 
@@ -318,12 +359,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       await get().fetchSalaries()
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Tính lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Tính lương thất bại")
     }
   },
 
@@ -339,12 +377,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Tạo bảng lương thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Tạo bảng lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Tạo bảng lương thất bại")
     }
   },
 
@@ -362,12 +397,9 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       toast.success("Cập nhật bảng lương thành công")
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast.error(
-        error?.response?.data?.message ||
-        "Cập nhật bảng lương thất bại"
-      )
+      toast.error(getErrorMessage(error) || "Cập nhật bảng lương thất bại")
     }
   },
 
@@ -375,13 +407,13 @@ export const useHrStore = create<HrState>((set, get) => ({
   // STATISTICS
   // =================
 
-  fetchStatistics: async () => {
+  fetchStatistics: async (params) => {
 
     set({ loadingStatistics: true })
 
     try {
 
-      const data = await employeeApi.getHrStatistics()
+      const data = await employeeApi.getHrStatistics(params)
 
       set({
         statistics: data

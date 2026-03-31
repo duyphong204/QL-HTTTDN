@@ -117,7 +117,7 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
       await get().fetchMyLeaveRequests()
     } catch {
       toast.error("Không thể gửi đơn nghỉ phép!")
-      throw error
+      // throw error
     }
   },
 

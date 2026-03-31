@@ -1,17 +1,18 @@
 import { axiosInstance } from "./axios";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
 import type { Role } from "@/types/auth.type";
+import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.type";
 
-export interface GetUsersParams {
-  page?: number;
-  limit?: number;
-  search?: string;
+export interface GetUsersParams extends Partial<BaseFilters> {
   role?: Role;
+  sortBy?: "createdAt" | "email" | "role";
+  sortOrder?: SortOrder;
+  isActive?: boolean;
 }
 
 export const userApi = {
   getUsers: async (params?: GetUsersParams) => {
-    const res = await axiosInstance.get<User[]>("/users", { params });
+    const res = await axiosInstance.get<PaginatedResponse<User>>("/users", { params });
     return res.data;
   },
 
@@ -34,7 +35,7 @@ export const userApi = {
     await axiosInstance.delete(`/users/${id}`);
   },
 
-  changeRole: async (id: string, role: Role) => {
+  changeRole: async (id: string, role: string) => {
     const res = await axiosInstance.patch<User>(`/users/${id}/role`, { role });
     return res.data;
   },

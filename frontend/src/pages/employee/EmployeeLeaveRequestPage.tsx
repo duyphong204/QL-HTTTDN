@@ -269,8 +269,8 @@ export default function EmployeeLeaveRequestPage() {
 
                   <option value="ANNUAL">Nghỉ phép</option>
                   <option value="SICK">Nghỉ bệnh</option>
-                  <option value="UNPAID">Nghỉ không lương</option>
-
+                  <option value="MATERNITY">Nghỉ thai sản</option>
+                  <option value="RESIGNATION">Đơn nghỉ việc</option>
                 </select>
 
               </div>

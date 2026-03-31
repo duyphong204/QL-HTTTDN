@@ -42,6 +42,63 @@ export class SalariesService {
     });
   }
 
+  async calculateAllForMonth(month: number, year: number) {
+    const activeEmployees = await this.prisma.employee.findMany({
+      where: {
+        resignDate: null,
+        user: {
+          isActive: true,
+        },
+      },
+      select: {
+        id: true,
+        baseSalary: true,
+      },
+    });
+
+    return this.prisma.$transaction(async (tx) => {
+      let created = 0;
+      let skipped = 0;
+
+      for (const employee of activeEmployees) {
+        const existing = await tx.salary.findFirst({
+          where: {
+            employeeId: employee.id,
+            month,
+            year,
+          },
+          select: { id: true },
+        });
+
+        if (existing) {
+          skipped += 1;
+          continue;
+        }
+
+        await tx.salary.create({
+          data: {
+            employeeId: employee.id,
+            month,
+            year,
+            bonus: 0,
+            deduction: 0,
+            amount: employee.baseSalary,
+            status: 'PENDING',
+          },
+        });
+        created += 1;
+      }
+
+      return {
+        month,
+        year,
+        totalEmployees: activeEmployees.length,
+        created,
+        skipped,
+      };
+    });
+  }
+
   async getMySalaries(userId: string, month?: number, year?: number) {
     return this.prisma.salary.findMany({
       where: {

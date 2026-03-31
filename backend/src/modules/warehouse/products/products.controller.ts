@@ -33,9 +33,16 @@ export class ProductController {
     return this.productsService.findAll(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.productsService.findOne(id);
+  @Get('report/stats')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  getWarehouseReport(
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    return this.productsService.getWarehouseReport(
+      month ? Number(month) : undefined,
+      year ? Number(year) : undefined,
+    );
   }
 
   @Post()
@@ -66,5 +73,10 @@ export class ProductController {
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.productsService.findOne(id);
   }
 }

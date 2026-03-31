@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { employeeApi, salaryApi } from "@/api/hr.api";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState, useEffect, useMemo } from "react";
+import { useHrStore } from "@/store/hr.store";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, TrendingUp, DollarSign, Gift } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 const currentYear = new Date().getFullYear();
@@ -12,127 +13,152 @@ const formatCurrency = (n: number) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n || 0);
 
 export default function HrStatisticsPage() {
-    const [stats, setStats] = useState<any>(null);
-    const [allSalaries, setAllSalaries] = useState<any[]>([]);
+    const { statistics, salaries, loadingSalaries, loadingStatistics, fetchStatistics, fetchSalaries } = useHrStore();
     const [year, setYear] = useState(String(currentYear));
     const [month, setMonth] = useState(String(new Date().getMonth() + 1));
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchAll = async () => {
-            setLoading(true);
             try {
-                const [hrStats, salaries] = await Promise.all([
-                    employeeApi.getHrStatistics(),
-                    salaryApi.getSalaries(),
+                await Promise.all([
+                    fetchStatistics({ month: Number(month), year: Number(year) }),
+                    fetchSalaries({ month: Number(month), year: Number(year) }),
                 ]);
-                setStats(hrStats);
-                setAllSalaries(salaries);
-            } catch { toast.error("Không thể tải thống kê!"); }
-            finally { setLoading(false); }
+            } catch { toast.error("Lỗi kết nối dữ liệu"); }
         };
         fetchAll();
-    }, []);
+    }, [month, year, fetchStatistics, fetchSalaries]);
 
-    const filteredSalaries = allSalaries.filter(s => s.month === Number(month) && s.year === Number(year));
-    const totalPay = filteredSalaries.reduce((sum, s) => sum + s.amount, 0);
-    const totalBonus = filteredSalaries.reduce((sum, s) => sum + s.bonus, 0);
+    const { totalPay, totalBonus } = useMemo(() => {
+        return salaries.reduce((acc, s) => ({
+            totalPay: acc.totalPay + (s.amount || 0),
+            totalBonus: acc.totalBonus + (s.bonus || 0)
+        }), { totalPay: 0, totalBonus: 0 });
+    }, [salaries]);
+
+    const isLoading = loadingSalaries || loadingStatistics;
 
     return (
-        <div className="space-y-6 p-4 sm:p-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Thống Kê Nhân Sự & Lương</h1>
-                <p className="text-sm text-gray-500">Tổng quan tình hình nhân sự tháng này</p>
+        <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans antialiased text-slate-900">
+            {/* Upper Header: Navigation & Filters */}
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+                <div>
+                    <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-1">
+                        <div className="h-1 w-4 bg-blue-600 rounded-full" />
+                        Analytics Dashboard
+                    </div>
+                    <h1 className="text-4xl font-black tracking-tight">HR Insights</h1>
+                </div>
+
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-slate-200/60">
+                    <div className="p-2 bg-slate-50 rounded-xl">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <Select value={month} onValueChange={setMonth}>
+                        <SelectTrigger className="w-[120px] border-none focus:ring-0 font-medium">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                            {MONTHS.map(m => <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={year} onValueChange={setYear}>
+                        <SelectTrigger className="w-[90px] border-none focus:ring-0 font-medium">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                            {[currentYear, currentYear - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
-            {/* 4 thẻ tổng quan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                    { label: "Nhân viên đang làm", value: stats?.totalEmployees ?? "—", icon: Users, color: "blue" },
-                    { label: "Đã nghỉ việc (lũy kế)", value: stats?.totalResigned ?? "—", icon: TrendingUp, color: "red" },
-                    { label: "Quỹ lương tháng này", value: stats ? formatCurrency(stats.totalSalaryPaid) : "—", icon: DollarSign, color: "green" },
-                    { label: "Tổng thưởng tháng này", value: stats ? formatCurrency(stats.totalBonus) : "—", icon: Gift, color: "purple" },
-                ].map(card => (
-                    <Card key={card.label}>
-                        <CardContent className="pt-5 flex items-center gap-4">
-                            <div className={`h-11 w-11 rounded-lg bg-${card.color}-100 flex items-center justify-center shrink-0`}>
-                                <card.icon className={`h-5 w-5 text-${card.color}-600`} />
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide">{card.label}</p>
-                                <p className="text-xl font-bold text-gray-900 mt-0.5">{loading ? "..." : card.value}</p>
+            <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+                {/* Highlight Stats: Left Column */}
+                <div className="col-span-12 lg:col-span-4 space-y-6">
+                    <Card className="bg-blue-600 border-none shadow-blue-200/50 shadow-xl overflow-hidden relative group">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                            <Wallet className="h-32 w-32 text-white" />
+                        </div>
+                        <CardContent className="p-8 relative">
+                            <p className="text-blue-100 font-medium mb-1">Tổng chi ngân sách</p>
+                            <h2 className="text-3xl font-bold text-white mb-6">
+                                {isLoading ? "..." : formatCurrency((statistics?.totalSalaryPaid || 0) + (statistics?.totalBonus || 0))}
+                            </h2>
+                            <div className="flex items-center gap-2 text-sm text-blue-100 bg-blue-500/30 w-fit px-3 py-1 rounded-full border border-white/10">
+                                <ArrowUpRight className="h-4 w-4" />
+                                <span>+2.4% so với tháng trước</span>
                             </div>
                         </CardContent>
                     </Card>
-                ))}
-            </div>
 
-            {/* Chi tiết lương theo tháng */}
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                        <h2 className="text-base font-semibold text-gray-800">Chi Tiết Lương Theo Tháng</h2>
-                        <div className="flex gap-2">
-                            <Select value={month} onValueChange={setMonth}>
-                                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {MONTHS.map(m => <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select value={year} onValueChange={setYear}>
-                                <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {[currentYear, currentYear - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Card className="border-none shadow-sm bg-white p-6">
+                            <Users className="h-6 w-6 text-blue-500 mb-4" />
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nhân sự</p>
+                            <h3 className="text-2xl font-bold mt-1">{statistics?.totalEmployees || 0}</h3>
+                        </Card>
+                        <Card className="border-none shadow-sm bg-white p-6">
+                            <CreditCard className="h-6 w-6 text-emerald-500 mb-4" />
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Tiền thưởng</p>
+                            <h3 className="text-2xl font-bold mt-1 text-emerald-600">{formatCurrency(totalBonus)}</h3>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* Main Table: Right Column */}
+                <Card className="col-span-12 lg:col-span-8 border-none shadow-sm bg-white/70 backdrop-blur-sm">
+                    <CardContent className="p-0">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="font-bold text-lg">Danh sách chi trả lương</h3>
+                            <span className="text-xs font-medium text-slate-400">Cập nhật 5 phút trước</span>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50 border-b">
-                                <tr>
-                                    <th className="p-3 text-left font-medium text-gray-600">Nhân viên</th>
-                                    <th className="p-3 text-right font-medium text-gray-600">Lương cơ bản</th>
-                                    <th className="p-3 text-right font-medium text-gray-600">Thưởng</th>
-                                    <th className="p-3 text-right font-medium text-gray-600">Khấu trừ</th>
-                                    <th className="p-3 text-right font-medium text-gray-600">Thực lĩnh</th>
-                                    <th className="p-3 text-center font-medium text-gray-600">Trạng thái</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {filteredSalaries.length === 0 ? (
-                                    <tr><td colSpan={6} className="p-8 text-center text-gray-400">Không có dữ liệu lương cho tháng {month}/{year}</td></tr>
-                                ) : filteredSalaries.map(s => (
-                                    <tr key={s.id} className="hover:bg-gray-50/50">
-                                        <td className="p-3 font-medium text-gray-900">{s.employee?.user?.profile?.fullName || "N/A"}</td>
-                                        <td className="p-3 text-right text-gray-700">{formatCurrency(s.employee?.baseSalary || 0)}</td>
-                                        <td className="p-3 text-right text-green-700 font-medium">+{formatCurrency(s.bonus)}</td>
-                                        <td className="p-3 text-right text-red-700 font-medium">-{formatCurrency(s.deduction)}</td>
-                                        <td className="p-3 text-right font-bold text-gray-900">{formatCurrency(s.amount)}</td>
-                                        <td className="p-3 text-center">
-                                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.status === "PAID" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800"}`}>
-                                                {s.status === "PAID" ? "Đã trả" : "Chưa trả"}
-                                            </span>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-slate-400 border-b border-slate-50">
+                                        <th className="px-6 py-4 font-medium text-left">Nhân viên</th>
+                                        <th className="px-6 py-4 font-medium text-right">Thu nhập</th>
+                                        <th className="px-6 py-4 font-medium text-center">Trạng thái</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                            {filteredSalaries.length > 0 && (
-                                <tfoot className="bg-gray-50 border-t-2 border-gray-200">
-                                    <tr>
-                                        <td className="p-3 font-bold text-gray-700">Tổng cộng ({filteredSalaries.length} NV)</td>
-                                        <td colSpan={2} className="p-3 text-right font-bold text-green-700">Thưởng: {formatCurrency(totalBonus)}</td>
-                                        <td colSpan={2} className="p-3 text-right font-bold text-blue-700">Thực trả: {formatCurrency(totalPay)}</td>
-                                        <td className="p-3"></td>
-                                    </tr>
-                                </tfoot>
-                            )}
-                        </table>
-                    </div>
-                </CardContent>
-            </Card>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {salaries.map((s) => (
+                                        <tr key={s.id} className="group hover:bg-white transition-all">
+                                            <td className="px-6 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-blue-600 border border-white shadow-sm">
+                                                        {s.employee?.user?.profile?.fullName?.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
+                                                            {s.employee?.user?.profile?.fullName}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400">Mã NV: {s.id.slice(-5)}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-5 text-right">
+                                                <p className="font-bold text-slate-900">{formatCurrency(s.amount)}</p>
+                                                <p className="text-[10px] text-emerald-500 font-medium">Thưởng: +{formatCurrency(s.bonus)}</p>
+                                            </td>
+                                            <td className="px-6 py-5 text-center">
+                                                <Badge className={`rounded-lg px-3 py-1 border-none shadow-none font-semibold ${
+                                                    s.status === "PAID" 
+                                                    ? "bg-blue-50 text-blue-600" 
+                                                    : "bg-orange-50 text-orange-600"
+                                                }`}>
+                                                    {s.status === "PAID" ? "Hoàn tất" : "Đang xử lý"}
+                                                </Badge>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }

@@ -1,24 +1,22 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useHrStore } from "@/store/hr.store"
 
-import { Search, UserPlus, Pencil, Trash2, Eye } from "lucide-react"
+import { UserPlus, Pencil, Trash2, Eye } from "lucide-react"
 
-import { EmployeeFormModal } from "@/components/hr/EmployeeFormModal"
-import { EmployeeDetailModal } from "@/components/hr/EmployeeDetailModal"
+import { EmployeeFormModal } from "./components/EmployeeFormModal"
+import { EmployeeDetailModal } from "./components/EmployeeDetailModal"
 
 import type { Employee } from "@/types/hr.type"
-import type { CreateEmployeeDto } from "@/types/hr.type"
-
-const POSITION_BADGE: Record<string, string> = {
-  "HR Manager": "bg-blue-100 text-blue-600",
-  "Developer": "bg-purple-100 text-purple-600",
-  "Accountant": "bg-emerald-100 text-emerald-600",
-  "Sales": "bg-orange-100 text-orange-600",
-}
+import type { CreateEmployeeDto, UpdateEmployeeDto } from "@/types/hr.type"
+import { ROLE_BADGE } from "@/constants/role"
+import { usePaginatedList } from "@/hooks/usePaginatedList"
+import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { PaginationControls } from "@/components/common/PaginationControls"
 
 export default function EmployeeManagement() {
   const {
     employees,
+    meta,
     loadingEmployees,
     selectedEmployee,
     loadingEmployeeDetail,
@@ -27,24 +25,19 @@ export default function EmployeeManagement() {
     clearSelectedEmployee,
     deleteEmployee,
     createEmployee,
-    updateEmployee
+    updateEmployee,
+    filters,
+    setFilters,
   } = useHrStore()
 
-  const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
 
-  useEffect(() => {
-    fetchEmployees()
-  }, [fetchEmployees])
-
-  const filteredEmployees = employees.filter((emp) => {
-    const name = emp.user?.profile?.fullName?.toLowerCase() || ""
-
-    return (
-      emp.code.toLowerCase().includes(search.toLowerCase()) ||
-      name.includes(search.toLowerCase())
-    )
+  const { searchTerm, setSearchTerm, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchEmployees,
+    debounceMs: 400,
   })
 
   const openCreateModal = () => {
@@ -67,11 +60,11 @@ export default function EmployeeManagement() {
     }
   }
 
-  const handleSubmit = async (data: CreateEmployeeDto) => {
+  const handleSubmit = async (data: CreateEmployeeDto | UpdateEmployeeDto) => {
     if (editingEmployee) {
-      await updateEmployee(editingEmployee.id, data)
+      await updateEmployee(editingEmployee.id, data as UpdateEmployeeDto)
     } else {
-      await createEmployee(data)
+      await createEmployee(data as CreateEmployeeDto)
     }
 
     setModalOpen(false)
@@ -101,21 +94,11 @@ export default function EmployeeManagement() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
-          <div className="p-4 border-b border-gray-50">
-            <div className="relative max-w-xl">
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm kiếm nhân viên..."
-                className="w-full h-11 pl-11 pr-4 text-sm bg-gray-50/50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-700"
-              />
-            </div>
-          </div>
+          <DataTableToolbar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Tìm kiếm nhân viên..."
+          />
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
@@ -134,18 +117,18 @@ export default function EmployeeManagement() {
               <tbody className="divide-y divide-gray-50">
                 {loadingEmployees ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
                       Đang tải dữ liệu...
                     </td>
                   </tr>
-                ) : filteredEmployees.length === 0 ? (
+                ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
                       Không tìm thấy nhân viên.
                     </td>
                   </tr>
                 ) : (
-                  filteredEmployees.map((emp) => (
+                  employees.map((emp) => (
                     <tr key={emp.id} className="hover:bg-gray-50/70 transition-colors group">
                       <td className="px-6 py-4 font-mono text-gray-900">
                         {emp.code}
@@ -162,11 +145,11 @@ export default function EmployeeManagement() {
                       <td className="px-6 py-4">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            POSITION_BADGE[emp.position || ""] ||
+                            ROLE_BADGE[emp.position || "EMPLOYEE"]?.color ||
                             "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          {emp.position || "—"}
+                          {emp.position ? ROLE_BADGE[emp.position]?.label || emp.position : "—"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
@@ -211,10 +194,18 @@ export default function EmployeeManagement() {
               </tbody>
             </table>
           </div>
+
+          <PaginationControls 
+            meta={meta} 
+            currentPage={filters.page} 
+            isLoading={loadingEmployees}
+            onPageChange={goToPage} 
+          />
         </div>
       </div>
 
       <EmployeeFormModal
+        key={editingEmployee?.id || "create-employee"}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         editingEmployee={editingEmployee}

@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { UserPlus, Pencil, Trash2 } from "lucide-react";
 import { useUserStore } from "@/store/user.store";
-import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
-import { UserFormModal } from "@/components/admin/UserFormModal";
+import { UserFormModal } from "./components/UserFormModal";
+import { ROLE_BADGE } from "@/constants/role";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import type { Role } from "@/types/auth.type";
 import type { User } from "@/types/user.type";
-
-const ROLE_BADGE = {
-  ADMIN: { label: "Quản trị viên", color: "bg-red-100 text-red-600" },
-  HR_MANAGER: { label: "Quản lý Nhân sự", color: "bg-blue-100 text-blue-600" },
-  WAREHOUSE_MANAGER: { label: "Quản lý Kho", color: "bg-emerald-100 text-emerald-600" },
-  SALES_MANAGER: { label: "Quản lý Kinh doanh", color: "bg-purple-100 text-purple-600" },
-  EMPLOYEE: { label: "Nhân viên", color: "bg-gray-100 text-gray-700" },
-  CUSTOMER: { label: "Khách hàng", color: "bg-gray-100 text-gray-500" },
-} as const;
 
 type UserFormValues = {
   email: string;
@@ -26,6 +21,7 @@ type UserFormValues = {
 export default function UserManagement() {
   const {
     users,
+    meta,
     isLoading,
     fetchUsers,
     addUser,
@@ -35,21 +31,15 @@ export default function UserManagement() {
     filters,
   } = useUserStore();
 
-  const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setFilters({ search });
-    }, 350);
-
-    return () => clearTimeout(timeout);
-  }, [search, setFilters]);
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchUsers,
+    debounceMs: 300,
+  });
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -95,12 +85,8 @@ export default function UserManagement() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Quản lý User
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Quản lý tài khoản và phân quyền người dùng
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý User</h1>
+            <p className="mt-1 text-sm text-gray-500">Quản lý tài khoản và phân quyền người dùng</p>
           </div>
 
           <button
@@ -113,40 +99,60 @@ export default function UserManagement() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
-          <div className="grid gap-3 border-b border-gray-50 p-4 md:grid-cols-12">
-            <div className="relative md:col-span-8">
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo email hoặc họ tên..."
-                className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 pl-11 pr-4 text-sm text-gray-700 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-            </div>
+          <DataTableToolbar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Tìm theo email hoặc họ tên..."
+          >
+            <select
+              value={filters.role || ""}
+              onChange={(e) =>
+                updateFilters({
+                  role: (e.target.value || undefined) as Role | undefined,
+                })
+              }
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Tất cả vai trò</option>
+              {Object.entries(ROLE_BADGE).map(([role, config]) => (
+                <option key={role} value={role}>
+                  {config.label}
+                </option>
+              ))}
+            </select>
 
-            <div className="md:col-span-4">
-              <select
-                value={filters.role || ""}
-                onChange={(e) =>
-                  setFilters({
-                    role: (e.target.value || undefined) as Role | undefined,
-                  })
-                }
-                className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 px-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="">Tất cả vai trò</option>
-                {Object.entries(ROLE_BADGE).map(([role, config]) => (
-                  <option key={role} value={role}>
-                    {config.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+            <select
+              value={typeof filters.isActive === "boolean" ? String(filters.isActive) : ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                updateFilters({
+                  isActive: value === "" ? undefined : value === "true",
+                });
+              }}
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="true">Đang hoạt động</option>
+              <option value="false">Ngưng hoạt động</option>
+            </select>
+
+            <select
+              value={`${filters.sortBy}:${filters.sortOrder}`}
+              onChange={(e) => {
+                const [sortBy, sortOrder] = e.target.value.split(":") as [
+                  "createdAt" | "email" | "role",
+                  "asc" | "desc",
+                ];
+                updateFilters({ sortBy, sortOrder });
+              }}
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="createdAt:desc">Mới nhất</option>
+              <option value="createdAt:asc">Cũ nhất</option>
+              <option value="email:asc">Email A-Z</option>
+              <option value="email:desc">Email Z-A</option>
+            </select>
+          </DataTableToolbar>
 
           <div className="overflow-x-auto">
             <table className="w-full whitespace-nowrap text-left text-sm">
@@ -175,17 +181,12 @@ export default function UserManagement() {
                   </tr>
                 ) : (
                   users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="group transition-colors hover:bg-gray-50/70"
-                    >
+                    <tr key={user.id} className="group transition-colors hover:bg-gray-50/70">
                       <td className="px-6 py-4 font-semibold text-gray-900">
                         {user.email ? user.email.split("@")[0] : "—"}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
-                        {user.profile?.fullName || "—"}
-                      </td>
+                      <td className="px-6 py-4 text-gray-600">{user.profile?.fullName || "—"}</td>
 
                       <td className="px-6 py-4 text-gray-600">{user.email || "—"}</td>
 
@@ -225,6 +226,14 @@ export default function UserManagement() {
               </tbody>
             </table>
           </div>
+
+          <PaginationControls
+            meta={meta}
+            currentPage={filters.page}
+            totalLabel="Tổng"
+            isLoading={isLoading}
+            onPageChange={goToPage}
+          />
         </div>
       </div>
 

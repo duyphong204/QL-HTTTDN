@@ -11,6 +11,7 @@ export interface Profile {
 export interface User {
   id: string
   email: string
+  role?: string
   profile: Profile
 }
 
@@ -38,8 +39,8 @@ export interface EmployeeProfile {
 }
 
 export interface UpdateProfileDto {
-  fullName?: string
   phone?: string
   address?: string
+  avatar?: string
   dateOfBirth?: string
 }

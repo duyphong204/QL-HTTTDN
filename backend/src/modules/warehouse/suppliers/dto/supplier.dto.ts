@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsInt, Min } from 'class-validator';
 
 export class CreateSupplierDto {
   @ApiProperty({ example: 'Công ty ABC', description: 'Tên nhà cung cấp' })
@@ -43,4 +45,30 @@ export class UpdateSupplierDto {
   @IsEmail({}, { message: 'Email không hợp lệ' })
   @IsOptional()
   email?: string;
+}
+
+export class QuerySupplierDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number = 10;
+
+  @IsOptional()
+  @IsIn(['name', 'email', 'phone'])
+  sortBy?: 'name' | 'email' | 'phone' = 'name';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'asc';
 }

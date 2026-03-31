@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -16,7 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { CreateUserDto, QueryUsersDto, UpdateUserDto } from './dto/user.dto';
 
 @ApiTags('Admin - User Management')
 @ApiBearerAuth()
@@ -27,8 +28,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  getAllUsers() {
-    return this.usersService.findAll();
+  getAllUsers(@Query() query: QueryUsersDto) {
+    return this.usersService.findAll(query);
   }
   // GET /users/:id
   @Get(':id')

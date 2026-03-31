@@ -1,4 +1,5 @@
 import type { BaseEntity } from "./common.type"
+import type { Role } from "./auth.type"
 import type { User } from "./user.type"
 
 export interface Employee extends BaseEntity {
@@ -6,7 +7,7 @@ export interface Employee extends BaseEntity {
     user?: User
     code: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     joinDate: Date
     resignDate?: Date
@@ -14,27 +15,27 @@ export interface Employee extends BaseEntity {
 }
 
 export interface CreateEmployeeDto {
-  email: string
-  password: string
-  fullName: string
-  phone?: string
-  department?: string
-  position?: string
-  baseSalary: number
+    email: string
+    password: string
+    fullName: string
+    phone?: string
+    department?: string
+    position?: Role
+    baseSalary: number
 }
 
 export interface UpdateProfileDto {
     fullName?: string;
     phone?: string;
     address?: string;
-    position?: string;
+    position?: Role;
     department?: string;
 }
 
 export interface UpdateEmployeeDto {
     code?: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary?: number
     resignDate?: Date
 }
@@ -43,7 +44,7 @@ export interface JobHistory extends BaseEntity {
     employeeId: string
     employee?: Employee
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     startDate: Date
     endDate?: Date
@@ -52,7 +53,7 @@ export interface JobHistory extends BaseEntity {
 export interface CreateJobHistoryDto {
     employeeId: string
     department?: string
-    position?: string
+    position?: Role
     baseSalary: number
     startDate: Date
 }
@@ -72,9 +73,9 @@ export interface CreateSalaryDto {
     employeeId: string
     month: number
     year: number
-    amount: number
     bonus?: number
     deduction?: number
+    status: 'PAID' | 'PENDING'
 }
 
 export interface UpdateSalaryDto {
@@ -85,8 +86,8 @@ export interface UpdateSalaryDto {
 }
 
 export interface LeaveRequest extends BaseEntity {
-    employeeId: string
-    employeeName: string
+    employeeId?: string
+    employeeName?: string
     startDate: string
     endDate: string
     type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"

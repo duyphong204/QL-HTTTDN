@@ -1,9 +1,10 @@
-import type { CreateSupplierDto, UpdateSupplierDto } from '@/types/supplier.type';
 import { axiosInstance } from './axios';
 import type {
   Product,
   Category,
   Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
   StockIn,
   CreateProductDto,
   UpdateProductDto,
@@ -11,6 +12,7 @@ import type {
   ProductQuery,
   ProductResponse,
 } from '@/types/warehouse.type';
+import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.type';
 
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
   const formData = new FormData();
@@ -53,14 +55,11 @@ export const categoryApi = {
 };
 
 export const supplierApi = {
-  getSuppliers: async (params?: {
-    search?: string;
-    page?: number;
-    limit?: number;
+  getSuppliers: async (params?: Partial<BaseFilters> & {
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: SortOrder;
   }) => {
-    const res = await axiosInstance.get('/suppliers', { params });
+    const res = await axiosInstance.get<PaginatedResponse<Supplier>>('/suppliers', { params });
     return res.data;
   },
 
@@ -97,22 +96,22 @@ export const productApi = {
 
   createProduct: async (data: CreateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.post<Product>('/products', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await axiosInstance.post<Product>('/products', formData);
     return res.data;
   },
 
   updateProduct: async (id: string, data: UpdateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.patch<Product>('/products/' + id, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const res = await axiosInstance.patch<Product>('/products/' + id, formData);
     return res.data;
   },
 
   deleteProduct: async (id: string) => {
     await axiosInstance.delete('/products/' + id);
+  },
+  getReport: async (params?: { month?: number; year?: number }) => {
+    const res = await axiosInstance.get('/products/report/stats', { params });
+    return res.data;
   },
 };
 

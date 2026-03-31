@@ -3,16 +3,18 @@ import { userApi } from "@/api/user.api";
 import { toast } from "sonner";
 import type { Role } from "@/types/auth.type";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
 
-type UserFilters = {
-    page: number;
-    limit: number;
-    search: string;
+type UserFilters = BaseFilters & {
     role?: Role;
+    sortBy: "createdAt" | "email" | "role";
+    sortOrder: SortOrder;
+    isActive?: boolean;
 };
 
 type UserState = {
     users: User[];
+    meta: PaginationMeta | null;
     isLoading: boolean;
     error: string | null;
     filters: UserFilters;
@@ -29,13 +31,25 @@ const getErrorMessage = (error: unknown): string =>
 
 export const useUserStore = create<UserState>((set, get) => ({
     users: [],
+    meta: null,
     isLoading: false,
     error: null,
-    filters: { page: 1, limit: 10, search: "" },
+    filters: {
+        page: 1,
+        limit: 10,
+        search: "",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+    },
 
     setFilters: (newFilters) => {
+        const isPageChange = "page" in newFilters;
         set((state) => ({
-            filters: { ...state.filters, ...newFilters },
+            filters: {
+                ...state.filters,
+                ...newFilters,
+                page: isPageChange ? (newFilters.page ?? 1) : 1,
+            },
         }));
     },
 
@@ -43,8 +57,11 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ isLoading: true, error: null });
         try {
             const { filters } = get();
-            const users = await userApi.getUsers(filters);
-            set({ users });
+            const response = await userApi.getUsers(filters);
+            set({
+                users: response.data,
+                meta: response.meta,
+            });
         } catch (err: unknown) {
             const message = getErrorMessage(err);
             set({ error: message });
@@ -103,4 +120,5 @@ export const useUserStore = create<UserState>((set, get) => ({
             throw err;
         }
     },
+
 }));
