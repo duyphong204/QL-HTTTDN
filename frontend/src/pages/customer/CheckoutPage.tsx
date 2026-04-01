@@ -59,7 +59,14 @@ export default function CheckoutPage() {
       toast.success('Đặt hàng thành công 🎉');
       navigate(`/order-success/${res.order.id}`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Lỗi đặt hàng';
+      const typedError = err as Error & { code?: string; productId?: string };
+      const message = typedError instanceof Error ? typedError.message : 'Lỗi đặt hàng';
+
+      if (typedError.code === 'PRODUCT_NOT_FOUND' && typedError.productId) {
+        removeFromCart(typedError.productId);
+        toast.error('Một sản phẩm trong giỏ đã bị xóa khỏi hệ thống. Đã cập nhật lại giỏ hàng.');
+        return;
+      }
 
       // If a product was deleted in admin while still in cart, remove it locally.
       const notFoundPattern = /^Sản phẩm\s+([a-f0-9-]{36})\s+không tồn tại$/i;

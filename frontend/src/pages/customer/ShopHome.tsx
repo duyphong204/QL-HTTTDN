@@ -24,11 +24,11 @@ export default function ShopHome() {
 
         const [featuredRes, flashRes] = await Promise.all([
           fetchProductsByQuery({ page: 1, limit: 8, sortBy: 'newest' }),
-          fetchProductsByQuery({ page: 1, limit: 4, sortBy: 'price-high' }),
+          fetchProductsByQuery({ page: 1, limit: 24, sortBy: 'newest' }),
         ]);
 
         setFeaturedProducts(featuredRes?.data ?? []);
-        setFlashProducts(flashRes?.data ?? []);
+        setFlashProducts((flashRes?.data ?? []).filter((item) => item.isOnSale));
         setTotalProducts(featuredRes?.meta?.total ?? 0);
       } catch {
         setFeaturedProducts([]);
@@ -59,13 +59,7 @@ export default function ShopHome() {
   }, [categories]);
 
   const flashSaleItems = useMemo(() => {
-    const discounts = [10, 15, 20, 12];
-
-    return flashProducts.slice(0, 4).map((item, index) => ({
-      ...item,
-      discountPercent: discounts[index % discounts.length],
-      salePrice: Math.round(item.price * (1 - discounts[index % discounts.length] / 100)),
-    }));
+    return flashProducts.slice(0, 4);
   }, [flashProducts]);
 
   return (
@@ -177,53 +171,40 @@ export default function ShopHome() {
       </section>
 
       {/* Banner Flash Sale */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="relative overflow-hidden rounded-3xl bg-[#f5f0e8] px-6 py-10 sm:px-8 md:py-12 border border-amber-100 shadow-sm">
-            <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80')] bg-repeat"></div>
+      {!isLoading && flashSaleItems.length > 0 ? (
+        <section className="py-16 md:py-24 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="relative overflow-hidden rounded-3xl bg-[#f5f0e8] px-6 py-10 sm:px-8 md:py-12 border border-amber-100 shadow-sm">
+              <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80')] bg-repeat"></div>
 
-            <div className="relative z-10">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-                <div>
-                  <div className="inline-flex items-center gap-3 bg-red-600 text-white px-5 py-2 rounded-full font-bold text-lg">
-                    <Zap size={24} fill="white" />
-                    Flash Sale
+              <div className="relative z-10">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+                  <div>
+                    <div className="inline-flex items-center gap-3 bg-red-600 text-white px-5 py-2 rounded-full font-bold text-lg">
+                      <Zap size={24} fill="white" />
+                      Flash Sale
+                    </div>
+                    <p className="text-gray-700 mt-2 font-medium">Ưu đãi có thời hạn - đừng bỏ lỡ!</p>
                   </div>
-                  <p className="text-gray-700 mt-2 font-medium">Ưu đãi có thời hạn - đừng bỏ lỡ!</p>
+                  <Link to="/products" className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2">
+                    Xem tất cả <ArrowRight size={18} />
+                  </Link>
                 </div>
-                <Link to="/products" className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2">
-                  Xem tất cả <ArrowRight size={18} />
-                </Link>
-              </div>
 
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="h-80 rounded-2xl bg-gray-300 animate-pulse" />
-                  ))}
-                </div>
-              ) : flashSaleItems.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
                   {flashSaleItems.map((prod) => (
                     <ProductCard
                       key={prod.id}
                       product={prod}
-                      discountPercent={prod.discountPercent}
-                      priceOverride={prod.salePrice}
-                      showOriginalPrice
                       compactAddToCart
                     />
                   ))}
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white/80 p-10 text-center text-gray-600">
-                  Chưa có sản phẩm flash sale.
-                </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Sản phẩm nổi bật */}
       <section className="py-16 md:py-24 bg-white">

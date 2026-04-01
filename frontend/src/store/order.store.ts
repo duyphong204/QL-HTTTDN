@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import { orderApi } from "@/api/order.api";
 import { toast } from "sonner";
-import type { CreateOrderDto, CreateOrderResponse } from "@/types/sales.type";
+import type {
+  CreateOrderDto,
+  CreateOrderResponse,
+  VerifyPaymentReturnResponse,
+} from "@/types/sales.type";
 
 export interface OrderHistoryItem {
   id: string;
@@ -26,6 +30,9 @@ interface OrderState {
   loading: boolean;
   fetchMyOrders: () => Promise<void>;
   createOrder: (data: CreateOrderDto) => Promise<CreateOrderResponse>;
+  verifyVnpayReturn: (
+    params: URLSearchParams,
+  ) => Promise<VerifyPaymentReturnResponse>;
   selectOrder: (order: OrderHistoryOrder) => void;
   clearSelected: () => void;
 }
@@ -55,6 +62,10 @@ export const useOrderStore = create<OrderState>((set) => ({
       const message = err instanceof Error ? err.message : "Lỗi đặt hàng";
       throw new Error(message);
     }
+  },
+
+  verifyVnpayReturn: async (params) => {
+    return orderApi.verifyVnpayReturn(params);
   },
 
   selectOrder: (order) => set({ selectedOrder: order }),

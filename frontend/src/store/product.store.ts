@@ -1,10 +1,12 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-import { categoryApi, productApi } from "@/api/warehouse.api";
+import { categoryApi, productApi, supplierApi } from "@/api/warehouse.api";
 
 import type {
   Product,
   Category,
+  Supplier,
+  WarehouseReport,
   ProductQuery,
   ProductResponse,
   CreateProductDto,
@@ -14,16 +16,21 @@ import type {
 interface ProductState {
   products: Product[];
   categories: Category[];
+  suppliers: Supplier[];
+  report: WarehouseReport | null;
   meta?: ProductResponse["meta"];
   filters: ProductQuery;
   isLoading: boolean;
   isCategoryLoading: boolean;
+  isLoadingReport: boolean;
   fetchProducts: () => Promise<void>;
   fetchProductsByQuery: (
     query: ProductQuery,
   ) => Promise<ProductResponse | null>;
   fetchProductById: (id: string) => Promise<Product | null>;
   fetchCategories: () => Promise<void>;
+  fetchSuppliers: () => Promise<void>;
+  fetchReport: (params?: { month?: number; year?: number }) => Promise<void>;
   setFilters: (filters: Partial<ProductQuery>) => void;
   setPage: (page: number) => void;
   createProduct: (data: CreateProductDto) => Promise<void>;
@@ -37,6 +44,8 @@ const toErrorMessage = (error: unknown): string =>
 export const useProductStore = create<ProductState>((set, get) => ({
   products: [],
   categories: [],
+  suppliers: [],
+  report: null,
   meta: undefined,
 
   filters: {
@@ -50,6 +59,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   isLoading: false,
   isCategoryLoading: false,
+  isLoadingReport: false,
 
   fetchProducts: async () => {
     try {
@@ -94,6 +104,32 @@ export const useProductStore = create<ProductState>((set, get) => ({
     } catch (error) {
       toast.error(toErrorMessage(error));
       set({ categories: [], isCategoryLoading: false });
+    }
+  },
+
+  fetchSuppliers: async () => {
+    try {
+      const res = await supplierApi.getSuppliers({
+        page: 1,
+        limit: 200,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      set({ suppliers: res.data });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+      set({ suppliers: [] });
+    }
+  },
+
+  fetchReport: async (params) => {
+    try {
+      set({ isLoadingReport: true });
+      const report = await productApi.getReport(params);
+      set({ report, isLoadingReport: false });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+      set({ report: null, isLoadingReport: false });
     }
   },
 

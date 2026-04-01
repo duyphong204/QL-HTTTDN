@@ -20,10 +20,19 @@ export default function ProductCard({
 }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
   const isOutOfStock = product.stockQuantity <= 0;
+  const effectiveDiscountPercent = discountPercent || product.discountPercent || 0;
+  const hasComputedSale =
+    Boolean(product.isOnSale) &&
+    typeof product.salePrice === 'number' &&
+    product.salePrice < product.price;
   const effectivePrice =
     typeof priceOverride === 'number' && priceOverride > 0
       ? priceOverride
+      : hasComputedSale
+        ? (product.salePrice as number)
       : product.price;
+  const shouldShowOriginalPrice =
+    showOriginalPrice || hasComputedSale || effectivePrice < product.price;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     if (isOutOfStock) {
@@ -41,9 +50,9 @@ export default function ProductCard({
     >
       {/* Ảnh */}
       <div className="relative bg-gray-50 aspect-square overflow-hidden">
-        {discountPercent > 0 && (
+        {effectiveDiscountPercent > 0 && (
           <span className="absolute top-3 left-3 z-10 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-            -{discountPercent}%
+            -{effectiveDiscountPercent}%
           </span>
         )}
         <img
@@ -67,7 +76,7 @@ export default function ProductCard({
                 <p className="text-lg sm:text-xl font-bold text-blue-600">
                   {effectivePrice?.toLocaleString('vi-VN')} ₫
                 </p>
-                {showOriginalPrice && effectivePrice < product.price && (
+                {shouldShowOriginalPrice && effectivePrice < product.price && (
                   <p className="text-sm text-gray-500 line-through mt-1">
                     {product.price?.toLocaleString('vi-VN')} ₫
                   </p>
@@ -93,7 +102,7 @@ export default function ProductCard({
               <p className="text-lg sm:text-xl font-bold text-blue-600">
                 {effectivePrice?.toLocaleString('vi-VN')} ₫
               </p>
-              {showOriginalPrice && effectivePrice < product.price && (
+              {shouldShowOriginalPrice && effectivePrice < product.price && (
                 <p className="text-sm text-gray-500 line-through mt-1">
                   {product.price?.toLocaleString('vi-VN')} ₫
                 </p>

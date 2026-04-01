@@ -1,9 +1,10 @@
 import ProtectedRoute from './ProtectedRoute';
 import AdminLayout from '@/layouts/AppLayout';
 import HomePage from '@/pages/admin/HomePage';
+import PromotionManagement from '@/pages/admin/PromotionManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import SupplierManagement from '@/pages/admin/SupplierManagement';
-import ProductManagement from '@/pages/admin/ProductPage';
+import ProductManagement from '@/pages/warehouse/ProductManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -17,6 +18,9 @@ import EmployeeManagement from '@/pages/hr/EmployeeManagement';
 import LeaveRequestManagement from '@/pages/hr/LeaveRequestManagement';
 import MySalaryPage from '@/pages/employee/MySalaryPage';
 import ProfilePage from '@/pages/employee/ProfilePage';
+import SalesOrderManagement from '@/pages/sales/SalesOrderManagement';
+import ExportSlipManagement from '@/pages/sales/ExportSlipManagement';
+import SalesReportPage from '@/pages/sales/SalesReportPage';
 import { rolesFor } from "@/routes/routes.config";
 // IMPORT CUSTOMER PAGES
 import ShopHome from '@/pages/customer/ShopHome';
@@ -57,6 +61,10 @@ export const AppRouter = () => {
             <ProtectedRoute roles={rolesFor("/admin/users")}><UserManagement /></ProtectedRoute>
           } />
 
+          <Route path="/admin/promotions" element={
+            <ProtectedRoute roles={rolesFor("/admin/promotions")}><PromotionManagement /></ProtectedRoute>
+          } />
+
           <Route path="/hr/employees" element={
             <ProtectedRoute roles={rolesFor("/hr/employees")}><EmployeeManagement /></ProtectedRoute>
           } />
@@ -82,6 +90,16 @@ export const AppRouter = () => {
           } />
           <Route path="/warehouse/suppliers" element={
             <ProtectedRoute roles={rolesFor("/warehouse/suppliers")}><SupplierManagement /></ProtectedRoute>
+          } />
+
+          <Route path="/sales/orders" element={
+            <ProtectedRoute roles={rolesFor("/sales/orders")}><SalesOrderManagement /></ProtectedRoute>
+          } />
+          <Route path="/sales/export-slips" element={
+            <ProtectedRoute roles={rolesFor("/sales/export-slips")}><ExportSlipManagement /></ProtectedRoute>
+          } />
+          <Route path="/sales/reports" element={
+            <ProtectedRoute roles={rolesFor("/sales/reports")}><SalesReportPage /></ProtectedRoute>
           } />
         </Route>
           {/* Customer Routes */}

@@ -34,6 +34,7 @@ export class ProductController {
   }
 
   @Get('report/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   getWarehouseReport(
     @Query('month') month?: string,

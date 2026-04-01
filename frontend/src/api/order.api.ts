@@ -4,6 +4,7 @@ import type {
   CreateOrderDto,
   CreateOrderResponse,
   VerifyPaymentReturnResponse,
+  SalesStats,
   Cart,
   CartItem,
   AddToCartDto,
@@ -46,6 +47,20 @@ export const orderApi = {
   cancelOrder: async (id: string, reason?: string) => {
     const res = await axiosInstance.patch<Order>(`/orders/${id}/cancel`, {
       reason,
+    });
+    return res.data;
+  },
+
+  getSalesStats: async (params?: { month?: number; year?: number }) => {
+    const res = await axiosInstance.get<SalesStats>("/orders/stats", {
+      params,
+    });
+    return res.data;
+  },
+
+  getSalesStatsByPeriod: async (params: { year: number; quarter?: number }) => {
+    const res = await axiosInstance.get<SalesStats>("/orders/stats/period", {
+      params,
     });
     return res.data;
   },

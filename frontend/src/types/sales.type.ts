@@ -37,6 +37,7 @@ export interface OrderDetail extends BaseEntity {
 export interface Order extends BaseEntity {
   userId?: string; // Khách vãng lai (userId = null) hoặc user đăng nhập
   fullName: string;
+  customerName?: string;
   phone: string;
   address: string;
   totalAmount: number;
@@ -80,4 +81,12 @@ export interface UpdateOrderStatusDto {
 
 export interface CancelOrderDto {
   reason?: string;
+}
+
+export interface SalesStats {
+  totalOrders: number;
+  totalRevenue: number;
+  totalProfit: number;
+  totalItemsSold?: number;
+  totalProductsSold: number;
 }

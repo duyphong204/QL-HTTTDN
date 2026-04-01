@@ -48,6 +48,27 @@ export class OrdersController {
     return this.ordersService.getMyOrders(req.user.id);
   }
 
+  @Get('stats')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
+  getSalesStats(@Query('month') month?: string, @Query('year') year?: string) {
+    return this.ordersService.getSalesStatistics(
+      month ? +month : undefined,
+      year ? +year : undefined,
+    );
+  }
+
+  @Get('stats/period')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
+  getSalesStatsByPeriod(
+    @Query('year') year?: string,
+    @Query('quarter') quarter?: string,
+  ) {
+    return this.ordersService.getSalesStatisticsByPeriod(
+      year ? +year : undefined,
+      quarter ? +quarter : undefined,
+    );
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
   getOrderById(@Param('id') id: string) {
@@ -67,17 +88,5 @@ export class OrdersController {
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
   cancelOrder(@Param('id') id: string, @Body() _dto: CancelOrderDto) {
     return this.ordersService.cancelOrder(id);
-  }
-
-  @Get('statistics/report')
-  @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  getSalesStatistics(
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    return this.ordersService.getSalesStatistics(
-      month ? +month : undefined,
-      year ? +year : undefined,
-    );
   }
 }

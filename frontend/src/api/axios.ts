@@ -12,7 +12,9 @@ export const getAccessToken = (): string | null => {
 };
 export interface ApiErrorResponse {
   statusCode: number;
-  message: string;
+  message: string | string[];
+  code?: string;
+  productId?: string;
   timestamp?: string;
 }
 
@@ -109,7 +111,16 @@ axiosInstance.interceptors.response.use(
 
     const apiError = error.response?.data as ApiErrorResponse;
     if (apiError?.message) {
-      return Promise.reject(new Error(apiError.message));
+      const message = Array.isArray(apiError.message)
+        ? apiError.message.join(", ")
+        : apiError.message;
+      const enrichedError = new Error(message);
+      (enrichedError as Error & { code?: string; productId?: string }).code =
+        apiError.code;
+      (
+        enrichedError as Error & { code?: string; productId?: string }
+      ).productId = apiError.productId;
+      return Promise.reject(enrichedError);
     }
 
     return Promise.reject(error);

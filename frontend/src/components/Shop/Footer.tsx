@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, CreditCard, Smartphone, Mail } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, CreditCard, Smartphone } from 'lucide-react';
 
 export default function Footer() {
   return (

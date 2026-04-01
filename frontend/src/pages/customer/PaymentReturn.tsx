@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { orderApi } from '@/api/order.api';
 import { CheckCircle, XCircle, LoaderCircle, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
+import { useOrderStore } from '@/store/order.store';
 
 type VerifyState =
   | { status: 'loading' }
@@ -13,6 +13,7 @@ export default function PaymentReturn() {
   const location = useLocation();
   const [state, setState] = useState<VerifyState>({ status: 'loading' });
   const clearCart = useCartStore((s) => s.clearCart);
+  const verifyVnpayReturn = useOrderStore((s) => s.verifyVnpayReturn);
 
   const queryString = useMemo(() => location.search, [location.search]);
 
@@ -20,7 +21,7 @@ export default function PaymentReturn() {
     const verify = async () => {
       try {
         const params = new URLSearchParams(queryString);
-        const res = await orderApi.verifyVnpayReturn(params);
+        const res = await verifyVnpayReturn(params);
 
         if (res.success) {
           clearCart();
@@ -44,7 +45,7 @@ export default function PaymentReturn() {
     };
 
     verify();
-  }, [queryString, clearCart]);
+  }, [queryString, clearCart, verifyVnpayReturn]);
 
   if (state.status === 'loading') {
     return (

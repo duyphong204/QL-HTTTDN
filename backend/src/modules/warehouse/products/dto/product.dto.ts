@@ -119,8 +119,25 @@ export class QueryProductDto {
   maxPrice?: number;
 
   @IsOptional()
-  @IsIn(['featured', 'price-low', 'price-high', 'newest'])
-  sortBy?: 'featured' | 'price-low' | 'price-high' | 'newest' = 'featured';
+  @IsIn([
+    'featured',
+    'price-low',
+    'price-high',
+    'newest',
+    'name',
+    'price',
+    'costPrice',
+    'stockQuantity',
+  ])
+  sortBy?:
+    | 'featured'
+    | 'price-low'
+    | 'price-high'
+    | 'newest'
+    | 'name'
+    | 'price'
+    | 'costPrice'
+    | 'stockQuantity' = 'featured';
 
   @IsOptional()
   @Type(() => Number)
@@ -129,10 +146,6 @@ export class QueryProductDto {
   @IsOptional()
   @Type(() => Number)
   limit?: number = 10;
-
-  @IsOptional()
-  @IsIn(['name', 'price', 'costPrice', 'stockQuantity'])
-  sortBy?: 'name' | 'price' | 'costPrice' | 'stockQuantity' = 'name';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useOrderStore, type OrderHistoryOrder } from '@/store/order.store';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Package, Clock, CheckCircle, Truck, XCircle, ArrowRight } from 'lucide-react';
@@ -14,10 +14,37 @@ type OrderDetailFallback = {
   };
 };
 
+type OrderStatusTab =
+  | 'ALL'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'SHIPPING'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+const STATUS_LABEL_MAP: Record<OrderStatusTab, string> = {
+  ALL: 'Tất cả',
+  PENDING: 'Chờ xác nhận',
+  APPROVED: 'Đã xác nhận',
+  SHIPPING: 'Đang giao',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+};
+
+const STATUS_TABS: OrderStatusTab[] = [
+  'ALL',
+  'PENDING',
+  'APPROVED',
+  'SHIPPING',
+  'COMPLETED',
+  'CANCELLED',
+];
+
 export default function CustomerOrders() {
   const { orders, fetchMyOrders, loading } = useOrderStore();
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<OrderStatusTab>('ALL');
 
   const isDetailView = Boolean(id);
 
@@ -28,6 +55,41 @@ export default function CustomerOrders() {
 
     return orders.filter((order) => order.id === id);
   }, [id, orders]);
+
+  const statusCounts = useMemo(() => {
+    return orders.reduce(
+      (acc, order) => {
+        const status = String(order.status || '').toUpperCase() as OrderStatusTab;
+        if (status in acc) {
+          acc[status] += 1;
+        }
+        acc.ALL += 1;
+        return acc;
+      },
+      {
+        ALL: 0,
+        PENDING: 0,
+        APPROVED: 0,
+        SHIPPING: 0,
+        COMPLETED: 0,
+        CANCELLED: 0,
+      } satisfies Record<OrderStatusTab, number>,
+    );
+  }, [orders]);
+
+  const visibleOrders = useMemo(() => {
+    if (isDetailView) {
+      return filteredOrders;
+    }
+
+    if (activeTab === 'ALL') {
+      return filteredOrders;
+    }
+
+    return filteredOrders.filter(
+      (order) => String(order.status || '').toUpperCase() === activeTab,
+    );
+  }, [activeTab, filteredOrders, isDetailView]);
 
   useEffect(() => {
     if (!orders.length) {
@@ -122,7 +184,32 @@ export default function CustomerOrders() {
       </div>
 
       <div className="space-y-6">
-        {filteredOrders.map((order: OrderHistoryOrder) => (
+        {!isDetailView ? (
+          <div className="flex flex-wrap gap-3 pb-1">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
+                  activeTab === tab
+                    ? 'bg-blue-100 border-blue-300 text-blue-800'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {STATUS_LABEL_MAP[tab]} ({statusCounts[tab]})
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {!isDetailView && visibleOrders.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600">
+            Không có đơn nào ở trạng thái {STATUS_LABEL_MAP[activeTab].toLowerCase()}.
+          </div>
+        ) : null}
+
+        {visibleOrders.map((order: OrderHistoryOrder) => (
           <div
             key={order.id}
             onClick={() => {

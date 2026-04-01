@@ -19,6 +19,11 @@ enum Role {
   CUSTOMER
 }
 
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+
 model User {
   id               String    @id @default(uuid())
   email            String    @unique
@@ -142,6 +147,31 @@ model Product {
   stockInDetails StockInDetail[]
   orderDetails   OrderDetail[]
   cartItems      CartItem[]
+  promotionLinks PromotionProduct[]
+}
+
+model Promotion {
+  id        String        @id @default(uuid())
+  name      String
+  type      PromotionType
+  value     Float
+  startAt   DateTime?
+  endAt     DateTime?
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  products PromotionProduct[]
+}
+
+model PromotionProduct {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+  productId   String    @unique
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([promotionId, productId])
 }
 
 model StockIn {

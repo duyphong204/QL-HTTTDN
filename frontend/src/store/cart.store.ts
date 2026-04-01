@@ -27,7 +27,7 @@ const getStorageKey = (owner: Owner) => `cart_${owner}`;
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       owner: "guest",
       items: [],
 

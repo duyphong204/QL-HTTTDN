@@ -21,6 +21,94 @@ const normalizeVietnamese = (value: string): string =>
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
 
+  private resolveActivePromotion(product: {
+    promotionLinks?: Array<{
+      promotion: {
+        id: string;
+        name: string;
+        type: 'PERCENT' | 'FIXED';
+        value: number;
+        isActive: boolean;
+        startAt: Date | null;
+        endAt: Date | null;
+      };
+    }>;
+  }) {
+    const now = new Date();
+    const link = (product.promotionLinks ?? []).find(({ promotion }) => {
+      if (!promotion.isActive) {
+        return false;
+      }
+
+      if (promotion.startAt && promotion.startAt > now) {
+        return false;
+      }
+
+      if (promotion.endAt && promotion.endAt < now) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return link?.promotion;
+  }
+
+  private calculateSalePrice(
+    price: number,
+    promotion?: {
+      type: 'PERCENT' | 'FIXED';
+      value: number;
+    },
+  ) {
+    if (!promotion) {
+      return price;
+    }
+
+    if (promotion.type === 'PERCENT') {
+      const percent = Math.max(0, Math.min(100, promotion.value));
+      return Math.max(0, price * (1 - percent / 100));
+    }
+
+    return Math.max(0, price - promotion.value);
+  }
+
+  private enrichProductPricing<
+    T extends {
+      price: number;
+      promotionLinks?: Array<{
+        promotion: {
+          id: string;
+          name: string;
+          type: 'PERCENT' | 'FIXED';
+          value: number;
+          isActive: boolean;
+          startAt: Date | null;
+          endAt: Date | null;
+        };
+      }>;
+    } & Record<string, any>,
+  >(product: T) {
+    const promotion = this.resolveActivePromotion(product);
+    const salePrice = this.calculateSalePrice(product.price, promotion);
+    const isOnSale = !!promotion && salePrice < product.price;
+    const discountPercent =
+      isOnSale && product.price > 0
+        ? Math.round(((product.price - salePrice) / product.price) * 100)
+        : 0;
+
+    const { promotionLinks, ...rest } = product;
+
+    return {
+      ...rest,
+      isOnSale,
+      salePrice,
+      discountPercent,
+      promotionName: promotion?.name,
+      promotionId: promotion?.id,
+    };
+  }
+
   private isUploadFile(
     file: unknown,
   ): file is Parameters<CloudinaryService['uploadImage']>[0] {
@@ -45,6 +133,7 @@ export class ProductService {
       minPrice,
       maxPrice,
       sortBy = 'featured',
+      sortOrder = 'asc',
       page = 1,
       limit = 9,
     } = query;
@@ -80,7 +169,13 @@ export class ProductService {
           ? { price: 'desc' }
           : sortBy === 'newest'
             ? { id: 'desc' }
-            : { name: 'asc' };
+            : sortBy === 'price'
+              ? { price: sortOrder }
+              : sortBy === 'costPrice'
+                ? { costPrice: sortOrder }
+                : sortBy === 'stockQuantity'
+                  ? { stockQuantity: sortOrder }
+                  : { name: sortOrder };
 
     const inStockWhere: Prisma.ProductWhereInput = {
       ...where,
@@ -97,11 +192,20 @@ export class ProductService {
         include: {
           category: { select: { id: true, name: true } },
           supplier: { select: { id: true, name: true } },
+          promotionLinks: {
+            include: {
+              promotion: true,
+            },
+          },
         },
         orderBy,
       });
 
-      const filteredProducts = allProducts.filter((product) =>
+      const pricedProducts = allProducts.map((product) =>
+        this.enrichProductPricing(product),
+      );
+
+      const filteredProducts = pricedProducts.filter((product) =>
         normalizeVietnamese(product.name).includes(normalizedSearch),
       );
 
@@ -155,6 +259,11 @@ export class ProductService {
             include: {
               category: { select: { id: true, name: true } },
               supplier: { select: { id: true, name: true } },
+              promotionLinks: {
+                include: {
+                  promotion: true,
+                },
+              },
             },
             orderBy,
           })
@@ -167,13 +276,20 @@ export class ProductService {
             include: {
               category: { select: { id: true, name: true } },
               supplier: { select: { id: true, name: true } },
+              promotionLinks: {
+                include: {
+                  promotion: true,
+                },
+              },
             },
             orderBy,
           })
         : Promise.resolve([]),
     ]);
 
-    const data = [...inStockData, ...outOfStockData];
+    const data = [...inStockData, ...outOfStockData].map((product) =>
+      this.enrichProductPricing(product),
+    );
 
     return {
       data,
@@ -192,10 +308,15 @@ export class ProductService {
       include: {
         category: true,
         supplier: true,
+        promotionLinks: {
+          include: {
+            promotion: true,
+          },
+        },
       },
     });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+    return this.enrichProductPricing(product);
   }
 
   async create(dto: CreateProductDto, file?: unknown) {
@@ -241,5 +362,65 @@ export class ProductService {
     }
 
     return this.prisma.product.delete({ where: { id } });
+  }
+
+  async getWarehouseReport(month?: number, year?: number) {
+    const now = new Date();
+    const reportYear = year ?? now.getFullYear();
+    const startDate =
+      month && month >= 1 && month <= 12
+        ? new Date(reportYear, month - 1, 1)
+        : new Date(reportYear, 0, 1);
+    const endDate =
+      month && month >= 1 && month <= 12
+        ? new Date(reportYear, month, 1)
+        : new Date(reportYear + 1, 0, 1);
+
+    const [stockIns, products] = await Promise.all([
+      this.prisma.stockIn.findMany({
+        where: {
+          date: {
+            gte: startDate,
+            lt: endDate,
+          },
+        },
+        include: {
+          details: true,
+        },
+      }),
+      this.prisma.product.findMany({
+        select: {
+          id: true,
+          name: true,
+          stockQuantity: true,
+          minStock: true,
+        },
+      }),
+    ]);
+
+    const totalImportValue = stockIns.reduce((sum, stockIn) => {
+      const detailTotal = stockIn.details.reduce(
+        (acc, detail) => acc + detail.quantity * detail.price,
+        0,
+      );
+      return sum + detailTotal;
+    }, 0);
+
+    const totalStockQuantity = products.reduce(
+      (sum, product) => sum + product.stockQuantity,
+      0,
+    );
+
+    const lowStockProducts = products.filter(
+      (product) => product.stockQuantity <= (product.minStock ?? 10),
+    );
+
+    return {
+      totalStockIns: stockIns.length,
+      totalImportValue,
+      totalProductTypes: products.length,
+      totalStockQuantity,
+      lowStockProducts,
+    };
   }
 }

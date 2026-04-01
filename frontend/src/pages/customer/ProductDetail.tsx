@@ -15,6 +15,11 @@ export default function ProductDetail() {
   const { fetchProductById, fetchProductsByQuery } = useProductStore();
   const addToCart = useCartStore((state) => state.addToCart);
   const isOutOfStock = (product?.stockQuantity ?? 0) <= 0;
+  const hasSale =
+    Boolean(product?.isOnSale) &&
+    typeof product?.salePrice === 'number' &&
+    (product?.salePrice as number) < (product?.price ?? 0);
+  const currentPrice = hasSale ? (product?.salePrice as number) : (product?.price ?? 0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -77,7 +82,10 @@ export default function ProductDetail() {
       return;
     }
 
-    addToCart(targetProduct, quantity);
+    const cartProduct = hasSale
+      ? { ...targetProduct, price: currentPrice }
+      : targetProduct;
+    addToCart(cartProduct, quantity);
   };
 
   if (isLoading) {
@@ -139,8 +147,18 @@ export default function ProductDetail() {
   {/* Giá sản phẩm */}
   <div className="mt-4 flex items-baseline gap-3">
     <span className="text-4xl sm:text-5xl font-bold text-blue-600">
-      {product.price?.toLocaleString('vi-VN')} đ
+      {currentPrice?.toLocaleString('vi-VN')} đ
     </span>
+    {hasSale && (
+      <>
+        <span className="text-lg text-gray-500 line-through">
+          {product.price?.toLocaleString('vi-VN')} đ
+        </span>
+        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+          -{product.discountPercent ?? 0}%
+        </span>
+      </>
+    )}
   </div>
 
   {/* Mô tả */}
@@ -231,7 +249,9 @@ export default function ProductDetail() {
                 </div>
                 <div className="p-4">
                   <h4 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[40px]">{item.name}</h4>
-                  <p className="text-blue-600 font-bold mt-2">{item.price.toLocaleString('vi-VN')} đ</p>
+                  <p className="text-blue-600 font-bold mt-2">
+                    {(item.salePrice && item.isOnSale ? item.salePrice : item.price).toLocaleString('vi-VN')} đ
+                  </p>
                 </div>
               </Link>
             ))}

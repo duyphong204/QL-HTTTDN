@@ -8,6 +8,7 @@ import {
   FileText,
   ShoppingCart,
   BarChart3,
+  Tag,
 } from "lucide-react";
 
 export interface RouteConfig {
@@ -55,6 +56,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     inSidebar: true,
   },
   {
+    path: "/admin/promotions",
+    title: "Khuyen mai",
+    icon: Tag,
+    roles: ["ADMIN"],
+    inSidebar: true,
+  },
+  {
     path: "/warehouse/products",
     title: "Sản phẩm",
     icon: Package,
@@ -76,11 +84,18 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     inSidebar: true,
   },
   {
+    path: "/sales/orders",
+    title: "Đơn hàng",
+    icon: ShoppingCart,
+    roles: ["SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
     path: "/sales/export-slips",
     title: "Phiếu xuất",
     icon: ShoppingCart,
     roles: ["SALES_MANAGER"],
-    inSidebar: true,
+    inSidebar: false,
   },
   {
     path: "/sales/reports",

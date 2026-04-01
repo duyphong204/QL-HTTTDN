@@ -1,4 +1,4 @@
-import type { BaseEntity } from "./common.type";
+import type { BaseEntity, SortOrder } from "./common.type";
 
 export interface Category extends BaseEntity {
   name: string;
@@ -44,8 +44,14 @@ export interface Product extends BaseEntity {
   name: string;
   description?: string;
   price: number;
+  salePrice?: number;
+  isOnSale?: boolean;
+  discountPercent?: number;
+  promotionName?: string;
+  promotionId?: string;
   costPrice: number;
   stockQuantity: number;
+  minStock?: number;
   imageUrl?: string;
 
   categoryId: string;
@@ -61,9 +67,31 @@ export interface ProductQuery {
   supplierId?: string;
   minPrice?: number;
   maxPrice?: number;
-  sortBy?: "featured" | "price-low" | "price-high" | "newest";
+  sortBy?:
+    | "featured"
+    | "price-low"
+    | "price-high"
+    | "newest"
+    | "name"
+    | "price"
+    | "costPrice"
+    | "stockQuantity";
+  sortOrder?: SortOrder;
   page?: number;
   limit?: number;
+}
+
+export interface WarehouseReport {
+  totalStockIns: number;
+  totalImportValue: number;
+  totalProductTypes: number;
+  totalStockQuantity: number;
+  lowStockProducts: Array<{
+    id: string;
+    name: string;
+    stockQuantity: number;
+    minStock: number;
+  }>;
 }
 
 export interface ProductResponse {
