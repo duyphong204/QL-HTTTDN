@@ -11,6 +11,7 @@ import type {
   Supplier,
 } from '@/types/warehouse.type';
 import type { BaseFilters, SortOrder } from '@/types/common.type';
+import { loadingState, mergeFiltersWithPageReset } from '@/store/store.helpers';
 
 type ProductFilters = BaseFilters & {
   categoryId?: string;
@@ -67,40 +68,35 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   fetchProducts: async () => {
     try {
-      set({ isLoading: true });
+      set(loadingState('isLoading', true));
       const { filters } = get();
       const res = await productApi.getProducts(filters);
 
       set({
         products: res.data,
         meta: res.meta,
-        isLoading: false,
+        ...loadingState('isLoading', false),
       });
     } catch {
       toast.error('Không thể tải danh sách sản phẩm');
-      set({ isLoading: false });
+      set(loadingState('isLoading', false));
     }
   },
 
   fetchReport: async (params) => {
     try {
-      set({ isLoadingReport: true });
+      set(loadingState('isLoadingReport', true));
       const data = await productApi.getReport(params);
-      set({ report: data, isLoadingReport: false });
+      set({ report: data, ...loadingState('isLoadingReport', false) });
     } catch {
       toast.error('Không thể tải báo cáo kho');
-      set({ isLoadingReport: false });
+      set(loadingState('isLoadingReport', false));
     }
   },
 
   setFilters: (newFilters) => {
-    const isPageChange = 'page' in newFilters;
     set((state) => ({
-      filters: {
-        ...state.filters,
-        ...newFilters,
-        page: isPageChange ? (newFilters.page ?? 1) : 1,
-      },
+      filters: mergeFiltersWithPageReset(state.filters, newFilters),
     }));
   },
 

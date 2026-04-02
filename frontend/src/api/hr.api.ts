@@ -10,6 +10,7 @@ import type {
     Salary,
     CreateSalaryDto,
     UpdateSalaryDto,
+    HrStatisticsReport,
 } from "@/types/hr.type"
 import type { BaseFilters, PaginatedResponse } from "@/types/common.type"
 
@@ -51,7 +52,7 @@ export const employeeApi = {
         return res.data;
     },
     getHrStatistics: async (params?: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get('/employees/statistics/hr-report', { params });
+        const res = await axiosInstance.get<HrStatisticsReport>('/employees/statistics/hr-report', { params });
         return res.data;
     },
 };

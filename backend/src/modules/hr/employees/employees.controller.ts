@@ -30,6 +30,7 @@ import { ValidationPipe } from '@nestjs/common';
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
   @Get('me')
+  @Roles(Role.EMPLOYEE)
   getMe(@Request() req: any) {
     return this.employeesService.getProfile(req.user.id);
   }
@@ -42,6 +43,7 @@ export class EmployeesController {
     );
   }
   @Patch('me') //Nhân viên tự sửa thông tin
+  @Roles(Role.EMPLOYEE)
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
     return this.employeesService.updateMe(req.user.id, dto);
   }

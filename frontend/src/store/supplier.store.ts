@@ -3,6 +3,7 @@ import { supplierApi } from "@/api/warehouse.api";
 import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/warehouse.type";
 import { toast } from "sonner";
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
+import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/store/store.helpers";
 
 type SupplierFilters = BaseFilters & {
     sortBy: string;
@@ -22,11 +23,6 @@ interface SupplierState {
     deleteSupplier: (id: string) => Promise<void>;
 }
 
-const getErrorMessage = (error: unknown): string => {
-    if (error instanceof Error) return error.message;
-    return "Đã xảy ra lỗi không xác định";
-};
-
 export const useSupplierStore = create<SupplierState>((set, get) => ({
     suppliers: [],
     meta: null,
@@ -40,19 +36,14 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         sortOrder: "asc",
     },
     setFilters: (newFilters) => {
-        const isPageChange = 'page' in newFilters;
         set((state) => ({
-            filters: {
-                ...state.filters,
-                ...newFilters,
-                page: isPageChange ? (newFilters.page ?? 1) : 1,
-            },
+            filters: mergeFiltersWithPageReset(state.filters, newFilters),
         }));
     },
 
     fetchSuppliers: async () => {
         const { filters } = get();
-        set({ isLoading: true, error: null });
+        set({ ...loadingState("isLoading", true), error: null });
         try {
             const response = await supplierApi.getSuppliers({
                 page: filters.page,
@@ -65,47 +56,47 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
             set({
                 suppliers,
                 meta: Array.isArray(response) ? null : response.meta,
-                isLoading: false,
+                ...loadingState("isLoading", false),
             });
         } catch (error: unknown) {
-            const errorMessage = getErrorMessage(error);
-            set({ suppliers: [], isLoading: false, error: errorMessage });
+            const errorMessage = getErrorMessage(error, "Đã xảy ra lỗi không xác định");
+            set({ suppliers: [], ...loadingState("isLoading", false), error: errorMessage });
             toast.error("Lấy dữ liệu thất bại: " + errorMessage);
         }
     },
 
     addSupplier: async (data) => {
-        set({ isLoading: true });
+        set(loadingState("isLoading", true));
         try {
             await supplierApi.createSupplier(data);
             toast.success("Thêm thành công");
             await get().fetchSuppliers();
         } catch (error) {
-            set({ isLoading: false });
+            set(loadingState("isLoading", false));
             throw error;
         }
     },
 
     updateSupplier: async (id, data) => {
-        set({ isLoading: true });
+        set(loadingState("isLoading", true));
         try {
             await supplierApi.updateSupplier(id, data);
             toast.success("Cập nhật thành công");
             await get().fetchSuppliers();
         } catch (error) {
-            set({ isLoading: false });
+            set(loadingState("isLoading", false));
             throw error;
         }
     },
 
     deleteSupplier: async (id) => {
-        set({ isLoading: true });
+        set(loadingState("isLoading", true));
         try {
             await supplierApi.deleteSupplier(id);
             toast.success("Xóa thành công");
             await get().fetchSuppliers();
         } catch {
-            set({ isLoading: false });
+            set(loadingState("isLoading", false));
         }
     },
 }));

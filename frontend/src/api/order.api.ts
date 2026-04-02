@@ -1,5 +1,5 @@
 import { axiosInstance } from "./axios"
-import type { Order, CreateOrderDto, Cart, CartItem, AddToCartDto } from "@/types/sales.type"
+import type { Order, CreateOrderDto, Cart, CartItem, AddToCartDto, SalesStats } from "@/types/sales.type"
 
 export const orderApi = {
     getOrders: async () => {
@@ -27,12 +27,12 @@ export const orderApi = {
         return res.data;
     },
     getSalesStats: async (params: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get('/orders/stats', { params });
+        const res = await axiosInstance.get<SalesStats>('/orders/stats', { params });
         return res.data;
     },
 
     getSalesStatsByPeriod: async (params: { year: number; quarter?: number }) => {
-        const res = await axiosInstance.get('/orders/period', { params });
+        const res = await axiosInstance.get<SalesStats>('/orders/period', { params });
         return res.data;
     },
 };

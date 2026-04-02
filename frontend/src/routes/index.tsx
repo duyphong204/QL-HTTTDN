@@ -3,6 +3,7 @@ import AdminLayout from '@/layouts/AppLayout';
 import HomePage from '@/pages/admin/HomePage';
 import UserManagement from '@/pages/admin/UserManagement';
 import SupplierManagement from '@/pages/admin/SupplierManagement';
+import AdminReportPage from '@/pages/admin/AdminReportPage';
 // import ProductManagement from '@/pages/admin/ProductPage';
 import ProductManagement from '@/pages/warehouse/ProductManagement';
 import LoginPage from '@/pages/auth/login';
@@ -48,7 +49,7 @@ export const AppRouter = () => {
             <ProtectedRoute roles={rolesFor("/admin/users")}><UserManagement /></ProtectedRoute>
           } />
           <Route path="/admin/report" element={
-            <ProtectedRoute roles={rolesFor("/admin/report")}><SalesReportPage /></ProtectedRoute>
+            <ProtectedRoute roles={rolesFor("/admin/report")}><AdminReportPage /></ProtectedRoute>
           } />
 
           <Route path="/hr/employees" element={

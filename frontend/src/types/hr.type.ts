@@ -107,3 +107,13 @@ export interface CreateLeaveRequestDto {
 export interface ApproveLeaveRequestDto {
     status: "APPROVED" | "REJECTED"
 }
+
+export interface HrStatisticsReport {
+    totalEmployees: number
+    totalResigned: number
+    headcount: number
+    salaryMonth: number
+    salaryYear: number
+    totalSalaryPaid: number
+    totalBonus: number
+}

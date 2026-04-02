@@ -29,7 +29,7 @@ export default function HrStatisticsPage() {
         fetchAll();
     }, [month, year, fetchStatistics, fetchSalaries]);
 
-    const { totalPay, totalBonus } = useMemo(() => {
+    const { totalBonus } = useMemo(() => {
         return salaries.reduce((acc, s) => ({
             totalPay: acc.totalPay + (s.amount || 0),
             totalBonus: acc.totalBonus + (s.bonus || 0)

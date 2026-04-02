@@ -11,6 +11,7 @@ import type {
   CreateStockInDto,
   ProductQuery,
   ProductResponse,
+  WarehouseReport,
 } from '@/types/warehouse.type';
 import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.type';
 
@@ -110,7 +111,7 @@ export const productApi = {
     await axiosInstance.delete('/products/' + id);
   },
   getReport: async (params?: { month?: number; year?: number }) => {
-    const res = await axiosInstance.get('/products/report/stats', { params });
+    const res = await axiosInstance.get<WarehouseReport>('/products/report/stats', { params });
     return res.data;
   },
 };

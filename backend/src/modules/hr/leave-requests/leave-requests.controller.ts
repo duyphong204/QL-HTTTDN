@@ -31,6 +31,7 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.create(req.user.id, dto);
   }
   @Get('me')
+  @Roles(Role.EMPLOYEE)
   async getMyRequests(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }

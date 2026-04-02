@@ -118,3 +118,13 @@ export interface UpdateSupplierDto {
   email?: string;
   address?: string;
 }
+
+export interface WarehouseReport {
+  period: { month?: number; year: number }
+  totalStockIns: number
+  totalImportValue: number
+  totalImportQuantity: number
+  totalProductTypes: number
+  totalStockQuantity: number
+  lowStockProducts: { id: string; name: string; stockQuantity: number; minStock: number }[]
+}

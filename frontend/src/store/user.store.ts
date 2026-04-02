@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { Role } from "@/types/auth.type";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
+import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/store/store.helpers";
 
 type UserFilters = BaseFilters & {
     role?: Role;
@@ -26,9 +27,6 @@ type UserState = {
     deleteUser: (id: string) => Promise<void>;
 };
 
-const getErrorMessage = (error: unknown): string =>
-    error instanceof Error ? error.message : "Lỗi không xác định";
-
 export const useUserStore = create<UserState>((set, get) => ({
     users: [],
     meta: null,
@@ -43,18 +41,13 @@ export const useUserStore = create<UserState>((set, get) => ({
     },
 
     setFilters: (newFilters) => {
-        const isPageChange = "page" in newFilters;
         set((state) => ({
-            filters: {
-                ...state.filters,
-                ...newFilters,
-                page: isPageChange ? (newFilters.page ?? 1) : 1,
-            },
+            filters: mergeFiltersWithPageReset(state.filters, newFilters),
         }));
     },
 
     fetchUsers: async () => {
-        set({ isLoading: true, error: null });
+        set({ ...loadingState("isLoading", true), error: null });
         try {
             const { filters } = get();
             const response = await userApi.getUsers(filters);
@@ -67,7 +60,7 @@ export const useUserStore = create<UserState>((set, get) => ({
             set({ error: message });
             toast.error(message);
         } finally {
-            set({ isLoading: false });
+            set(loadingState("isLoading", false));
         }
     },
 
