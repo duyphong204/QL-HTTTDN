@@ -1,42 +1,36 @@
-import { useState, useEffect, useMemo } from "react";
-import { useHrStore } from "@/store/hr.store";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect, useMemo } from "react"
+import { useHrStore } from "@/store/hr.store"
+import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react"
 
-const currentYear = new Date().getFullYear();
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+const currentYear = new Date().getFullYear()
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 const formatCurrency = (n: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n || 0);
+    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n || 0)
 
 export default function HrStatisticsPage() {
-    const { statistics, salaries, loadingSalaries, loadingStatistics, fetchStatistics, fetchSalaries } = useHrStore();
-    const [year, setYear] = useState(String(currentYear));
-    const [month, setMonth] = useState(String(new Date().getMonth() + 1));
+    const { statistics, salaries, loadingSalaries, loadingStatistics, fetchStatistics, fetchSalaries } = useHrStore()
+    const [year, setYear] = useState(String(currentYear))
+    const [month, setMonth] = useState(String(new Date().getMonth() + 1))
 
     useEffect(() => {
-        const fetchAll = async () => {
-            try {
-                await Promise.all([
-                    fetchStatistics({ month: Number(month), year: Number(year) }),
-                    fetchSalaries({ month: Number(month), year: Number(year) }),
-                ]);
-            } catch { toast.error("Lỗi kết nối dữ liệu"); }
-        };
-        fetchAll();
-    }, [month, year, fetchStatistics, fetchSalaries]);
+        void Promise.all([
+            fetchStatistics({ month: Number(month), year: Number(year) }),
+            fetchSalaries({ month: Number(month), year: Number(year) }),
+        ])
+    }, [month, year, fetchStatistics, fetchSalaries])
 
     const { totalBonus } = useMemo(() => {
         return salaries.reduce((acc, s) => ({
             totalPay: acc.totalPay + (s.amount || 0),
             totalBonus: acc.totalBonus + (s.bonus || 0)
-        }), { totalPay: 0, totalBonus: 0 });
-    }, [salaries]);
+        }), { totalPay: 0, totalBonus: 0 })
+    }, [salaries])
 
-    const isLoading = loadingSalaries || loadingStatistics;
+    const isLoading = loadingSalaries || loadingStatistics
 
     return (
         <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans antialiased text-slate-900">
@@ -87,7 +81,7 @@ export default function HrStatisticsPage() {
                             </h2>
                             <div className="flex items-center gap-2 text-sm text-blue-100 bg-blue-500/30 w-fit px-3 py-1 rounded-full border border-white/10">
                                 <ArrowUpRight className="h-4 w-4" />
-                                <span>+2.4% so với tháng trước</span>
+                                <span>Tháng {month}/{year}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -111,7 +105,7 @@ export default function HrStatisticsPage() {
                     <CardContent className="p-0">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                             <h3 className="font-bold text-lg">Danh sách chi trả lương</h3>
-                            <span className="text-xs font-medium text-slate-400">Cập nhật 5 phút trước</span>
+                            <span className="text-xs font-medium text-slate-400">Tháng {month}/{year}</span>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
@@ -144,8 +138,8 @@ export default function HrStatisticsPage() {
                                             </td>
                                             <td className="px-6 py-5 text-center">
                                                 <Badge className={`rounded-lg px-3 py-1 border-none shadow-none font-semibold ${
-                                                    s.status === "PAID" 
-                                                    ? "bg-blue-50 text-blue-600" 
+                                                    s.status === "PAID"
+                                                    ? "bg-blue-50 text-blue-600"
                                                     : "bg-orange-50 text-orange-600"
                                                 }`}>
                                                     {s.status === "PAID" ? "Hoàn tất" : "Đang xử lý"}
@@ -160,5 +154,5 @@ export default function HrStatisticsPage() {
                 </Card>
             </div>
         </div>
-    );
+    )
 }

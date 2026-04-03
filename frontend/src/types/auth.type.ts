@@ -17,8 +17,8 @@ export interface LoginResponse {
         email: string
         role: Role
         fullName?: string
-        createdAt: Date;    
-        updatedAt: Date;
+        createdAt: string
+        updatedAt: string
     }
 }
 

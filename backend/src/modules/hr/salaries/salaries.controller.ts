@@ -14,6 +14,7 @@ import { SalariesService } from './salaries.service';
 import {
   CalculateAllSalaryDto,
   CreateSalaryDto,
+  QuerySalaryDto,
   UpdateSalaryDto,
 } from './dto/salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
@@ -30,9 +31,15 @@ import { ValidationPipe } from '@nestjs/common';
 export class SalariesController {
   constructor(private readonly salariesService: SalariesService) { }
 
-  @Post('calculate')
+  @Post()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   create(@Body() dto: CreateSalaryDto) {
+    return this.salariesService.calculateSalary(dto);
+  }
+
+  @Post('calculate')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  calculate(@Body() dto: CreateSalaryDto) {
     return this.salariesService.calculateSalary(dto);
   }
 
@@ -56,17 +63,38 @@ export class SalariesController {
       yearNumber,
     );
   }
+  @Get('my')
+  getMySalariesAlias(
+    @Request() req: any,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
+    const monthNumber = month ? Number(month) : undefined;
+    const yearNumber = year ? Number(year) : undefined;
+    return this.salariesService.getMySalaries(
+      req.user.id,
+      monthNumber,
+      yearNumber,
+    );
+  }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll(@Query('month') month?: string, @Query('year') year?: string) {
-    return this.salariesService.findAll(
-      month ? +month : undefined,
-      year ? +year : undefined,
-    );
+  findAll(@Query() query: QuerySalaryDto) {
+    return this.salariesService.findAll(query);
+  }
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  findOne(@Param('id') id: string) {
+    return this.salariesService.findOne(id);
   }
   @Patch(':id')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   update(@Param('id') id: string, @Body() dto: UpdateSalaryDto) {
     return this.salariesService.update(id, dto);
+  }
+  @Patch(':id/pay')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  pay(@Param('id') id: string) {
+    return this.salariesService.markAsPaid(id);
   }
 }

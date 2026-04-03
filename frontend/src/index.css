@@ -103,9 +103,9 @@
         --destructive-foreground: 0 0% 100%;
 
         /* Border and input */
-        --border: 282 16% 87%;
-        --input: 260 30% 92%;
-        --ring: 271 79% 47%;
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 215 20.2% 65.1%;
 
         /* Design system values */
         --radius: 1rem;
@@ -197,9 +197,10 @@
         --destructive: 0 80% 47%;
         --destructive-foreground: 0 0% 100%;
 
-        --border: 281 15% 25%;
+        --ring: 212.7 26.8% 83.9%;
+        --border: 217.2 32.6% 17.5%;
         --input: 240 15% 18%;
-        --ring: 280 100% 70%;
+
 
         /* Dark mode gradients */
         --gradient-primary: linear-gradient(135deg,

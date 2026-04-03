@@ -1,16 +1,17 @@
 import { create } from "zustand"
 import { employeeApi, salaryApi, leaveRequestApi } from "@/api/hr.api"
 import { toast } from "sonner"
+import { getErrorMessage } from "@/store/store.helpers"
 
 import type {
   Salary,
   LeaveRequest,
   CreateLeaveRequestDto,
 } from "@/types/hr.type"
-import type { EmployeeProfile,UpdateProfileDto } from "@/types/employee.type"
+import type { EmployeeProfile, UpdateMyProfileDto } from "@/types/employee.type"
 
 interface EmployeeState {
-  myProfile:EmployeeProfile | null
+  myProfile: EmployeeProfile | null
   mySalaries: Salary[]
   myLeaveRequests: LeaveRequest[]
 
@@ -20,7 +21,7 @@ interface EmployeeState {
 
   // Profile
   fetchMyProfile: () => Promise<void>
-  updateMyProfile: (data: UpdateProfileDto) => Promise<void>
+  updateMyProfile: (data: UpdateMyProfileDto) => Promise<void>
 
   // Salary
   fetchMySalaries: (params?: { month?: number; year?: number }) => Promise<void>
@@ -50,24 +51,24 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     try {
       const data = await employeeApi.getMyProfile()
       set({ myProfile: data })
-    } catch {
-      toast.error("Không thể tải thông tin hồ sơ!")
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Không thể tải thông tin hồ sơ!")
+      toast.error(msg)
     } finally {
       set({ isLoadingProfile: false })
     }
   },
 
-  updateMyProfile: async (data :UpdateProfileDto) => {
+  updateMyProfile: async (data: UpdateMyProfileDto) => {
     set({ isLoadingProfile: true })
 
     try {
       await employeeApi.updateMyProfile(data)
-
       toast.success("Cập nhật hồ sơ thành công!")
-
       await get().fetchMyProfile()
-    } catch (error) {
-      toast.error("Lỗi khi cập nhật hồ sơ!")
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Lỗi khi cập nhật hồ sơ!")
+      toast.error(msg)
       throw error
     } finally {
       set({ isLoadingProfile: false })
@@ -84,8 +85,9 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     try {
       const data = await salaryApi.getMySalaries(params)
       set({ mySalaries: data })
-    } catch {
-      toast.error("Không thể tải bảng lương!")
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Không thể tải bảng lương!")
+      toast.error(msg)
     } finally {
       set({ isLoadingSalary: false })
     }
@@ -101,8 +103,9 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     try {
       const data = await leaveRequestApi.getMyLeaveRequests()
       set({ myLeaveRequests: data })
-    } catch {
-      toast.error("Không thể tải đơn nghỉ phép!")
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Không thể tải đơn nghỉ phép!")
+      toast.error(msg)
     } finally {
       set({ isLoadingLeave: false })
     }
@@ -111,13 +114,12 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
   createLeaveRequest: async (data) => {
     try {
       await leaveRequestApi.createLeaveRequest(data)
-
       toast.success("Gửi đơn nghỉ phép thành công!")
-
       await get().fetchMyLeaveRequests()
-    } catch {
-      toast.error("Không thể gửi đơn nghỉ phép!")
-      // throw error
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Không thể gửi đơn nghỉ phép!")
+      toast.error(msg)
+      throw error
     }
   },
 
@@ -130,8 +132,9 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
       }))
 
       toast.success("Đã xóa đơn nghỉ phép")
-    } catch {
-      toast.error("Không thể xóa đơn nghỉ phép")
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, "Không thể xóa đơn nghỉ phép")
+      toast.error(msg)
     }
   },
 }))

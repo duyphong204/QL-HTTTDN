@@ -128,7 +128,7 @@ export const useHrStore = create<HrState>((set, get) => ({
         page: filters.page,
         limit: filters.limit,
         search: filters.search,
-        sortBy: filters.sortBy,
+        sortBy: filters.sortBy as 'code' | 'department' | 'position' | 'joinDate',
         sortOrder: filters.sortOrder as SortOrder,
         department: filters.department,
         position: filters.position,
@@ -398,9 +398,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         statistics: data
       })
 
-    } catch {
+    } catch (error: unknown) {
 
-      toast.error("Không thể tải thống kê HR")
+      toast.error(getErrorMessage(error, "Không thể tải thống kê HR"))
 
     } finally {
 

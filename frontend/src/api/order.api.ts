@@ -1,63 +1,57 @@
-import { axiosInstance } from "./axios"
+import { apiDelete, apiGet, apiPatch, apiPost } from "./base"
 import type { Order, CreateOrderDto, Cart, CartItem, AddToCartDto, SalesStats } from "@/types/sales.type"
 
 export const orderApi = {
     getOrders: async () => {
-        const res = await axiosInstance.get<Order[]>("/orders");
-        return res.data;
+        return apiGet<Order[]>("/orders");
+    },
+
+    getMyOrders: async () => {
+        return apiGet<Order[]>('/orders/my');
     },
 
     getOrderById: async (id: string) => {
-        const res = await axiosInstance.get<Order>(`/orders/${id}`);
-        return res.data;
+        return apiGet<Order>(`/orders/${id}`);
     },
 
     createOrder: async (data: CreateOrderDto) => {
-        const res = await axiosInstance.post<Order>("/orders", data);
-        return res.data;
+        return apiPost<Order>("/orders", data);
     },
 
     updateOrderStatus: async (id: string, status: string) => {
-        const res = await axiosInstance.patch<Order>(`/orders/${id}/status`, { status });
-        return res.data;
+        return apiPatch<Order>(`/orders/${id}/status`, { status });
     },
 
     cancelOrder: async (id: string, reason?: string) => {
-        const res = await axiosInstance.patch<Order>(`/orders/${id}/cancel`, { reason });
-        return res.data;
+        return apiPatch<Order>(`/orders/${id}/cancel`, { reason });
     },
     getSalesStats: async (params: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get<SalesStats>('/orders/stats', { params });
-        return res.data;
+        return apiGet<SalesStats>('/orders/stats', params);
     },
 
     getSalesStatsByPeriod: async (params: { year: number; quarter?: number }) => {
-        const res = await axiosInstance.get<SalesStats>('/orders/period', { params });
-        return res.data;
+        return apiGet<SalesStats>('/orders/period', params);
     },
 };
 
 export const cartApi = {
     getCart: async () => {
-        const res = await axiosInstance.get<Cart>("/cart");
-        return res.data;
+        return apiGet<Cart>("/cart");
     },
 
     addToCart: async (data: AddToCartDto) => {
-        const res = await axiosInstance.post<CartItem>("/cart/items", data);
-        return res.data;
+        return apiPost<CartItem>("/cart/items", data);
     },
 
     updateCartItem: async (itemId: string, quantity: number) => {
-        const res = await axiosInstance.patch<CartItem>(`/cart/items/${itemId}`, { quantity });
-        return res.data;
+        return apiPatch<CartItem>(`/cart/items/${itemId}`, { quantity });
     },
 
     removeCartItem: async (itemId: string) => {
-        await axiosInstance.delete(`/cart/items/${itemId}`);
+        await apiDelete(`/cart/items/${itemId}`);
     },
 
     clearCart: async () => {
-        await axiosInstance.post("/cart/clear");
+        await apiPost("/cart/clear");
     },
 };

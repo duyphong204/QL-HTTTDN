@@ -36,6 +36,10 @@ export interface OrderDetail extends BaseEntity {
 
 export interface Order extends BaseEntity {
     userId?: string  // Khách vãng lai (userId = null) hoặc user đăng nhập
+    user?: {
+        id: string
+        email: string
+    }
     fullName: string
     phone: string
     address: string

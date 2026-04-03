@@ -1,10 +1,10 @@
-// frontend/src/store/sales.store.ts
 import { create } from 'zustand'
 import { toast } from 'sonner'
 import { orderApi } from '@/api/order.api'
 import { productApi } from '@/api/warehouse.api'
 import type { Order, SalesStats } from '@/types/sales.type'
 import type { Product } from '@/types/warehouse.type'
+import { getErrorMessage } from '@/store/store.helpers'
 
 interface SalesState {
     orders: Order[]
@@ -34,8 +34,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         try {
             const data = await orderApi.getOrders()
             set({ orders: data, isLoading: false })
-        } catch {
-            toast.error('Không thể tải danh sách phiếu xuất')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Không thể tải danh sách phiếu xuất')
+            toast.error(msg)
             set({ isLoading: false })
         }
     },
@@ -45,8 +46,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         try {
             const data = await orderApi.getSalesStats(params)
             set({ stats: data, isLoadingStats: false })
-        } catch {
-            toast.error('Không thể tải thống kê')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Không thể tải thống kê')
+            toast.error(msg)
             set({ isLoadingStats: false })
         }
     },
@@ -56,8 +58,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         try {
             const data = await orderApi.getSalesStatsByPeriod(params)
             set({ stats: data, isLoadingStats: false })
-        } catch {
-            toast.error('Không thể tải thống kê')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Không thể tải thống kê')
+            toast.error(msg)
             set({ isLoadingStats: false })
         }
     },
@@ -72,8 +75,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
                 sortOrder: 'asc',
             })
             set({ productOptions: response.data, isLoadingProducts: false })
-        } catch {
-            toast.error('Không thể tải danh sách sản phẩm')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Không thể tải danh sách sản phẩm')
+            toast.error(msg)
             set({ isLoadingProducts: false })
         }
     },
@@ -86,9 +90,10 @@ export const useSalesStore = create<SalesState>((set, get) => ({
             })
             toast.success('Tạo phiếu xuất thành công')
             await get().fetchOrders()
-        } catch {
-            toast.error('Tạo phiếu xuất thất bại')
-            throw new Error('failed')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Tạo phiếu xuất thất bại')
+            toast.error(msg)
+            throw error
         }
     },
 
@@ -97,8 +102,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
             await orderApi.updateOrderStatus(id, status)
             toast.success('Cập nhật trạng thái thành công')
             await get().fetchOrders()
-        } catch {
-            toast.error('Cập nhật thất bại')
+        } catch (error: unknown) {
+            const msg = getErrorMessage(error, 'Cập nhật thất bại')
+            toast.error(msg)
         }
     },
 }))

@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from "react";
-import { X } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateUserSchema, UpdateUserSchema} from "@/schemas/user.schema";
 import type { User } from "@/types/user.type";
 import type { Role } from "@/types/auth.type";
 import { ROLE_OPTIONS } from "@/constants/role";
+import { AppModal } from "@/components/common/AppModal";
 
 type UserFormValues = {
   email: string;
@@ -72,30 +72,18 @@ export function UserFormModal({
     });
   }, [isOpen, editingUser, reset]);
 
-  if (!isOpen) return null;
-
   const submit = async (data: UserFormValues) => {
     await onSubmit(data);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-xl">
-        <div className="flex items-start justify-between px-6 pt-6 pb-2">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {isEditMode ? "Chỉnh sửa User" : "Thêm User mới"}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Nhập thông tin tài khoản người dùng
-            </p>
-          </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full">
-            <X size={20} />
-          </button>
-        </div>
-
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditMode ? "Chỉnh sửa User" : "Thêm User mới"}
+      subtitle="Nhập thông tin tài khoản người dùng"
+      maxWidthClassName="max-w-lg"
+    >
         <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
@@ -150,7 +138,6 @@ export function UserFormModal({
             {isSubmitting ? "Đang xử lý..." : isEditMode ? "Cập nhật" : "Thêm User"}
           </button>
         </form>
-      </div>
-    </div>
+    </AppModal>
   );
 }

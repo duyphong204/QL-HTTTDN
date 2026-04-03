@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
   UsePipes,
@@ -35,6 +36,11 @@ export class LeaveRequestsController {
   async getMyRequests(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
+  @Get('my')
+  @Roles(Role.EMPLOYEE)
+  async getMyRequestsAlias(@Request() req: any) {
+    return this.leaveRequestsService.getMyRequests(req.user.id);
+  }
   @Patch(':id/status')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateStatus(
@@ -44,10 +50,20 @@ export class LeaveRequestsController {
   ) {
     return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id);
   }
+  @Patch(':id/approve')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  approve(@Param('id') id: string, @Request() req: any) {
+    return this.leaveRequestsService.updateStatus(id, 'APPROVED', req.user.id);
+  }
+  @Patch(':id/reject')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  reject(@Param('id') id: string, @Request() req: any) {
+    return this.leaveRequestsService.updateStatus(id, 'REJECTED', req.user.id);
+  }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll() {
-    return this.leaveRequestsService.findAll();
+  findAll(@Query() query?: { status?: string; type?: string; employeeId?: string; year?: string }) {
+    return this.leaveRequestsService.findAll(query);
   }
   @Delete(':id')
   @Roles(Role.EMPLOYEE)

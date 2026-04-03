@@ -1,19 +1,20 @@
-import { create } from 'zustand';
-import { toast } from 'sonner';
-import { stockInApi, productApi, supplierApi } from '@/api/warehouse.api';
-import type { CreateStockInDto, Product, StockIn, Supplier } from '@/types/warehouse.type';
+import { create } from 'zustand'
+import { toast } from 'sonner'
+import { stockInApi, productApi, supplierApi } from '@/api/warehouse.api'
+import type { CreateStockInDto, Product, StockIn, Supplier } from '@/types/warehouse.type'
+import { getErrorMessage } from '@/store/store.helpers'
 
 interface StockInState {
-  stockIns: StockIn[];
-  products: Product[];
-  suppliers: Supplier[];
-  selectedStockIn: StockIn | null;
-  isLoading: boolean;
-  fetchStockIns: () => Promise<void>;
-  fetchReferenceData: () => Promise<void>;
-  fetchStockInById: (id: string) => Promise<void>;
-  clearSelectedStockIn: () => void;
-  createTicket: (data: CreateStockInDto) => Promise<void>;
+  stockIns: StockIn[]
+  products: Product[]
+  suppliers: Supplier[]
+  selectedStockIn: StockIn | null
+  isLoading: boolean
+  fetchStockIns: () => Promise<void>
+  fetchReferenceData: () => Promise<void>
+  fetchStockInById: (id: string) => Promise<void>
+  clearSelectedStockIn: () => void
+  createTicket: (data: CreateStockInDto) => Promise<void>
 }
 
 export const useStockInStore = create<StockInState>((set, get) => ({
@@ -24,14 +25,15 @@ export const useStockInStore = create<StockInState>((set, get) => ({
   isLoading: false,
 
   fetchStockIns: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true })
     try {
-      const data = await stockInApi.getStockIns();
-      set({ stockIns: data, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false });
-      toast.error('Lỗi khi tải danh sách phiếu nhập kho');
-      throw error;
+      const data = await stockInApi.getStockIns()
+      set({ stockIns: data, isLoading: false })
+    } catch (error: unknown) {
+      set({ isLoading: false })
+      const msg = getErrorMessage(error, 'Lỗi khi tải danh sách phiếu nhập kho')
+      toast.error(msg)
+      throw error
     }
   },
 
@@ -50,45 +52,48 @@ export const useStockInStore = create<StockInState>((set, get) => ({
           sortBy: 'name',
           sortOrder: 'asc',
         }),
-      ]);
+      ])
 
       set({
         products: productsResponse.data,
-        suppliers: Array.isArray(suppliersResponse) ? suppliersResponse : suppliersResponse.data,
-      });
-    } catch (error) {
-      toast.error('Lỗi khi tải dữ liệu sản phẩm và nhà cung cấp');
-      throw error;
+        suppliers: suppliersResponse.data,
+      })
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, 'Lỗi khi tải dữ liệu sản phẩm và nhà cung cấp')
+      toast.error(msg)
+      throw error
     }
   },
 
   fetchStockInById: async (id: string) => {
-    set({ isLoading: true, selectedStockIn: null });
+    set({ isLoading: true, selectedStockIn: null })
     try {
-      const data = await stockInApi.getStockInById(id);
-      set({ selectedStockIn: data, isLoading: false });
-    } catch (error) {
-      set({ isLoading: false });
-      toast.error('Lỗi khi tải thông tin phiếu nhập kho');
-      throw error;
+      const data = await stockInApi.getStockInById(id)
+      set({ selectedStockIn: data, isLoading: false })
+    } catch (error: unknown) {
+      set({ isLoading: false })
+      const msg = getErrorMessage(error, 'Lỗi khi tải thông tin phiếu nhập kho')
+      toast.error(msg)
+      throw error
     }
   },
 
   clearSelectedStockIn: () => {
-    set({ selectedStockIn: null });
+    set({ selectedStockIn: null })
   },
 
   createTicket: async (data: CreateStockInDto) => {
-    set({ isLoading: true });
+    set({ isLoading: true })
     try {
-      await stockInApi.createStockIn(data);
-      toast.success('Tạo phiếu nhập kho thành công');
-      await Promise.all([get().fetchStockIns(), get().fetchReferenceData()]);
-    } catch (error) {
-      toast.error('Tạo phiếu nhập kho thất bại');
-      throw error;
+      await stockInApi.createStockIn(data)
+      toast.success('Tạo phiếu nhập kho thành công')
+      await Promise.all([get().fetchStockIns(), get().fetchReferenceData()])
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, 'Tạo phiếu nhập kho thất bại')
+      toast.error(msg)
+      throw error
     } finally {
-      set({ isLoading: false });
+      set({ isLoading: false })
     }
-  }
-}));
+  },
+}))

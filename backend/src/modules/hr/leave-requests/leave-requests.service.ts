@@ -9,7 +9,7 @@ import { CreateLeaveDto } from './dto/leave.dto';
 
 @Injectable()
 export class LeaveRequestsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateLeaveDto) {
     const employee = await this.prisma.employee.findUnique({
@@ -36,14 +36,21 @@ export class LeaveRequestsService {
     });
   }
   async getMyRequests(userId: string) {
-    const employee = await this.prisma.employee.findUnique({ where: { userId } });
+    const employee = await this.prisma.employee.findUnique({
+      where: { userId },
+    });
     if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
     const requests = await this.prisma.leaveRequest.findMany({
       where: { employeeId: employee.id },
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, type: true, startDate: true, endDate: true,
-        reason: true, status: true, createdAt: true,
+        id: true,
+        type: true,
+        startDate: true,
+        endDate: true,
+        reason: true,
+        status: true,
+        createdAt: true,
         employee: {
           select: {
             user: { select: { profile: { select: { fullName: true } } } },
@@ -62,8 +69,28 @@ export class LeaveRequestsService {
       createdAt: item.createdAt,
     }));
   }
-  async findAll() {
+  async findAll(query?: {
+    status?: string;
+    type?: string;
+    employeeId?: string;
+    year?: string;
+  }) {
+    const { status, type, employeeId, year } = query || {};
+
     const leaveRequests = await this.prisma.leaveRequest.findMany({
+      where: {
+        ...(status ? { status } : {}),
+        ...(type ? { type } : {}),
+        ...(employeeId ? { employeeId } : {}),
+        ...(year
+          ? {
+              createdAt: {
+                gte: new Date(Number(year), 0, 1),
+                lte: new Date(Number(year), 11, 31, 23, 59, 59),
+              },
+            }
+          : {}),
+      },
       orderBy: {
         createdAt: 'desc',
       },

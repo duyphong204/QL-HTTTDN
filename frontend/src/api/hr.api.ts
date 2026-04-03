@@ -74,9 +74,9 @@ export const leaveRequestApi = {
     },
 
     approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto) => {
+        const endpoint = data.status === 'APPROVED' ? 'approve' : 'reject';
         const res = await axiosInstance.patch<LeaveRequest>(
-            `/leave-requests/${id}/status`,
-            data
+            `/leave-requests/${id}/${endpoint}`,
         );
         return res.data;
     },
@@ -106,7 +106,7 @@ export const salaryApi = {
         return res.data;
     },
     calculateSalary: async (data: CreateSalaryDto) => {
-        const res = await axiosInstance.post('/salaries/calculate', data);
+        const res = await axiosInstance.post('/salaries', data);
         return res.data;
     },
     calculateAllSalaries: async (data: { month: number; year: number }) => {

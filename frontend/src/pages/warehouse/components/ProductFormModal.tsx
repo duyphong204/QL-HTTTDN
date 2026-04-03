@@ -1,7 +1,8 @@
 // frontend/src/components/warehouse/ProductFormModal.tsx
 import { useEffect, useRef, useState } from 'react'
 import type { Category, CreateProductDto, Product, Supplier, UpdateProductDto } from '@/types/warehouse.type'
-import { X, Upload } from 'lucide-react'
+import { Upload } from 'lucide-react'
+import { AppModal } from '@/components/common/AppModal'
 
 interface Props {
     isOpen: boolean
@@ -76,20 +77,13 @@ export function ProductFormModal({ isOpen, onClose, editingProduct, categories, 
     }
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        {isEdit ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}
-                    </h2>
-                    <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-                        <X size={18} />
-                    </button>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <AppModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={isEdit ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}
+            maxWidthClassName="max-w-lg"
+        >
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Tên */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Tên sản phẩm *</label>
@@ -176,8 +170,7 @@ export function ProductFormModal({ isOpen, onClose, editingProduct, categories, 
                             {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Thêm mới'}
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
+            </form>
+        </AppModal>
     )
 }

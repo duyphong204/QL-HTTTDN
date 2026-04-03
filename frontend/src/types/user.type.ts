@@ -17,8 +17,10 @@ export interface User {
     email: string
     role: Role
     profile?: Profile
-    createdAt: Date
-    updatedAt: Date
+    isActive?: boolean
+    deletedAt?: string | null
+    createdAt: string
+    updatedAt: string
 }
 
 export interface CreateUserDto {

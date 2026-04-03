@@ -1,5 +1,4 @@
 import type { BaseEntity } from "./common.type"
-import type { Role } from "./auth.type"
 import type { User } from "./user.type"
 
 export interface Employee extends BaseEntity {
@@ -7,7 +6,7 @@ export interface Employee extends BaseEntity {
     user?: User
     code: string
     department?: string
-    position?: Role
+    position?: string
     baseSalary: number
     joinDate: Date
     resignDate?: Date
@@ -20,31 +19,35 @@ export interface CreateEmployeeDto {
     fullName: string
     phone?: string
     department?: string
-    position?: Role
+    position?: string
     baseSalary: number
-}
-
-export interface UpdateProfileDto {
-    fullName?: string;
-    phone?: string;
-    address?: string;
-    position?: Role;
-    department?: string;
 }
 
 export interface UpdateEmployeeDto {
     code?: string
     department?: string
-    position?: Role
+    position?: string
     baseSalary?: number
     resignDate?: Date
+    effectiveDate?: string
+}
+
+export interface QueryEmployeeDto {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: 'code' | 'department' | 'position' | 'joinDate'
+    sortOrder?: 'asc' | 'desc'
+    department?: string
+    position?: string
+    isActive?: boolean
 }
 
 export interface JobHistory extends BaseEntity {
     employeeId: string
     employee?: Employee
     department?: string
-    position?: Role
+    position?: string
     baseSalary: number
     startDate: Date
     endDate?: Date
@@ -53,7 +56,7 @@ export interface JobHistory extends BaseEntity {
 export interface CreateJobHistoryDto {
     employeeId: string
     department?: string
-    position?: Role
+    position?: string
     baseSalary: number
     startDate: Date
 }
@@ -67,6 +70,7 @@ export interface Salary extends BaseEntity {
     bonus: number
     deduction: number
     status: "PAID" | "PENDING"
+    netSalary?: number
 }
 
 export interface CreateSalaryDto {
@@ -75,7 +79,7 @@ export interface CreateSalaryDto {
     year: number
     bonus?: number
     deduction?: number
-    status: 'PAID' | 'PENDING'
+    status?: 'PAID' | 'PENDING'
 }
 
 export interface UpdateSalaryDto {
@@ -83,6 +87,13 @@ export interface UpdateSalaryDto {
     bonus?: number
     deduction?: number
     status?: "PAID" | "PENDING"
+}
+
+export interface QuerySalaryDto {
+    month?: number
+    year?: number
+    employeeId?: string
+    status?: 'PAID' | 'PENDING'
 }
 
 export interface LeaveRequest extends BaseEntity {
@@ -116,4 +127,11 @@ export interface HrStatisticsReport {
     salaryYear: number
     totalSalaryPaid: number
     totalBonus: number
+}
+
+export interface QueryLeaveRequestDto {
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+    type?: 'SICK' | 'ANNUAL' | 'MATERNITY' | 'RESIGNATION'
+    employeeId?: string
+    year?: string
 }

@@ -51,6 +51,10 @@ export class UsersController {
   deleteUser(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+  @Patch(':id/restore')
+  restoreUser(@Param('id') id: string) {
+    return this.usersService.restore(id);
+  }
   @Patch(':id/role')
   changeRole(@Param('id') id: string, @Body('role') role: Role) {
     return this.usersService.updateRole(id, role);

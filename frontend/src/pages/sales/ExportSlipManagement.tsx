@@ -5,6 +5,7 @@ import { Plus, Trash2, FileText } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { useClientTable } from '@/hooks/useClientTable'
+import { AppModal } from '@/components/common/AppModal'
 
 const formatCurrency = (n: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
@@ -125,14 +126,13 @@ export default function ExportSlipManagement() {
                 </div>
             </div>
 
-            {formOpen && (
-                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900">Tạo phiếu xuất hàng</h2>
-                            <button onClick={() => setFormOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg">✕</button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <AppModal
+                isOpen={formOpen}
+                onClose={() => setFormOpen(false)}
+                title="Tạo phiếu xuất hàng"
+                maxWidthClassName="max-w-2xl"
+            >
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Tên khách hàng *</label>
@@ -200,10 +200,8 @@ export default function ExportSlipManagement() {
                                     Tạo phiếu xuất
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </AppModal>
         </div>
     )
 }

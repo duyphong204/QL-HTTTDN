@@ -1,5 +1,6 @@
 import { Loader2, X, Clock } from "lucide-react"
 import type { Employee } from "@/types/hr.type"
+import { AppModal } from "@/components/common/AppModal"
 
 interface Props {
   employee: Employee | null
@@ -23,13 +24,16 @@ export function EmployeeDetailModal({ employee, isLoading = false, onClose }: Pr
   if (!employee && !isLoading) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="relative bg-white rounded-2xl w-full max-w-3xl p-6 md:p-8 shadow-xl max-h-[90vh] overflow-y-auto">
+    <AppModal
+      isOpen={!!employee || isLoading}
+      onClose={onClose}
+      title="Chi tiết Nhân sự"
+      maxWidthClassName="max-w-3xl"
+    >
+      <div className="relative p-6 md:p-8">
         <button onClick={onClose} className="absolute top-4 right-4 h-8 w-8 rounded-md border border-gray-300 text-gray-500 hover:text-gray-700 hover:bg-gray-50 flex items-center justify-center">
           <X size={18} />
         </button>
-
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Chi tiết Nhân sự</h2>
 
         {isLoading ? (
           <div className="h-52 flex items-center justify-center text-gray-500">
@@ -85,6 +89,6 @@ export function EmployeeDetailModal({ employee, isLoading = false, onClose }: Pr
           </div>
         )}
       </div>
-    </div>
+    </AppModal>
   )
 }

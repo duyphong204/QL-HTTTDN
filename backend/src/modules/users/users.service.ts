@@ -17,6 +17,7 @@ const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
   email: true,
   role: true,
   isActive: true,
+  deletedAt: true,
   createdAt: true,
   updatedAt: true,
   profile: {
@@ -165,6 +166,26 @@ export class UsersService {
       data: {
         isActive: false,
         deletedAt: new Date(),
+      },
+      select: USER_SAFE_SELECT,
+    });
+  }
+
+  async restore(id: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: { not: null } },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Người dùng đã tồn tại hoặc không thể khôi phục');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        isActive: true,
+        deletedAt: null,
       },
       select: USER_SAFE_SELECT,
     });

@@ -32,6 +32,29 @@ export default function EmployeeManagement() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+  const employeeList = Array.isArray(employees) ? employees : []
+
+  const getPositionBadge = (position?: string) => {
+    if (!position) {
+      return {
+        label: "—",
+        color: "bg-gray-100 text-gray-600",
+      }
+    }
+
+    if (position in ROLE_BADGE) {
+      const config = ROLE_BADGE[position as keyof typeof ROLE_BADGE]
+      return {
+        label: config.label,
+        color: config.color,
+      }
+    }
+
+    return {
+      label: position,
+      color: "bg-indigo-100 text-indigo-700",
+    }
+  }
 
   const { searchTerm, setSearchTerm, goToPage } = usePaginatedList({
     filters,
@@ -121,14 +144,17 @@ export default function EmployeeManagement() {
                       Đang tải dữ liệu...
                     </td>
                   </tr>
-                ) : employees.length === 0 ? (
+                ) : employeeList.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
                       Không tìm thấy nhân viên.
                     </td>
                   </tr>
                 ) : (
-                  employees.map((emp) => (
+                  employeeList.map((emp) => {
+                    const badge = getPositionBadge(emp.position)
+
+                    return (
                     <tr key={emp.id} className="hover:bg-gray-50/70 transition-colors group">
                       <td className="px-6 py-4 font-mono text-gray-900">
                         {emp.code}
@@ -144,12 +170,9 @@ export default function EmployeeManagement() {
 
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            ROLE_BADGE[emp.position || "EMPLOYEE"]?.color ||
-                            "bg-gray-100 text-gray-600"
-                          }`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}
                         >
-                          {emp.position ? ROLE_BADGE[emp.position]?.label || emp.position : "—"}
+                          {badge.label}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
@@ -189,7 +212,8 @@ export default function EmployeeManagement() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    )
+                  })
                 )}
               </tbody>
             </table>

@@ -1,6 +1,7 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { API_CONFIG } from "./constants";
+import { API_CONFIG } from "@/constants";
+import type { ApiEnvelope, ApiErrorResponse } from "@/types/common.type";
 
 let accessToken: string | null = null;
 
@@ -11,12 +12,6 @@ export const setAccessToken = (token: string | null): void => {
 export const getAccessToken = (): string | null => {
     return accessToken;
 };
-export interface ApiErrorResponse {
-    statusCode: number;
-    message: string;
-    timestamp?: string;
-}
-
 export const axiosInstance = axios.create({
     baseURL: API_CONFIG.BASE_URL,
     timeout: API_CONFIG.TIMEOUT,
@@ -61,7 +56,20 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const payload = response.data as ApiEnvelope<unknown> | unknown;
+
+    if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
+      const envelope = payload as ApiEnvelope<unknown>;
+
+      // Keep pagination meta for list endpoints while still unwrapping normal payloads.
+      response.data = typeof envelope.meta !== 'undefined'
+        ? { data: envelope.data, meta: envelope.meta }
+        : envelope.data;
+    }
+
+    return response;
+  },
   async (error: AxiosError) => {
 
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
@@ -90,13 +98,23 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post(
+        const refreshResponse = await axios.post(
           `${API_CONFIG.BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
-        const newToken = data.accessToken;
+        const refreshPayload = refreshResponse.data as
+          | ApiEnvelope<{ accessToken: string }>
+          | { accessToken?: string };
+
+        const newToken = 'data' in refreshPayload
+          ? refreshPayload.data.accessToken
+          : refreshPayload.accessToken;
+
+        if (!newToken) {
+          throw new Error('Không thể làm mới token');
+        }
         setAccessToken(newToken);
 
         processQueue(null, newToken);
@@ -119,7 +137,12 @@ axiosInstance.interceptors.response.use(
 
     const apiError = error.response?.data as ApiErrorResponse;
     if (apiError?.message) {
-      return Promise.reject(new Error(apiError.message));
+      const message = Array.isArray(apiError.message)
+        ? apiError.message.join(', ')
+        : typeof apiError.message === 'string'
+          ? apiError.message
+          : apiError.error || 'Lỗi không xác định';
+      return Promise.reject(new Error(message));
     }
 
     return Promise.reject(error);

@@ -26,6 +26,23 @@ export interface ApiResponse<T> {
     message: string
 }
 
+export interface ApiEnvelope<T> {
+    success: true
+    data: T
+    meta?: PaginationMeta | null
+    message?: string | string[]
+    timestamp?: string
+}
+
+export interface ApiErrorResponse {
+    success?: false
+    statusCode: number
+    error?: string
+    message?: string | string[] | Record<string, string | string[]>
+    path?: string
+    timestamp?: string
+}
+
 export interface PaginatedResponse<T> {
     data: T[]
     meta: PaginationMeta

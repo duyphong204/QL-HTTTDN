@@ -74,7 +74,7 @@ export class AuthService {
       },
     });
 
-    return { message: 'Đăng ký thành công' };
+    return { data: null, message: 'Đăng ký thành công' };
   }
 
   async login(dto: LoginDto, res: Response) {

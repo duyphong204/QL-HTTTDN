@@ -4,6 +4,7 @@ import type { User } from "@/types/user.type";
 import type { LoginRequest, RegisterRequest } from "@/types/auth.type";
 import { setAccessToken } from "@/api/axios";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/store/store.helpers";
 
 interface AuthState {
     user: User | null;
@@ -16,9 +17,6 @@ interface AuthState {
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>; 
 }
-
-const toErrorMessage = (error: unknown): string =>
-    error instanceof Error ? error.message : "Lỗi không xác định";
 
 export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
@@ -39,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             toast.success("Đăng nhập thành công 🎉");
         } catch (error: unknown) {
-            const msg = toErrorMessage(error); 
+            const msg = getErrorMessage(error, "Lỗi không xác định"); 
             toast.error(msg);
             set({ isLoading: false });
             throw error;
@@ -52,7 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             toast.success("Đăng ký thành công 🎉");
             await get().login({ email: data.email, password: data.password });
         } catch (error: unknown) {
-            const msg = toErrorMessage(error);
+            const msg = getErrorMessage(error, "Lỗi không xác định");
             toast.error(msg);
             throw error;
         }
@@ -63,7 +61,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const user = await authApi.getProfile();
             set({ user, isAuthenticated: true });
         } catch (error: unknown) {
-                const msg = toErrorMessage(error);
+            const msg = getErrorMessage(error, "Lỗi không xác định");
                 toast.error(msg);
                 set({ user: null, isAuthenticated: false });
         }
@@ -82,7 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isAuthenticated: true,
                 isLoading : false                                                                                                                                         
             });
-        } catch(error : unknown) {
+        } catch {
             setAccessToken(null);
             set({
                 user: null,
@@ -97,7 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             await authApi.logout();
             toast.success("Đã đăng xuất 👋");
-        } catch (error: unknown) {
+        } catch {
             toast.error("Đăng xuất thất bại");
         }
 

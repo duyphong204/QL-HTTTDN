@@ -1,71 +1,85 @@
-import { useCallback, useEffect, useState } from "react";
-import { Plus, Trash2, Loader2 } from "lucide-react";
-import dayjs from "dayjs";
+import { useCallback, useEffect, useState } from "react"
+import { Plus, Trash2, Loader2 } from "lucide-react"
+import dayjs from "dayjs"
 
-import { useEmployeeStore } from "@/store/employee.store";
-import { DataTableToolbar } from "@/components/common/DataTableToolbar";
-import { PaginationControls } from "@/components/common/PaginationControls";
+import { useEmployeeStore } from "@/store/employee.store"
+import { useClientTable } from "@/hooks/useClientTable"
+import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { PaginationControls } from "@/components/common/PaginationControls"
+import { AppModal } from "@/components/common/AppModal"
 
-import type { LeaveRequest } from "@/types/hr.type";
-import type { CreateLeaveRequestValues } from "@/schemas/employee.schema";
+import type { LeaveRequest, CreateLeaveRequestDto } from "@/types/hr.type"
+
+const TYPE_LABEL: Record<string, string> = {
+  ANNUAL: "Nghỉ phép",
+  SICK: "Nghỉ bệnh",
+  MATERNITY: "Nghỉ thai sản",
+  RESIGNATION: "Đơn nghỉ việc",
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  PENDING: "bg-yellow-100 text-yellow-700",
+  APPROVED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  REJECTED: "Từ chối",
+}
 
 export default function EmployeeLeaveRequestPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false)
 
-  const [form, setForm] = useState<CreateLeaveRequestValues>({
+  const [form, setForm] = useState<CreateLeaveRequestDto>({
     type: "ANNUAL",
     startDate: "",
     endDate: "",
     reason: "",
-  });
+  })
 
   const {
     myLeaveRequests,
-    meta, // Bây giờ Store đã có meta nên sẽ hết lỗi TS2339
     isLoadingLeave,
     fetchMyLeaveRequests,
     createLeaveRequest,
     deleteLeaveRequest,
-  } = useEmployeeStore();
+  } = useEmployeeStore()
+
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
+    data: myLeaveRequests,
+    pageSize: 10,
+    searchFn: (item, keyword) => {
+      const reason = item.reason?.toLowerCase() ?? ""
+      const type = (TYPE_LABEL[item.type] ?? item.type).toLowerCase()
+      return reason.includes(keyword) || type.includes(keyword)
+    },
+  })
 
   useEffect(() => {
-    fetchMyLeaveRequests();
-  }, [fetchMyLeaveRequests]);
+    fetchMyLeaveRequests()
+  }, [fetchMyLeaveRequests])
 
-  const handleChange = (key: keyof CreateLeaveRequestValues, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  const handleChange = (key: keyof CreateLeaveRequestDto, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
 
   const handleSubmit = async () => {
     if (!form.startDate || !form.endDate || !form.reason) {
-      alert("Vui lòng điền đầy đủ thông tin");
-      return;
+      alert("Vui lòng điền đầy đủ thông tin")
+      return
     }
-    await createLeaveRequest(form);
-    setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" });
-    setDialogOpen(false);
-  };
+    await createLeaveRequest(form)
+    setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" })
+    setDialogOpen(false)
+  }
 
   const handleDelete = useCallback(async (id: string) => {
     if (window.confirm("Bạn có chắc muốn xóa đơn này?")) {
-      await deleteLeaveRequest(id);
+      await deleteLeaveRequest(id)
     }
-  }, [deleteLeaveRequest]);
-
-  const renderStatus = (status: string) => {
-    const styles = {
-      PENDING: "bg-yellow-100 text-yellow-700",
-      APPROVED: "bg-green-100 text-green-700",
-      REJECTED: "bg-red-100 text-red-700",
-    };
-    const labels = { PENDING: "Chờ duyệt", APPROVED: "Đã duyệt", REJECTED: "Từ chối" };
-    return (
-      <span className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status as keyof typeof styles] || styles.REJECTED}`}>
-        {labels[status as keyof typeof labels] || "Từ chối"}
-      </span>
-    );
-  };
+  }, [deleteLeaveRequest])
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -87,12 +101,11 @@ export default function EmployeeLeaveRequestPage() {
         </div>
 
         {/* TABLE CONTAINER */}
-        {/* Đã sửa min-h-[400px] thành min-h-100 theo gợi ý Lint */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative min-h-100">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative">
           <DataTableToolbar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Tìm kiếm lý do..."
+            searchPlaceholder="Tìm kiếm theo lý do, loại đơn..."
           />
 
           <div className="relative">
@@ -106,7 +119,6 @@ export default function EmployeeLeaveRequestPage() {
               <table className="w-full text-sm text-left whitespace-nowrap">
                 <thead className="bg-gray-50/50 text-gray-600 font-semibold border-b border-gray-100">
                   <tr>
-                    <th className="px-6 py-4">Nhân viên</th>
                     <th className="px-6 py-4">Loại đơn</th>
                     <th className="px-6 py-4">Từ ngày</th>
                     <th className="px-6 py-4">Đến ngày</th>
@@ -117,26 +129,26 @@ export default function EmployeeLeaveRequestPage() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-50">
-                  {myLeaveRequests.length === 0 && !isLoadingLeave ? (
+                  {pagedData.length === 0 && !isLoadingLeave ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-20 text-center text-gray-400 font-medium">
+                      <td colSpan={6} className="px-6 py-20 text-center text-gray-400 font-medium">
                         Chưa có đơn xin nghỉ nào.
                       </td>
                     </tr>
                   ) : (
-                    myLeaveRequests.map((request: LeaveRequest) => (
+                    pagedData.map((request: LeaveRequest) => (
                       <tr key={request.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-6 py-4 font-semibold text-gray-900">{request.employeeName || "Bạn"}</td>
                         <td className="px-6 py-4 text-gray-600">
-                          {request.type === "ANNUAL" && "Nghỉ phép"}
-                          {request.type === "SICK" && "Nghỉ bệnh"}
-                          {request.type === "MATERNITY" && "Nghỉ thai sản"}
-                          {request.type === "RESIGNATION" && "Đơn nghỉ việc"}
+                          {TYPE_LABEL[request.type] || request.type}
                         </td>
                         <td className="px-6 py-4 text-gray-600">{dayjs(request.startDate).format("DD/MM/YYYY")}</td>
                         <td className="px-6 py-4 text-gray-600">{dayjs(request.endDate).format("DD/MM/YYYY")}</td>
                         <td className="px-6 py-4 text-gray-600 max-w-xs truncate" title={request.reason}>{request.reason}</td>
-                        <td className="px-6 py-4">{renderStatus(request.status)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_STYLES[request.status] || STATUS_STYLES.REJECTED}`}>
+                            {STATUS_LABELS[request.status] || request.status}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                             {request.status === "PENDING" && (
@@ -159,44 +171,84 @@ export default function EmployeeLeaveRequestPage() {
 
           <PaginationControls
             meta={meta}
-            currentPage={meta?.page || 1}
+            currentPage={page}
             totalLabel="Tổng số đơn"
             isLoading={isLoadingLeave}
-            onPageChange={() => {}}
+            onPageChange={setPage}
           />
         </div>
       </div>
 
-      {/* MODAL TRỰC TIẾP TRONG FILE */}
-      {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Nộp đơn xin nghỉ</h2>
-              <button onClick={() => setDialogOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
-            </div>
+      {/* FORM MODAL */}
+      <AppModal
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        title="Nộp đơn xin nghỉ"
+        maxWidthClassName="max-w-md"
+      >
+        <div className="space-y-4 p-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Loại đơn</label>
+            <select
+              value={form.type}
+              onChange={(e) => handleChange("type", e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="ANNUAL">Nghỉ phép</option>
+              <option value="SICK">Nghỉ bệnh</option>
+              <option value="MATERNITY">Nghỉ thai sản</option>
+              <option value="RESIGNATION">Đơn nghỉ việc</option>
+            </select>
+          </div>
 
-            <div className="space-y-4">
-              {/* Form fields giữ nguyên... */}
-              {/* ... */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setDialogOpen(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium transition-all"
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm shadow-blue-200 transition-all active:scale-95"
-                >
-                  Gửi đơn
-                </button>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Từ ngày</label>
+              <input
+                type="date"
+                value={form.startDate}
+                onChange={(e) => handleChange("startDate", e.target.value)}
+                className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Đến ngày</label>
+              <input
+                type="date"
+                value={form.endDate}
+                onChange={(e) => handleChange("endDate", e.target.value)}
+                className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Lý do</label>
+            <textarea
+              value={form.reason}
+              onChange={(e) => handleChange("reason", e.target.value)}
+              rows={3}
+              placeholder="Nhập lý do xin nghỉ..."
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setDialogOpen(false)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-medium transition-all"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium shadow-sm shadow-blue-200 transition-all active:scale-95"
+            >
+              Gửi đơn
+            </button>
+          </div>
         </div>
-      )}
+      </AppModal>
     </div>
-  );
+  )
 }

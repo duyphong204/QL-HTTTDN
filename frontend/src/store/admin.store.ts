@@ -4,6 +4,7 @@ import { orderApi } from '@/api/order.api'
 import { productApi } from '@/api/warehouse.api'
 import { employeeApi } from '@/api/hr.api'
 import type { AdminDashboardReport } from '@/types/admin.type'
+import { getErrorMessage } from '@/store/store.helpers'
 
 interface AdminStoreState {
   report: AdminDashboardReport | null
@@ -11,9 +12,6 @@ interface AdminStoreState {
   error: string | null
   fetchDashboardReport: (params: { month?: number; year: number }) => Promise<void>
 }
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : 'Loi khong xac dinh'
 
 export const useAdminStore = create<AdminStoreState>((set) => ({
   report: null,
@@ -58,7 +56,7 @@ export const useAdminStore = create<AdminStoreState>((set) => ({
         },
       })
     } catch (error: unknown) {
-      const message = getErrorMessage(error)
+      const message = getErrorMessage(error, 'Lỗi tải báo cáo tổng hợp')
       set({ error: message })
       toast.error(message)
     } finally {

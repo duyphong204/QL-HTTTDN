@@ -50,6 +50,7 @@ export interface Product extends BaseEntity {
 
   minStock: number
   imageUrl?: string
+  isLowStock?: boolean
 
   categoryId: string
   supplierId: string

@@ -15,7 +15,31 @@ export class OrdersService {
         return this.prisma.order.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
-                details: true,
+                details: {
+                    include: {
+                        product: true,
+                    },
+                },
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async getMyOrders(userId: string) {
+        return this.prisma.order.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                details: {
+                    include: {
+                        product: true,
+                    },
+                },
                 user: {
                     select: {
                         id: true,
@@ -102,7 +126,8 @@ export class OrdersService {
                     phone: dto.phone,
                     address: dto.address,
                     totalAmount,
-                    status: 'COMPLETED',
+                    status: 'PENDING',
+                    paymentStatus: 'UNPAID',
                     details: {
                         create: orderDetailsData
                     }

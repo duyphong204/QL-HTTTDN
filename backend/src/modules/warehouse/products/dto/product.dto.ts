@@ -121,4 +121,8 @@ export class QueryProductDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc' = 'asc';
+
+  @IsOptional()
+  @Type(() => Boolean)
+  minStock?: boolean;
 }

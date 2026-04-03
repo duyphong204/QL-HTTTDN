@@ -31,9 +31,15 @@ export class OrdersController {
     }
 
     @Post()
-    @Roles(Role.ADMIN, Role.SALES_MANAGER)
+    @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
     createOrder(@Body() dto: CreateOrderDto, @Request() req: any) {
         return this.ordersService.createOrder(req.user.id, dto);
+    }
+
+    @Get('my')
+    @Roles(Role.CUSTOMER)
+    getMyOrders(@Request() req: any) {
+        return this.ordersService.getMyOrders(req.user.id);
     }
 
     @Patch(':id/status')
