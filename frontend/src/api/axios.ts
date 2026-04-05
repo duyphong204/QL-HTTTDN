@@ -81,13 +81,19 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post(
+        const response = await axios.post(
           `${API_CONFIG.BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true },
         );
 
-        const newToken = data.accessToken;
+        // Unwrap response from TransformInterceptor wrapper
+        const wrappedData = response.data;
+        const unwrappedData = (wrappedData && typeof wrappedData === 'object' && 'data' in wrappedData && 'success' in wrappedData)
+          ? wrappedData.data
+          : wrappedData;
+
+        const newToken = unwrappedData.accessToken;
         setAccessToken(newToken);
 
         processQueue(null, newToken);
