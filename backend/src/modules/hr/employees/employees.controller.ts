@@ -41,7 +41,10 @@ export class EmployeesController {
   }
   @Get('statistics/hr-report')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  getHrStatistics(@Query('month') month?: string, @Query('year') year?: string) {
+  getHrStatistics(
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+  ) {
     return this.employeesService.getHrStatisticsWithFilter(
       month ? Number(month) : undefined,
       year ? Number(year) : undefined,
@@ -69,7 +72,10 @@ export class EmployeesController {
   }
   @Patch(':id/position')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async updatePosition(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
+  async updatePosition(
+    @Param('id') id: string,
+    @Body() dto: UpdateEmployeeDto,
+  ) {
     return this.employeesService.updatePosition(id, dto);
   }
   @Delete(':id')

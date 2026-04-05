@@ -167,8 +167,15 @@ export class EmployeesService {
       isActive,
     } = query || {};
 
-    const allowedSortBy = ['code', 'department', 'position', 'joinDate'] as const;
-    const normalizedSortBy = allowedSortBy.includes(sortBy as (typeof allowedSortBy)[number])
+    const allowedSortBy = [
+      'code',
+      'department',
+      'position',
+      'joinDate',
+    ] as const;
+    const normalizedSortBy = allowedSortBy.includes(
+      sortBy as (typeof allowedSortBy)[number],
+    )
       ? sortBy
       : 'code';
     const normalizedSortOrder: Prisma.SortOrder =
@@ -253,7 +260,9 @@ export class EmployeesService {
 
     await this.assertEmployeeNotAdminByUserId(currentEmployee.userId);
 
-    const effectiveDate = dto.effectiveDate ? new Date(dto.effectiveDate) : new Date();
+    const effectiveDate = dto.effectiveDate
+      ? new Date(dto.effectiveDate)
+      : new Date();
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Kết thúc job hiện tại

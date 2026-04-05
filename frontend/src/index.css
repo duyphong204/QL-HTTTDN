@@ -77,8 +77,10 @@
         --muted-foreground: 240 15% 50%;
 
         /* Accent - cyan */
-        --accent: 180 100% 75%;
-        --accent-foreground: 240 100% 15%;
+        /* --accent: 180 100% 75%;
+        --accent-foreground: 240 100% 15%; */
+        --accent: 240 4.8% 95.9%; /* Màu xám rất nhạt */
+        --accent-foreground: 240 5.9% 10%; /* Màu xám đậm hơn */
 
         /* Chat colors */
         --chat-bubble-sent: 271 79% 47%;
@@ -179,10 +181,11 @@
 
         --muted: 240 15% 15%;
         --muted-foreground: 240 15% 70%;
-
+/* 
         --accent: 180 100% 60%;
-        --accent-foreground: 240 15% 8%;
-
+        --accent-foreground: 240 15% 8%; */
+        --accent: 240 3.7% 15.9%; /* Màu xám tối */
+        --accent-foreground: 0 0% 98%;
         /* Chat bubbles in dark mode */
         --chat-bubble-sent: 280 100% 65%;
         --chat-bubble-sent-foreground: 0 0% 100%;
@@ -256,7 +259,8 @@
 
     /* Chat bubble variants */
     .chat-bubble-sent {
-        @apply !bg-primary/80 !text-[hsl(var(--chat-bubble-sent-foreground))] shadow-(--shadow-bubble);
+       /* // @apply !bg-primary/80 !text-[hsl(var(--chat-bubble-sent-foreground))] shadow-(--shadow-bubble); */
+        @apply bg-primary/80! text-[hsl(var(--chat-bubble-sent-foreground))]! shadow-(--shadow-bubble)
     }
 
     .chat-bubble-received {

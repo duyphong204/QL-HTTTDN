@@ -26,9 +26,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       exceptionResponse !== null &&
       ('message' in exceptionResponse || 'error' in exceptionResponse)
     ) {
-      const payload = exceptionResponse as { 
+      const payload = exceptionResponse as {
         message?: unknown;
-        error?: unknown };
+        error?: unknown;
+      };
       const msg = payload.message;
 
       if (payload.error) {

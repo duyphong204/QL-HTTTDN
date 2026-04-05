@@ -29,7 +29,7 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('salaries')
 export class SalariesController {
-  constructor(private readonly salariesService: SalariesService) { }
+  constructor(private readonly salariesService: SalariesService) {}
 
   @Post()
   @Roles(Role.ADMIN, Role.HR_MANAGER)

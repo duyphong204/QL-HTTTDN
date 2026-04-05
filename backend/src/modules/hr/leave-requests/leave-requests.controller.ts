@@ -25,7 +25,7 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('leave-requests')
 export class LeaveRequestsController {
-  constructor(private readonly leaveRequestsService: LeaveRequestsService) { }
+  constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
   @Roles(Role.EMPLOYEE)
   @Post()
   async create(@Request() req: any, @Body() dto: CreateLeaveDto) {
@@ -62,7 +62,15 @@ export class LeaveRequestsController {
   }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll(@Query() query?: { status?: string; type?: string; employeeId?: string; year?: string }) {
+  findAll(
+    @Query()
+    query?: {
+      status?: string;
+      type?: string;
+      employeeId?: string;
+      year?: string;
+    },
+  ) {
     return this.leaveRequestsService.findAll(query);
   }
   @Delete(':id')

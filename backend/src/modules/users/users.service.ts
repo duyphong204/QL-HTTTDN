@@ -37,6 +37,21 @@ const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  private async findUserOrThrow(id: string, includeDeleted = false) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id,
+        ...(includeDeleted ? {} : { deletedAt: null }),
+      },
+      select: USER_SAFE_SELECT,
+    });
+
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại hoặc đã bị xóa');
+    }
+    return user;
+  }
+
   async findAll(query: QueryUsersDto) {
     const {
       search,
@@ -47,24 +62,18 @@ export class UsersService {
       sortOrder = 'desc',
       isActive,
     } = query;
-
     const skip = calculatePaginationSkip(page, limit);
+
     const where: Prisma.UserWhereInput = {
       deletedAt: null,
-      ...(typeof isActive === 'boolean' ? { isActive } : {}),
-      ...(role ? { role } : {}),
-      ...(search
-        ? {
-            OR: [
-              { email: { contains: search, mode: 'insensitive' } },
-              {
-                profile: {
-                  fullName: { contains: search, mode: 'insensitive' },
-                },
-              },
-            ],
-          }
-        : {}),
+      role: role || undefined,
+      isActive: typeof isActive === 'boolean' ? isActive : undefined,
+      ...(search && {
+        OR: [
+          { email: { contains: search, mode: 'insensitive' } },
+          { profile: { fullName: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
     };
 
     const [data, total] = await this.prisma.$transaction([
@@ -72,9 +81,7 @@ export class UsersService {
         where,
         skip,
         take: Number(limit),
-        orderBy: {
-          [sortBy]: sortOrder,
-        },
+        orderBy: { [sortBy]: sortOrder },
         select: USER_SAFE_SELECT,
       }),
       this.prisma.user.count({ where }),
@@ -90,34 +97,25 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { id, isActive: true, deletedAt: null },
-      select: USER_SAFE_SELECT,
-    });
-
-    if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại');
-    }
-
-    return user;
+    return this.findUserOrThrow(id);
   }
 
-  async create(data: CreateUserDto) {
-    const existedUser = await this.findByEmail(data.email);
-    if (existedUser && existedUser.deletedAt === null) {
+  async create(dto: CreateUserDto) {
+    const existedUser = await this.findByEmail(dto.email);
+    if (existedUser && !existedUser.deletedAt) {
       throw new ConflictException('Email đã tồn tại');
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     return this.prisma.user.create({
       data: {
-        email: data.email,
+        email: dto.email,
         password: hashedPassword,
-        role: data.role,
+        role: dto.role,
         profile: {
           create: {
-            fullName: data.profile.fullName,
+            ...dto.profile,
           },
         },
       },
@@ -125,41 +123,33 @@ export class UsersService {
     });
   }
 
-  async update(id: string, data: UpdateUserDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateUserDto) {
+    await this.findUserOrThrow(id); // Kiểm tra tồn tại
 
-    if (data.email) {
+    if (dto.email) {
       const duplicated = await this.prisma.user.findFirst({
-        where: {
-          email: data.email,
-          deletedAt: null,
-          NOT: { id },
-        },
+        where: { email: dto.email, deletedAt: null, NOT: { id } },
       });
-      if (duplicated) {
-        throw new ConflictException('Email đã tồn tại');
-      }
+      if (duplicated) throw new ConflictException('Email đã tồn tại');
     }
 
     return this.prisma.user.update({
       where: { id },
       data: {
-        email: data.email,
-        role: data.role,
-        profile: data.profile
-          ? {
-              update: {
-                fullName: data.profile.fullName,
-              },
-            }
-          : undefined,
+        email: dto.email,
+        role: dto.role,
+        ...(dto.profile && {
+          profile: {
+            update: { ...dto.profile }, // Update linh hoạt mọi trường profile
+          },
+        }),
       },
       select: USER_SAFE_SELECT,
     });
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    await this.findUserOrThrow(id);
 
     return this.prisma.user.update({
       where: { id },
@@ -172,13 +162,13 @@ export class UsersService {
   }
 
   async restore(id: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { id, deletedAt: { not: null } },
-      select: { id: true },
-    });
+    // Phải dùng includeDeleted = true để tìm được user đã xóa
+    const user = await this.findUserOrThrow(id, true);
 
-    if (!user) {
-      throw new NotFoundException('Người dùng đã tồn tại hoặc không thể khôi phục');
+    if (user.deletedAt === null) {
+      throw new ConflictException(
+        'Người dùng này không bị xóa, không cần khôi phục',
+      );
     }
 
     return this.prisma.user.update({
@@ -192,7 +182,7 @@ export class UsersService {
   }
 
   async updateRole(id: string, role: Role) {
-    await this.findOne(id);
+    await this.findUserOrThrow(id);
 
     return this.prisma.user.update({
       where: { id },
