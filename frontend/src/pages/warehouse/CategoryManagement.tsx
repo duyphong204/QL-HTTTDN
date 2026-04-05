@@ -1,24 +1,36 @@
-import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { Folder, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { useCategoryStore } from '@/store/category.store';
 import { DataTableToolbar } from '@/components/common/DataTableToolbar';
+import { PaginationControls } from '@/components/common/PaginationControls';
 import { AppModal } from '@/components/common/AppModal';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import type { Category } from '@/types/warehouse.type';
 
 export default function CategoryManagement() {
   const {
     categories,
+    meta,
     isLoading,
+    filters,
     fetchCategories,
+    setFilters,
     createCategory,
     updateCategory,
     deleteCategory,
   } = useCategoryStore();
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState('');
+
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchCategories,
+    debounceMs: 500,
+    searchKey: 'search',
+  });
 
   const resetForm = () => {
     setName('');
@@ -60,12 +72,6 @@ export default function CategoryManagement() {
     }
   };
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter((cat) =>
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [categories, searchTerm]);
-
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -99,7 +105,19 @@ export default function CategoryManagement() {
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
             searchPlaceholder="Tìm kiếm theo tên danh mục..."
-          />
+          >
+            <select
+              value={`${filters.sortBy}:${filters.sortOrder}`}
+              onChange={(e) => {
+                const [sortBy, sortOrder] = e.target.value.split(':') as [string, 'asc' | 'desc'];
+                updateFilters({ sortBy, sortOrder, page: 1 });
+              }}
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="name:asc">Tên A-Z</option>
+              <option value="name:desc">Tên Z-A</option>
+            </select>
+          </DataTableToolbar>
 
           <div className="relative">
             {isLoading && (
@@ -119,14 +137,14 @@ export default function CategoryManagement() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-50">
-                  {filteredCategories.length === 0 && !isLoading ? (
+                  {categories.length === 0 && !isLoading ? (
                     <tr>
                       <td colSpan={3} className="px-6 py-16 text-center text-gray-400 font-medium">
                         {searchTerm ? 'Không tìm thấy danh mục nào.' : 'Chưa có danh mục nào'}
                       </td>
                     </tr>
                   ) : (
-                    filteredCategories.map((category) => (
+                    categories.map((category) => (
                       <tr key={category.id} className="hover:bg-blue-50/30 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
@@ -164,6 +182,14 @@ export default function CategoryManagement() {
               </table>
             </div>
           </div>
+
+          <PaginationControls
+            meta={meta}
+            currentPage={filters.page}
+            totalLabel="Danh mục"
+            isLoading={isLoading}
+            onPageChange={goToPage}
+          />
         </div>
       </div>
 
