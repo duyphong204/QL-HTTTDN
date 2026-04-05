@@ -10,6 +10,13 @@ import type { Product, CreateProductDto, UpdateProductDto } from '@/types/wareho
 
 function ProductThumbnail({ imageUrl, name }: { imageUrl?: string; name: string }) {
   const [hasError, setHasError] = useState(false);
+  const transformedUrl = getCloudinaryThumbnailUrl(imageUrl, 80, 80);
+  const [src, setSrc] = useState<string>(transformedUrl);
+
+  useEffect(() => {
+    setHasError(false);
+    setSrc(getCloudinaryThumbnailUrl(imageUrl, 80, 80));
+  }, [imageUrl]);
 
   if (!imageUrl || hasError) {
     return (
@@ -21,11 +28,18 @@ function ProductThumbnail({ imageUrl, name }: { imageUrl?: string; name: string 
 
   return (
     <img
-      src={getCloudinaryThumbnailUrl(imageUrl, 80, 80)}
+      src={src}
       alt={name}
       className="w-10 h-10 rounded-lg object-contain bg-gray-50 border border-gray-200"
       loading="lazy"
-      onError={() => setHasError(true)}
+      onError={() => {
+        // If transformed URL fails, retry with original image URL before falling back.
+        if (src !== imageUrl) {
+          setSrc(imageUrl);
+          return;
+        }
+        setHasError(true);
+      }}
     />
   );
 }
