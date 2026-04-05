@@ -1,4 +1,4 @@
-import { axiosInstance } from './axios';
+import { axiosInstance } from "./axios";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -10,7 +10,12 @@ interface ApiResponse<T> {
 
 // Unwrap response data from TransformInterceptor wrapper
 const unwrapResponse = <T>(response: any): T => {
-  if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    "success" in response
+  ) {
     return response.data as T;
   }
   return response as T;

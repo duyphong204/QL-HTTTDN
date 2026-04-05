@@ -1,4 +1,4 @@
-import { axiosInstance } from './axios';
+import { apiGet, apiPost, apiPatch, apiDelete } from './base';
 import type {
   Product,
   Category,
@@ -36,22 +36,19 @@ const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
 
 export const categoryApi = {
   getCategories: async () => {
-    const res = await axiosInstance.get<Category[]>('/categories');
-    return res.data;
+    return apiGet<Category[]>('/categories');
   },
 
   createCategory: async (data: { name: string }) => {
-    const res = await axiosInstance.post<Category>('/categories', data);
-    return res.data;
+    return apiPost<Category>('/categories', data);
   },
 
   updateCategory: async (id: string, data: { name: string }) => {
-    const res = await axiosInstance.patch<Category>('/categories/' + id, data);
-    return res.data;
+    return apiPatch<Category>('/categories/' + id, data);
   },
 
   deleteCategory: async (id: string) => {
-    await axiosInstance.delete('/categories/' + id);
+    await apiDelete('/categories/' + id);
   },
 };
 
@@ -60,75 +57,63 @@ export const supplierApi = {
     sortBy?: string;
     sortOrder?: SortOrder;
   }) => {
-    const res = await axiosInstance.get<PaginatedResponse<Supplier>>('/suppliers', { params });
-    return res.data;
+    return apiGet<PaginatedResponse<Supplier>>('/suppliers', params);
   },
 
   getSupplierById: async (id: string) => {
-    const res = await axiosInstance.get<Supplier>('/suppliers/' + id);
-    return res.data;
+    return apiGet<Supplier>('/suppliers/' + id);
   },
 
   createSupplier: async (data: CreateSupplierDto) => {
-    const res = await axiosInstance.post<Supplier>('/suppliers', data);
-    return res.data;
+    return apiPost<Supplier>('/suppliers', data);
   },
 
   updateSupplier: async (id: string, data: UpdateSupplierDto) => {
-    const res = await axiosInstance.patch<Supplier>('/suppliers/' + id, data);
-    return res.data;
+    return apiPatch<Supplier>('/suppliers/' + id, data);
   },
 
   deleteSupplier: async (id: string) => {
-    await axiosInstance.delete('/suppliers/' + id);
+    await apiDelete('/suppliers/' + id);
   },
 };
 
 export const productApi = {
   getProducts: async (params?: ProductQuery) => {
-    const res = await axiosInstance.get<ProductResponse>('/products', { params });
-    return res.data;
+    return apiGet<ProductResponse>('/products', params);
   },
 
   getProductById: async (id: string) => {
-    const res = await axiosInstance.get<Product>('/products/' + id);
-    return res.data;
+    return apiGet<Product>('/products/' + id);
   },
 
   createProduct: async (data: CreateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.post<Product>('/products', formData);
-    return res.data;
+    return apiPost<Product>('/products', formData);
   },
 
   updateProduct: async (id: string, data: UpdateProductDto) => {
     const formData = toProductFormData(data);
-    const res = await axiosInstance.patch<Product>('/products/' + id, formData);
-    return res.data;
+    return apiPatch<Product>('/products/' + id, formData);
   },
 
   deleteProduct: async (id: string) => {
-    await axiosInstance.delete('/products/' + id);
+    await apiDelete('/products/' + id);
   },
   getReport: async (params?: { month?: number; year?: number }) => {
-    const res = await axiosInstance.get<WarehouseReport>('/products/report/stats', { params });
-    return res.data;
+    return apiGet<WarehouseReport>('/products/report/stats', params);
   },
 };
 
 export const stockInApi = {
   getStockIns: async () => {
-    const res = await axiosInstance.get<StockIn[]>('/stock-ins');
-    return res.data;
+    return apiGet<StockIn[]>('/stock-ins');
   },
 
   createStockIn: async (data: CreateStockInDto) => {
-    const res = await axiosInstance.post<StockIn>('/stock-ins', data);
-    return res.data;
+    return apiPost<StockIn>('/stock-ins', data);
   },
 
   getStockInById: async (id: string) => {
-    const res = await axiosInstance.get<StockIn>('/stock-ins/' + id);
-    return res.data;
+    return apiGet<StockIn>('/stock-ins/' + id);
   },
 };

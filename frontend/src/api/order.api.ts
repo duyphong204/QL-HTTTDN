@@ -1,4 +1,4 @@
-import { axiosInstance } from "./axios";
+import { apiGet, apiPost, apiPatch, apiDelete } from "./base";
 import type {
   Order,
   CreateOrderDto,
