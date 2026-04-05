@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { categoryApi } from '@/api/warehouse.api';
-import type { Category } from '@/types/warehouse.type';
-import { toast } from 'sonner';
+import { create } from "zustand";
+import { categoryApi } from "@/api/warehouse.api";
+import type { Category } from "@/types/warehouse.type";
+import { toast } from "sonner";
 
 interface CategoryState {
   categories: Category[];
@@ -21,7 +21,7 @@ export const useCategoryStore = create<CategoryState>((set) => ({
       const data = await categoryApi.getCategories();
       set({ categories: data });
     } catch (error) {
-      toast.error('Không thể lấy danh sách danh mục');
+      toast.error("Không thể lấy danh sách danh mục");
       set({ categories: [] });
     } finally {
       set({ isLoading: false });
@@ -31,9 +31,9 @@ export const useCategoryStore = create<CategoryState>((set) => ({
     try {
       const newCategory = await categoryApi.createCategory(data);
       set((state) => ({ categories: [...state.categories, newCategory] }));
-      toast.success('Thêm danh mục thành công');
+      toast.success("Thêm danh mục thành công");
     } catch (error) {
-      toast.error('Không thể thêm danh mục');
+      toast.error("Không thể thêm danh mục");
     }
   },
   updateCategory: async (id: string, data: { name: string }) => {
@@ -41,12 +41,12 @@ export const useCategoryStore = create<CategoryState>((set) => ({
       const updatedCategory = await categoryApi.updateCategory(id, data);
       set((state) => ({
         categories: state.categories.map((cat) =>
-          cat.id === id ? updatedCategory : cat
+          cat.id === id ? updatedCategory : cat,
         ),
       }));
-      toast.success('Cập nhật danh mục thành công');
+      toast.success("Cập nhật danh mục thành công");
     } catch (error) {
-      toast.error('Không thể cập nhật danh mục');
+      toast.error("Không thể cập nhật danh mục");
     }
   },
   deleteCategory: async (id: string) => {
@@ -55,9 +55,9 @@ export const useCategoryStore = create<CategoryState>((set) => ({
       set((state) => ({
         categories: state.categories.filter((cat) => cat.id !== id),
       }));
-      toast.success('Xóa danh mục thành công');
+      toast.success("Xóa danh mục thành công");
     } catch (error) {
-      toast.error('Không thể xóa danh mục');
+      toast.error("Không thể xóa danh mục");
     }
   },
 }));
