@@ -1,4 +1,4 @@
-import { axiosInstance } from "./axios";
+import { apiGet, apiPatch, apiPost } from "./base";
 import type {
   CreatePromotionDto,
   Promotion,
@@ -7,27 +7,23 @@ import type {
 
 export const promotionApi = {
   getPromotions: async () => {
-    const res = await axiosInstance.get<Promotion[]>("/promotions");
-    return res.data;
+    return apiGet<Promotion[]>('/promotions');
   },
 
   createPromotion: async (data: CreatePromotionDto) => {
-    const res = await axiosInstance.post<Promotion>("/promotions", data);
-    return res.data;
+    return apiPost<Promotion>('/promotions', data);
   },
 
   updatePromotion: async (id: string, data: UpdatePromotionDto) => {
-    const res = await axiosInstance.patch<Promotion>(`/promotions/${id}`, data);
-    return res.data;
+    return apiPatch<Promotion>(`/promotions/${id}`, data);
   },
 
   setPromotionProducts: async (id: string, productIds: string[]) => {
-    const res = await axiosInstance.patch<Promotion>(
+    return apiPatch<Promotion>(
       `/promotions/${id}/products`,
       {
         productIds,
       },
     );
-    return res.data;
   },
 };

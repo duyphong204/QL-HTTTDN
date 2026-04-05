@@ -1,5 +1,6 @@
 import type { UpdateProfileDto } from "@/types/user.type";
-import { axiosInstance } from "./axios"
+import { apiDelete, apiGet, apiPatch, apiPost } from "./base"
+import type { EmployeeProfile } from "@/types/employee.type"
 import type {
     Employee,
     CreateEmployeeDto,
@@ -21,96 +22,77 @@ type EmployeeFilters = BaseFilters & {
 
 export const employeeApi = {
     getEmployees: async (params?: EmployeeFilters) => {
-        const res = await axiosInstance.get<PaginatedResponse<Employee>>("/employees", { params });
-        return res.data;
+        return apiGet<PaginatedResponse<Employee>>("/employees", params);
     },
 
     getEmployeeById: async (id: string) => {
-        const res = await axiosInstance.get<Employee>(`/employees/${id}`);
-        return res.data;
+        return apiGet<Employee>(`/employees/${id}`);
     },
 
     createEmployee: async (data: CreateEmployeeDto) => {
-        const res = await axiosInstance.post<Employee>("/employees", data);
-        return res.data;
+        return apiPost<Employee>("/employees", data);
     },
 
     updateEmployee: async (id: string, data: UpdateEmployeeDto) => {
-        const res = await axiosInstance.patch<Employee>(`/employees/${id}`, data);
-        return res.data;
+        return apiPatch<Employee>(`/employees/${id}`, data);
     },
     deleteEmployee: async (id: string) => {
-        const res = await axiosInstance.delete(`/employees/${id}`);
-        return res.data;
+        return apiDelete(`/employees/${id}`);
     },
     getMyProfile: async () => {
-        const res = await axiosInstance.get('/employees/me');
-        return res.data;
+        return apiGet<EmployeeProfile>('/employees/me');
     },
     updateMyProfile: async (data: UpdateProfileDto) => {
-        const res = await axiosInstance.patch('/employees/me', data);
-        return res.data;
+        return apiPatch('/employees/me', data);
     },
     getHrStatistics: async (params?: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get<HrStatisticsReport>('/employees/statistics/hr-report', { params });
-        return res.data;
+        return apiGet<HrStatisticsReport>('/employees/statistics/hr-report', params);
     },
 };
 
 export const leaveRequestApi = {
     getLeaveRequests: async () => {
-        const res = await axiosInstance.get<LeaveRequest[]>("/leave-requests");
-        return res.data;
+        return apiGet<LeaveRequest[]>("/leave-requests");
     },
 
     getMyLeaveRequests: async () => {
-        const res = await axiosInstance.get<LeaveRequest[]>("/leave-requests/me")
-        return res.data
+        return apiGet<LeaveRequest[]>("/leave-requests/me")
     },
 
     createLeaveRequest: async (data: CreateLeaveRequestDto) => {
-        const res = await axiosInstance.post<LeaveRequest>("/leave-requests", data);
-        return res.data;
+        return apiPost<LeaveRequest>("/leave-requests", data);
     },
 
     approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto) => {
         const endpoint = data.status === 'APPROVED' ? 'approve' : 'reject';
-        const res = await axiosInstance.patch<LeaveRequest>(
+        return apiPatch<LeaveRequest>(
             `/leave-requests/${id}/${endpoint}`,
         );
-        return res.data;
     },
     deleteLeaveRequest: async (id: string) => {
-        const res = await axiosInstance.delete(`/leave-requests/${id}`);
-        return res.data;
+        return apiDelete(`/leave-requests/${id}`);
     }
 };
 
 export const salaryApi = {
     getSalaries: async (params?: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get<Salary[]>("/salaries", { params });
-        return res.data;
+        return apiGet<Salary[]>("/salaries", params);
     },
 
     createSalary: async (data: CreateSalaryDto) => {
-        const res = await axiosInstance.post<Salary>("/salaries", data);
-        return res.data;
+        return apiPost<Salary>("/salaries", data);
     },
 
     updateSalary: async (id: string, data: UpdateSalaryDto) => {
-        const res = await axiosInstance.patch<Salary>(`/salaries/${id}`, data);
-        return res.data;
+        return apiPatch<Salary>(`/salaries/${id}`, data);
     },
     getMySalaries: async (params?: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get('/salaries/me', { params });
-        return res.data;
+        return apiGet<Salary[]>('/salaries/me', params);
     },
     calculateSalary: async (data: CreateSalaryDto) => {
-        const res = await axiosInstance.post('/salaries', data);
-        return res.data;
+        return apiPost('/salaries', data);
     },
     calculateAllSalaries: async (data: { month: number; year: number }) => {
-        const res = await axiosInstance.post('/salaries/calculate-all', data);
-        return res.data;
+        return apiPost('/salaries/calculate-all', data);
     },
 };

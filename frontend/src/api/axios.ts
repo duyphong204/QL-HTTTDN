@@ -89,9 +89,13 @@ axiosInstance.interceptors.response.use(
 
         // Unwrap response from TransformInterceptor wrapper
         const wrappedData = response.data;
-        const unwrappedData = (wrappedData && typeof wrappedData === 'object' && 'data' in wrappedData && 'success' in wrappedData)
-          ? wrappedData.data
-          : wrappedData;
+        const unwrappedData =
+          wrappedData &&
+          typeof wrappedData === "object" &&
+          "data" in wrappedData &&
+          "success" in wrappedData
+            ? wrappedData.data
+            : wrappedData;
 
         const newToken = unwrappedData.accessToken;
         setAccessToken(newToken);
