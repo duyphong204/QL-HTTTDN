@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useOrderStore, type OrderHistoryOrder } from '@/store/order.store';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Package, Clock, CheckCircle, Truck, XCircle, ArrowRight } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, XCircle, ArrowRight, MapPin, Phone, CreditCard, Calendar } from 'lucide-react';
 
 type OrderDetailFallback = {
   id?: string;
@@ -240,6 +240,8 @@ export default function CustomerOrders() {
                   : [];
 
               const status = String(order.status || '').toUpperCase();
+              const paymentStatus = String(order.paymentStatus || '').toUpperCase();
+              const productSubtotal = normalizedItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
               return (
                 <>
@@ -279,8 +281,77 @@ export default function CustomerOrders() {
               </div>
             </div>
 
+            {/* Thông tin chi tiết - hiện khi ở detail view */}
+            {isDetailView && (
+              <div className="p-6 sm:p-8 border-b border-gray-200 space-y-6">
+                {/* Thông tin giao hàng */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <MapPin size={18} className="text-blue-600" />
+                      <h3 className="font-semibold text-gray-900">Địa chỉ giao hàng</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p className=" text-gray-900">Tên người nhận: {order.fullName}</p>
+                      <p className="text-gray-700">Địa chỉ: {order.address}</p>
+                      <div className="flex items-center gap-2 text-gray-700 pt-2">
+                        <Phone size={14} />
+                        {order.phone}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thông tin thanh toán */}
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CreditCard size={18} className="text-blue-600" />
+                      <h3 className="font-semibold text-gray-900">Phương thức thanh toán</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Hình thức:</span>
+                        <span className="font-medium text-gray-900">
+                          {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 
+                           order.paymentMethod === 'BANK_TRANSFER' ? 'Chuyển khoản ngân hàng' : order.paymentMethod}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span className="text-sm text-gray-600">Trạng thái:</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                          paymentStatus === 'PAID' ? 'bg-green-100 text-green-700' :
+                          paymentStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                           paymentStatus === 'PENDING' ? 'Chờ thanh toán' : paymentStatus}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ngày giờ chi tiết */}
+                <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar size={18} className="text-blue-600" />
+                    <h3 className="font-semibold text-gray-900">Thông tin ngày giờ</h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <span className="text-gray-600">Đặt hàng lúc:</span>
+                    <span className="font-medium">
+                      {new Date(order.createdAt).toLocaleString('vi-VN', {
+                        dateStyle: 'long',
+                        timeStyle: 'medium',
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Danh sách sản phẩm trong đơn */}
-            <div className="p-6 sm:p-8">
+            <div className="p-6 sm:p-8 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-900 mb-6">Danh sách sản phẩm ({normalizedItems.length})</h3>
               {normalizedItems.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {normalizedItems.map((item, idx) => (
@@ -321,8 +392,24 @@ export default function CustomerOrders() {
               ) : (
                 <p className="text-center text-gray-500 py-4">Không có thông tin sản phẩm</p>
               )}
+            </div>
 
-              
+            {/* Tóm tắt chi phí */}
+            <div className="p-6 sm:p-8 bg-gray-50 rounded-b-2xl">
+              <div className="max-w-sm ml-auto space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tổng sản phẩm:</span>
+                  <span className="font-medium text-gray-900">{productSubtotal.toLocaleString('vi-VN')} đ</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-gray-200 pt-3">
+                  <span className="text-gray-600">Phí vận chuyển:</span>
+                  <span className="font-medium text-gray-900">0 đ</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-3">
+                  <span>Tổng cộng:</span>
+                  <span className="text-blue-600">{order.totalAmount.toLocaleString('vi-VN')} đ</span>
+                </div>
+              </div>
             </div>
                 </>
               );

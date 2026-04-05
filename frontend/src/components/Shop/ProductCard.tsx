@@ -46,12 +46,12 @@ export default function ProductCard({
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col border border-gray-200 hover:border-blue-300 h-full"
+      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col border border-gray-200 hover:border-blue-300 h-full"
     >
       {/* Ảnh */}
       <div className="relative bg-gray-50 aspect-square overflow-hidden">
         {effectiveDiscountPercent > 0 && (
-          <span className="absolute top-3 left-3 z-10 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+          <span className="absolute top-2 left-2 z-10 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
             -{effectiveDiscountPercent}%
           </span>
         )}
@@ -63,21 +63,21 @@ export default function ProductCard({
       </div>
 
       {/* Nội dung */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors min-h-[2.75rem]">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+        <h3 className="text-sm sm:text-base font-semibold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
           {product.name}
         </h3>
 
         {/* Giá tiền gọn hơn */}
-        <div className="mb-4 mt-auto">
+        <div className="mb-3 mt-auto">
           {compactAddToCart ? (
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <div>
-                <p className="text-lg sm:text-xl font-bold text-blue-600">
+                <p className="text-base sm:text-lg font-bold text-blue-600">
                   {effectivePrice?.toLocaleString('vi-VN')} ₫
                 </p>
                 {shouldShowOriginalPrice && effectivePrice < product.price && (
-                  <p className="text-sm text-gray-500 line-through mt-1">
+                  <p className="text-xs text-gray-500 line-through mt-0.5">
                     {product.price?.toLocaleString('vi-VN')} ₫
                   </p>
                 )}
@@ -87,23 +87,23 @@ export default function ProductCard({
                 type="button"
                 aria-label={isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ hàng'}
                 disabled={isOutOfStock}
-                className={`h-10 w-10 rounded-full border transition-colors flex items-center justify-center ${
+                className={`h-9 w-9 rounded-full border transition-colors flex items-center justify-center ${
                   isOutOfStock
                     ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed'
                     : 'bg-white border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
                 }`}
                 onClick={handleAddToCart}
               >
-                <ShoppingCart size={18} />
+                <ShoppingCart size={16} />
               </button>
             </div>
           ) : (
             <>
-              <p className="text-lg sm:text-xl font-bold text-blue-600">
+              <p className="text-base sm:text-lg font-bold text-blue-600">
                 {effectivePrice?.toLocaleString('vi-VN')} ₫
               </p>
               {shouldShowOriginalPrice && effectivePrice < product.price && (
-                <p className="text-sm text-gray-500 line-through mt-1">
+                <p className="text-xs text-gray-500 line-through mt-0.5">
                   {product.price?.toLocaleString('vi-VN')} ₫
                 </p>
               )}
@@ -114,14 +114,14 @@ export default function ProductCard({
         {!compactAddToCart && (
           <button
             disabled={isOutOfStock}
-            className={`w-full font-medium text-xs sm:text-base py-2 sm:py-3 px-2 sm:px-3 rounded-md sm:rounded-xl flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition-all shadow-sm ${
+            className={`w-full font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-3 rounded-md sm:rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition-all shadow-sm ${
               isOutOfStock
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md active:scale-[0.98]'
             }`}
             onClick={handleAddToCart}
           >
-            <ShoppingCart size={16} className="sm:h-[18px] sm:w-[18px]" />
+            <ShoppingCart size={15} className="sm:h-4 sm:w-4" />
             {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
           </button>
         )}

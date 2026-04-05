@@ -63,12 +63,13 @@ export default function ProductGrid({
         </div>
       </div>
 
-      {/* Grid chỉ 3 cột max, card to hơn */}
+      {/* Grid 4 cột ở màn lớn để hiển thị gọn hơn */}
       <div className="
         grid 
-        grid-cols-2             // mobile: 2 cột
-        md:grid-cols-3          // tablet & desktop: 3 cột
-        gap-5 sm:gap-6 lg:gap-8 // khoảng cách lớn hơn để card thoáng
+        grid-cols-2
+        md:grid-cols-3
+        xl:grid-cols-4
+        gap-4 sm:gap-5
       ">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />

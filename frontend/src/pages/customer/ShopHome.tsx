@@ -65,7 +65,7 @@ export default function ShopHome() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner Hero */}
-      <section className="relative bg-gradient-to-br from-blue-950 via-indigo-950 to-gray-950 text-white overflow-hidden">
+      <section className="relative -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-gradient-to-br from-blue-950 via-indigo-950 to-gray-950 text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20 pointer-events-none">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(59,130,246,0.15),transparent_50%)]"></div>
         </div>
@@ -174,7 +174,7 @@ export default function ShopHome() {
       {!isLoading && flashSaleItems.length > 0 ? (
         <section className="py-16 md:py-24 bg-white">
           <div className="container mx-auto px-6">
-            <div className="relative overflow-hidden rounded-3xl bg-[#f5f0e8] px-6 py-10 sm:px-8 md:py-12 border border-amber-100 shadow-sm">
+            <div className="relative overflow-hidden rounded-3xl bg-[#fff1e6] px-6 py-10 sm:px-8 md:py-12 border border-orange-100 shadow-sm">
               <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80')] bg-repeat"></div>
 
               <div className="relative z-10">
@@ -236,26 +236,6 @@ export default function ShopHome() {
         </div>
       </section>
 
-      {/* Banner nhận ưu đãi */}
-      <section className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white py-16">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Nhận ưu đãi 10% cho đơn hàng đầu tiên</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Đăng ký nhận tin để cập nhật khuyến mãi độc quyền, sản phẩm mới và mẹo sử dụng hữu ích.
-          </p>
-
-          <form className="max-w-md mx-auto flex">
-            <input
-              type="email"
-              placeholder="Nhập email của bạn"
-              className="flex-1 px-6 py-4 rounded-l-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
-            />
-            <button className="bg-white text-blue-700 font-bold px-8 py-4 rounded-r-full hover:bg-gray-100 transition shadow-lg">
-              Đăng ký
-            </button>
-          </form>
-        </div>
-      </section>
     </div>
   );
 }

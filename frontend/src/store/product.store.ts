@@ -138,10 +138,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
       filters: {
         ...state.filters,
         ...newFilters,
-        page:
-          typeof newFilters.page === "number"
-            ? newFilters.page
-            : 1,
+        page: typeof newFilters.page === "number" ? newFilters.page : 1,
       },
     }));
     get().fetchProducts();

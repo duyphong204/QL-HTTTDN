@@ -33,7 +33,10 @@ const productImageUploadOptions = {
     cb: (error: Error | null, acceptFile: boolean) => void,
   ) => {
     if (!file.mimetype?.startsWith('image/')) {
-      cb(new BadRequestException('Chỉ cho phép upload file hình ảnh') as Error, false);
+      cb(
+        new BadRequestException('Chỉ cho phép upload file hình ảnh') as Error,
+        false,
+      );
       return;
     }
     cb(null, true);

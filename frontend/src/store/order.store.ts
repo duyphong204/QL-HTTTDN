@@ -22,6 +22,11 @@ export interface OrderHistoryOrder {
   status: string;
   createdAt: string;
   items?: OrderHistoryItem[];
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
 }
 
 interface OrderState {

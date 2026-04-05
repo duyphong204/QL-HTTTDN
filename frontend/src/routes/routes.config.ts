@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   BarChart3,
   Tag,
+  Folder,
 } from "lucide-react";
 
 export interface RouteConfig {
@@ -63,6 +64,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     inSidebar: true,
   },
   {
+    path: "/warehouse/categories",
+    title: "Danh mục sản phẩm",
+    icon: Folder,
+    roles: ["ADMIN", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
     path: "/warehouse/products",
     title: "Sản phẩm",
     icon: Package,
@@ -95,7 +103,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     title: "Phiếu xuất",
     icon: ShoppingCart,
     roles: ["SALES_MANAGER"],
-    inSidebar: false,
+    inSidebar: true,
   },
   {
     path: "/sales/reports",

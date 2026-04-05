@@ -7,11 +7,11 @@ import type {
 
 export const promotionApi = {
   getPromotions: async () => {
-    return apiGet<Promotion[]>('/promotions');
+    return apiGet<Promotion[]>("/promotions");
   },
 
   createPromotion: async (data: CreatePromotionDto) => {
-    return apiPost<Promotion>('/promotions', data);
+    return apiPost<Promotion>("/promotions", data);
   },
 
   updatePromotion: async (id: string, data: UpdatePromotionDto) => {
@@ -19,11 +19,8 @@ export const promotionApi = {
   },
 
   setPromotionProducts: async (id: string, productIds: string[]) => {
-    return apiPatch<Promotion>(
-      `/promotions/${id}/products`,
-      {
-        productIds,
-      },
-    );
+    return apiPatch<Promotion>(`/promotions/${id}/products`, {
+      productIds,
+    });
   },
 };

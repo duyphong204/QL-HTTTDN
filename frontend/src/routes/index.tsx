@@ -5,6 +5,7 @@ import PromotionManagement from '@/pages/admin/PromotionManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import SupplierManagement from '@/pages/admin/SupplierManagement';
 import ProductManagement from '@/pages/warehouse/ProductManagement';
+import CategoryManagement from '@/pages/warehouse/CategoryManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -91,6 +92,9 @@ export const AppRouter = () => {
             <ProtectedRoute roles={rolesFor("/employee/profile")}><ProfilePage /></ProtectedRoute>
           } />
 
+          <Route path="/warehouse/categories" element={
+            <ProtectedRoute roles={rolesFor("/warehouse/categories")}><CategoryManagement /></ProtectedRoute>
+          } />
           <Route path="/warehouse/products" element={
             <ProtectedRoute roles={rolesFor("/warehouse/products")}><ProductManagement /></ProtectedRoute>
           } />

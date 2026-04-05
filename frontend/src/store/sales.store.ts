@@ -24,13 +24,10 @@ interface SalesState {
     fullName: string;
     phone: string;
     address: string;
-    paymentMethod?: string;
+    paymentMethod?: "COD" | "BANK_TRANSFER";
     items: { productId: string; quantity: number }[];
   }) => Promise<void>;
-  updateOrderStatus: (
-    id: string,
-    status: "APPROVED" | "SHIPPING" | "COMPLETED" | "CANCELLED",
-  ) => Promise<void>;
+  updateOrderStatus: (id: string, status: string) => Promise<void>;
 }
 
 export const useSalesStore = create<SalesState>((set, get) => ({
@@ -47,7 +44,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       const data = await orderApi.getOrders();
       set({ orders: data, isLoading: false });
     } catch {
-      toast.error("Không thể tải danh sách đơn hàng");
+      toast.error("Không thể tải danh sách phiếu xuất");
       set({ isLoading: false });
     }
   },

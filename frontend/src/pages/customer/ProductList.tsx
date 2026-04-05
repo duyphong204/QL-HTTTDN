@@ -39,6 +39,7 @@ export default function ProductList() {
       categoryId: categoryIdFromUrl === ALL_CATEGORY ? '' : categoryIdFromUrl,
       search: searchFromUrl,
       maxPrice: maxPriceFromUrl,
+      limit: 12,
     });
   }, [activeCategory, searchFromUrl, maxPriceFromUrl, setFilters]);
 

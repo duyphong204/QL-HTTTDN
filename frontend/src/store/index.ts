@@ -7,4 +7,5 @@ export { useSalesStore } from './sales.store';
 export { useStockInStore } from './stockIn.store';
 export { useSupplierStore } from './supplier.store';
 export { useAdminStore } from './admin.store';
+export { useCategoryStore } from './category.store';
 export { getErrorMessage, mergeFiltersWithPageReset, loadingState } from './store.helpers';
