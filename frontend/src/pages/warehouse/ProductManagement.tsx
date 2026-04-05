@@ -8,6 +8,28 @@ import { DataTableToolbar } from '@/components/common/DataTableToolbar';
 import { PaginationControls } from '@/components/common/PaginationControls';
 import type { Product, CreateProductDto, UpdateProductDto } from '@/types/warehouse.type';
 
+function ProductThumbnail({ imageUrl, name }: { imageUrl?: string; name: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!imageUrl || hasError) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+        <Package size={18} className="text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={getCloudinaryThumbnailUrl(imageUrl, 80, 80)}
+      alt={name}
+      className="w-10 h-10 rounded-lg object-contain bg-gray-50 border border-gray-200"
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 export default function ProductManagement() {
   const {
     products,
@@ -156,17 +178,7 @@ export default function ProductManagement() {
                   <tr key={product.id} className="hover:bg-gray-50/70 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {product.imageUrl ? (
-                          <img
-                            src={getCloudinaryThumbnailUrl(product.imageUrl)}
-                            alt={product.name}
-                            className="w-10 h-10 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <Package size={18} className="text-gray-400" />
-                          </div>
-                        )}
+                        <ProductThumbnail imageUrl={product.imageUrl} name={product.name} />
                         <span className="font-medium text-gray-800">{product.name}</span>
                       </div>
                     </td>
