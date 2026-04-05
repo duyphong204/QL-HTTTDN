@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
-import { DollarSign, Users, CheckCircle2, Download, Calculator, Printer } from "lucide-react"
+import { DollarSign, Users, CheckCircle2, Calculator, Printer } from "lucide-react"
 import { useHrStore } from "@/store/hr.store"
+import { useClientTable } from "@/hooks/useClientTable"
+import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { PaginationControls } from "@/components/common/PaginationControls"
 
 const STATUS_BADGE = {
   PAID: {
@@ -18,11 +20,23 @@ const currentYear = new Date().getFullYear()
 const YEARS = [currentYear, currentYear - 1, currentYear - 2]
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("vi-VN").format(amount || 0) + " đ"
+
 export default function SalaryManagement() {
   const { salaries, loadingSalaries, fetchSalaries, calculateAllSalaries } = useHrStore()
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
   const [year, setYear] = useState(String(currentYear))
   const [calculating, setCalculating] = useState(false)
+
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
+    data: salaries,
+    pageSize: 10,
+    searchFn: (s, keyword) => {
+      const name = s.employee?.user?.profile?.fullName?.toLowerCase() ?? ""
+      return name.includes(keyword)
+    },
+  })
 
   useEffect(() => {
     fetchSalaries({ month: Number(month), year: Number(year) })
@@ -44,15 +58,10 @@ export default function SalaryManagement() {
     }
   }, [salaries])
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("vi-VN").format(amount || 0) + " đ"
-
   const handleCalculateAll = async () => {
+    setCalculating(true)
     try {
-      setCalculating(true)
       await calculateAllSalaries({ month: Number(month), year: Number(year) })
-    } catch {
-      toast.error("Không thể tính lương hàng loạt")
     } finally {
       setCalculating(false)
     }
@@ -100,7 +109,7 @@ export default function SalaryManagement() {
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="h-10 px-4 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none"
+              className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               {MONTHS.map((m) => (
                 <option key={m} value={String(m)}>Tháng {m}</option>
@@ -110,7 +119,7 @@ export default function SalaryManagement() {
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="h-10 px-4 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none"
+              className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               {YEARS.map((y) => (
                 <option key={y} value={String(y)}>{y}</option>
@@ -120,7 +129,7 @@ export default function SalaryManagement() {
             <button
               onClick={handleCalculateAll}
               disabled={calculating}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm"
             >
               <Calculator size={16} />
               {calculating ? "Đang tính..." : "Tính lương tháng"}
@@ -128,7 +137,7 @@ export default function SalaryManagement() {
 
             <button
               onClick={handlePrint}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-slate-700 text-white hover:bg-slate-800"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 transition-colors shadow-sm"
             >
               <Printer size={16} />
               In bảng lương
@@ -142,7 +151,13 @@ export default function SalaryManagement() {
           <StatCard title="Đã thanh toán" value={`${summary.paid}/${summary.count}`} icon={<CheckCircle2 size={18} />} />
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+          <DataTableToolbar
+            searchValue={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Tìm theo tên nhân viên..."
+          />
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
@@ -153,17 +168,16 @@ export default function SalaryManagement() {
                   <th className="px-6 py-4 text-center">Khấu trừ</th>
                   <th className="px-6 py-4 text-center">Thực lĩnh</th>
                   <th className="px-6 py-4 text-center">Trạng thái</th>
-                  <th className="px-6 py-4 text-center">Thao tác</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-50">
                 {loadingSalaries ? (
                   <EmptyRow text="Đang tải dữ liệu..." />
-                ) : salaries.length === 0 ? (
+                ) : pagedData.length === 0 ? (
                   <EmptyRow text="Không có dữ liệu bảng lương." />
                 ) : (
-                  salaries.map((s) => (
+                  pagedData.map((s) => (
                     <tr key={s.id} className="hover:bg-gray-50/70 transition-colors group">
                       <td className="px-6 py-4 font-semibold text-gray-900">
                         {s.employee?.user?.profile?.fullName || "—"}
@@ -189,20 +203,20 @@ export default function SalaryManagement() {
                           {STATUS_BADGE[s.status as keyof typeof STATUS_BADGE]?.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                          title="Xuất dữ liệu"
-                        >
-                          <Download size={18} />
-                        </button>
-                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
+          <PaginationControls
+            meta={meta}
+            currentPage={page}
+            isLoading={loadingSalaries}
+            totalLabel="Tổng nhân viên"
+            onPageChange={setPage}
+          />
         </div>
       </div>
 
@@ -261,7 +275,7 @@ function StatCard({
 function EmptyRow({ text }: { text: string }) {
   return (
     <tr>
-      <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+      <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
         {text}
       </td>
     </tr>

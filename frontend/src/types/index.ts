@@ -53,15 +53,24 @@ export type {
     Employee,
     CreateEmployeeDto,
     UpdateEmployeeDto,
+    QueryEmployeeDto,
     JobHistory,
     CreateJobHistoryDto,
     Salary,
     CreateSalaryDto,
     UpdateSalaryDto,
+    QuerySalaryDto,
     LeaveRequest,
     CreateLeaveRequestDto,
     ApproveLeaveRequestDto,
+    QueryLeaveRequestDto,
 } from "./hr.type"
+
+// Employee (self-service)
+export type {
+    EmployeeProfile,
+    UpdateMyProfileDto,
+} from "./employee.type"
 
 // Admin
 export type {

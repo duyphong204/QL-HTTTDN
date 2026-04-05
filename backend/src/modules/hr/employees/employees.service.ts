@@ -16,6 +16,7 @@ import {
   calculatePaginationSkip,
   buildPaginatedResponse,
 } from 'src/common/utils/pagination.helper';
+import { Role } from 'src/common/enums/role.enum';
 @Injectable()
 export class EmployeesService {
   constructor(private prisma: PrismaService) {}
@@ -163,10 +164,18 @@ export class EmployeesService {
       sortOrder = 'asc',
       department,
       position,
+      isActive,
     } = query || {};
 
-    const allowedSortBy = ['code', 'department', 'position', 'joinDate'] as const;
-    const normalizedSortBy = allowedSortBy.includes(sortBy as (typeof allowedSortBy)[number])
+    const allowedSortBy = [
+      'code',
+      'department',
+      'position',
+      'joinDate',
+    ] as const;
+    const normalizedSortBy = allowedSortBy.includes(
+      sortBy as (typeof allowedSortBy)[number],
+    )
       ? sortBy
       : 'code';
     const normalizedSortOrder: Prisma.SortOrder =
@@ -175,7 +184,11 @@ export class EmployeesService {
     const skip = calculatePaginationSkip(page, limit);
 
     const where: Prisma.EmployeeWhereInput = {
-      resignDate: null,
+      ...(isActive === true
+        ? { resignDate: null }
+        : isActive === false
+          ? { resignDate: { not: null } }
+          : { resignDate: null }),
       ...(search && {
         OR: [
           { code: { contains: search, mode: 'insensitive' } },
@@ -227,14 +240,29 @@ export class EmployeesService {
   }
   //  cập nhật chức vụ/lương
   async update(id: string, dto: UpdateEmployeeDto) {
+    return this.updatePosition(id, dto);
+  }
+
+  async updatePosition(id: string, dto: UpdateEmployeeDto) {
     const currentEmployee = await this.prisma.employee.findUnique({
       where: { id },
+      select: {
+        id: true,
+        userId: true,
+        department: true,
+        position: true,
+        baseSalary: true,
+      },
     });
     if (!currentEmployee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
 
     await this.assertEmployeeNotAdminByUserId(currentEmployee.userId);
+
+    const effectiveDate = dto.effectiveDate
+      ? new Date(dto.effectiveDate)
+      : new Date();
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Kết thúc job hiện tại
@@ -244,7 +272,7 @@ export class EmployeesService {
           endDate: null,
         },
         data: {
-          endDate: new Date(),
+          endDate: effectiveDate,
         },
       });
       await tx.jobHistory.create({
@@ -253,12 +281,16 @@ export class EmployeesService {
           department: dto.department ?? currentEmployee.department,
           position: dto.position ?? currentEmployee.position,
           baseSalary: dto.baseSalary ?? currentEmployee.baseSalary,
-          startDate: new Date(),
+          startDate: effectiveDate,
         },
       });
       return tx.employee.update({
         where: { id },
-        data: dto,
+        data: {
+          department: dto.department,
+          position: dto.position,
+          baseSalary: dto.baseSalary,
+        },
       });
     });
   }
@@ -289,13 +321,21 @@ export class EmployeesService {
         data: { endDate: new Date() },
       });
       // ← KHÔNG đổi role. Giữ nguyên để lịch sử rõ ràng
-      return { message: 'Nhân sự đã được cho nghỉ việc' };
+      return { data: null, message: 'Nhân sự đã được cho nghỉ việc' };
     });
   }
-  async getEmployeeById(id: string) {
+  async getEmployeeById(id: string, requester?: { id: string; role: Role }) {
     const employee = await this.prisma.employee.findUnique({
       where: { id },
-      include: {
+      select: {
+        userId: true,
+        id: true,
+        code: true,
+        department: true,
+        position: true,
+        baseSalary: true,
+        joinDate: true,
+        resignDate: true,
         user: {
           select: {
             email: true,
@@ -320,7 +360,33 @@ export class EmployeesService {
     if (!employee) {
       throw new NotFoundException('Không tìm thấy nhân viên');
     }
+
+    if (requester?.role === 'EMPLOYEE' && requester.id !== employee.userId) {
+      throw new ForbiddenException('Bạn chỉ được xem hồ sơ của chính mình');
+    }
+
     return employee;
+  }
+
+  async getJobHistory(id: string, requester?: { id: string; role: Role }) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+    if (!employee) {
+      throw new NotFoundException('Không tìm thấy nhân viên');
+    }
+
+    if (requester?.role === 'EMPLOYEE' && requester.id !== employee.userId) {
+      throw new ForbiddenException('Bạn chỉ được xem lịch sử của chính mình');
+    }
+
+    return this.prisma.jobHistory.findMany({
+      where: { employeeId: id },
+      orderBy: { startDate: 'desc' },
+    });
   }
   async getHrStatistics() {
     const currentMonth = new Date().getMonth() + 1;

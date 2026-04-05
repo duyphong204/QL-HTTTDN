@@ -1,14 +1,14 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ROLE_OPTIONS } from "@/constants/role"
-import type { Role } from "@/types/auth.type"
 import type { CreateEmployeeDto, UpdateEmployeeDto, Employee } from "@/types/hr.type"
+import { AppModal } from "@/components/common/AppModal"
 
 type EmployeeFormState = {
   email: string
   password: string
   fullName: string
   department: string
-  position: Role | ""
+  position: string
   baseSalary: number
 }
 
@@ -20,29 +20,34 @@ interface Props {
 }
 
 export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }: Props) {
-  const initialForm: EmployeeFormState = editingEmployee
-    ? {
+  const emptyForm: EmployeeFormState = {
+    email: "",
+    password: "",
+    fullName: "",
+    department: "",
+    position: "",
+    baseSalary: 0,
+  }
+
+  const [form, setForm] = useState<EmployeeFormState>(emptyForm)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    if (editingEmployee) {
+      setForm({
         email: "",
         password: "",
         fullName: editingEmployee.user?.profile?.fullName || "",
         department: editingEmployee.department || "",
         position: editingEmployee.position || "",
         baseSalary: editingEmployee.baseSalary || 0,
-      }
-    : {
-        email: "",
-        password: "",
-        fullName: "",
-        department: "",
-        position: "",
-        baseSalary: 0,
-      }
+      })
+      return
+    }
 
-  const [form, setForm] = useState<EmployeeFormState>({
-    ...initialForm,
-  })
-
-  if (!isOpen) return null
+    setForm(emptyForm)
+  }, [editingEmployee, isOpen])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -76,11 +81,13 @@ export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          {editingEmployee ? "Thay đổi phòng ban / chức vụ / lương" : "Thêm nhân viên mới"}
-        </h2>
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingEmployee ? "Thay đổi phòng ban / chức vụ / lương" : "Thêm nhân viên mới"}
+      maxWidthClassName="max-w-md"
+    >
+      <div className="p-6">
         {editingEmployee && (
           <div className="mb-4 p-3 bg-blue-50 text-blue-700 text-sm rounded-lg border border-blue-100">
             Lưu ý: Thay đổi chức vụ hoặc lương lúc này sẽ hệ thống sẽ tự động chốt lịch sử cũ (end date) và tạo mốc lịch sử mới bắt đầu từ hôm nay.
@@ -139,6 +146,6 @@ export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }
           </div>
         </form>
       </div>
-    </div>
+    </AppModal>
   )
 }

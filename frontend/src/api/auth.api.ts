@@ -1,29 +1,25 @@
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/types/auth.type"
 import type { User } from "@/types/user.type"
-import { axiosInstance } from "./axios"
+import { apiGet, apiPost } from "./base"
 
 export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
-        const res = await axiosInstance.post("/auth/login", data);
-        return res.data;
+        return apiPost<LoginResponse>("/auth/login", data);
     },
 
     register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-        const res = await axiosInstance.post("/auth/register", data);
-        return res.data;
+        return apiPost<RegisterResponse>("/auth/register", data);
     },
 
     refresh: async (): Promise<{ accessToken: string }> => {
-        const res = await axiosInstance.post("/auth/refresh");
-        return res.data;
+        return apiPost<{ accessToken: string }>("/auth/refresh");
     },
 
     getProfile: async (): Promise<User> => {
-        const res = await axiosInstance.get("/auth/profile");
-        return res.data;
+        return apiGet<User>("/auth/profile");
     },
 
     logout: async (): Promise<void> => {
-        await axiosInstance.post("/auth/logout");
+        await apiPost<void>("/auth/logout");
     },
 };

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
   UsePipes,
@@ -24,14 +25,20 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('leave-requests')
 export class LeaveRequestsController {
-  constructor(private readonly leaveRequestsService: LeaveRequestsService) { }
+  constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
   @Roles(Role.EMPLOYEE)
   @Post()
   async create(@Request() req: any, @Body() dto: CreateLeaveDto) {
     return this.leaveRequestsService.create(req.user.id, dto);
   }
   @Get('me')
+  @Roles(Role.EMPLOYEE)
   async getMyRequests(@Request() req: any) {
+    return this.leaveRequestsService.getMyRequests(req.user.id);
+  }
+  @Get('my')
+  @Roles(Role.EMPLOYEE)
+  async getMyRequestsAlias(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
   @Patch(':id/status')
@@ -43,10 +50,28 @@ export class LeaveRequestsController {
   ) {
     return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id);
   }
+  @Patch(':id/approve')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  approve(@Param('id') id: string, @Request() req: any) {
+    return this.leaveRequestsService.updateStatus(id, 'APPROVED', req.user.id);
+  }
+  @Patch(':id/reject')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  reject(@Param('id') id: string, @Request() req: any) {
+    return this.leaveRequestsService.updateStatus(id, 'REJECTED', req.user.id);
+  }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll() {
-    return this.leaveRequestsService.findAll();
+  findAll(
+    @Query()
+    query?: {
+      status?: string;
+      type?: string;
+      employeeId?: string;
+      year?: string;
+    },
+  ) {
+    return this.leaveRequestsService.findAll(query);
   }
   @Delete(':id')
   @Roles(Role.EMPLOYEE)

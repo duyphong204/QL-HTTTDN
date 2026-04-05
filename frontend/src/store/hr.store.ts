@@ -12,32 +12,16 @@ import type {
   LeaveRequest,
   Salary,
   CreateSalaryDto,
-  UpdateSalaryDto
+  UpdateSalaryDto,
+  HrStatisticsReport,
 } from "@/types/hr.type"
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type"
-
-interface HrStatistics {
-  totalEmployees: number
-  totalResigned: number
-  headcount: number
-  salaryMonth: number
-  salaryYear: number
-  totalSalaryPaid: number
-  totalBonus: number
-}
+import { getErrorMessage, mergeFiltersWithPageReset } from "@/store/store.helpers"
 
 type EmployeeFilters = BaseFilters & {
   department?: string;
   position?: string;
 };
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return "Lỗi không xác định"
-}
 
 interface HrState {
 
@@ -52,7 +36,7 @@ interface HrState {
   salaries: Salary[]
   selectedEmployee: Employee | null
 
-  statistics: HrStatistics | null
+  statistics: HrStatisticsReport | null
 
   loadingEmployees: boolean
   loadingEmployeeDetail: boolean
@@ -128,13 +112,8 @@ export const useHrStore = create<HrState>((set, get) => ({
   // =================
 
   setFilters: (newFilters) => {
-    const isPageChange = 'page' in newFilters;
     set((state) => ({
-      filters: {
-        ...state.filters,
-        ...newFilters,
-        page: isPageChange ? (newFilters.page ?? 1) : 1,
-      },
+      filters: mergeFiltersWithPageReset(state.filters, newFilters),
     }));
   },
 
@@ -149,7 +128,7 @@ export const useHrStore = create<HrState>((set, get) => ({
         page: filters.page,
         limit: filters.limit,
         search: filters.search,
-        sortBy: filters.sortBy,
+        sortBy: filters.sortBy as 'code' | 'department' | 'position' | 'joinDate',
         sortOrder: filters.sortOrder as SortOrder,
         department: filters.department,
         position: filters.position,
@@ -162,7 +141,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Không thể tải danh sách nhân viên")
+      toast.error(getErrorMessage(error, "Không thể tải danh sách nhân viên"))
 
     } finally {
       set({ loadingEmployees: false })
@@ -185,7 +164,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Không thể tải chi tiết nhân viên")
+      toast.error(getErrorMessage(error, "Không thể tải chi tiết nhân viên"))
 
       return null
 
@@ -212,7 +191,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Thêm nhân sự thất bại")
+      toast.error(getErrorMessage(error, "Thêm nhân sự thất bại"))
 
       throw error
     }
@@ -234,7 +213,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Cập nhật nhân sự thất bại")
+      toast.error(getErrorMessage(error, "Cập nhật nhân sự thất bại"))
 
       throw error
     }
@@ -256,7 +235,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Xóa nhân sự thất bại")
+      toast.error(getErrorMessage(error, "Xóa nhân sự thất bại"))
     }
   },
 
@@ -278,7 +257,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Không thể tải đơn nghỉ phép")
+      toast.error(getErrorMessage(error, "Không thể tải đơn nghỉ phép"))
 
     } finally {
       set({ loadingLeaveRequests: false })
@@ -307,7 +286,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Duyệt đơn thất bại")
+      toast.error(getErrorMessage(error, "Duyệt đơn thất bại"))
     }
   },
 
@@ -329,7 +308,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Không thể tải bảng lương")
+      toast.error(getErrorMessage(error, "Không thể tải bảng lương"))
 
     } finally {
       set({ loadingSalaries: false })
@@ -344,7 +323,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
       await get().fetchSalaries(data)
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || "Không thể tính lương hàng loạt")
+      toast.error(getErrorMessage(error, "Không thể tính lương hàng loạt"))
       throw error
     }
   },
@@ -361,7 +340,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Tính lương thất bại")
+      toast.error(getErrorMessage(error, "Tính lương thất bại"))
     }
   },
 
@@ -379,7 +358,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Tạo bảng lương thất bại")
+      toast.error(getErrorMessage(error, "Tạo bảng lương thất bại"))
     }
   },
 
@@ -399,7 +378,7 @@ export const useHrStore = create<HrState>((set, get) => ({
 
     } catch (error: unknown) {
 
-      toast.error(getErrorMessage(error) || "Cập nhật bảng lương thất bại")
+      toast.error(getErrorMessage(error, "Cập nhật bảng lương thất bại"))
     }
   },
 
@@ -419,9 +398,9 @@ export const useHrStore = create<HrState>((set, get) => ({
         statistics: data
       })
 
-    } catch {
+    } catch (error: unknown) {
 
-      toast.error("Không thể tải thống kê HR")
+      toast.error(getErrorMessage(error, "Không thể tải thống kê HR"))
 
     } finally {
 

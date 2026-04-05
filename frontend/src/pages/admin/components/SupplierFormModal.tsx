@@ -6,6 +6,7 @@ import {
   CreateSupplierSchema,
   type CreateSupplierValues,
 } from "@/schemas/supplier.schema";
+import { AppModal } from "@/components/common/AppModal";
 
 import type { Supplier } from "@/types/warehouse.type";
 
@@ -60,27 +61,17 @@ export function SupplierFormModal({
     reset();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 space-y-6">
-
-        {/* HEADER */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {editingSupplier ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp"}
-          </h2>
-          <p className="text-sm text-gray-500">
-            Nhập thông tin nhà cung cấp hàng hóa
-          </p>
-        </div>
-
-        {/* FORM */}
+    <AppModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingSupplier ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp"}
+      subtitle="Nhập thông tin nhà cung cấp hàng hóa"
+      maxWidthClassName="max-w-lg"
+    >
         <form
           onSubmit={handleSubmit(submitHandler)}
-          className="space-y-4"
+          className="space-y-4 p-6"
         >
 
           {/* NAME */}
@@ -153,7 +144,6 @@ export function SupplierFormModal({
 
           {/* ACTION */}
           <div className="flex justify-end gap-3 pt-2">
-
             <button
               type="button"
               onClick={onClose}
@@ -161,7 +151,6 @@ export function SupplierFormModal({
             >
               Hủy
             </button>
-
             <button
               type="submit"
               disabled={isSubmitting}
@@ -169,11 +158,8 @@ export function SupplierFormModal({
             >
               {editingSupplier ? "Cập nhật" : "Thêm"}
             </button>
-
           </div>
-
         </form>
-      </div>
-    </div>
+    </AppModal>
   );
 }

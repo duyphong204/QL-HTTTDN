@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -31,20 +33,44 @@ export class CreateSalaryDto {
   @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
   @IsNumber()
   deduction: number;
-  @ApiProperty({ enum: SalaryStatus })
+  @ApiProperty({ enum: SalaryStatus, required: false })
+  @IsOptional()
   @IsEnum(SalaryStatus)
-  status: SalaryStatus;
+  status?: SalaryStatus;
 }
 export class UpdateSalaryDto {
   @ApiProperty({ description: 'Tiền thưởng' })
+  @IsOptional()
   @IsNumber()
-  bonus: number;
+  bonus?: number;
   @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
+  @IsOptional()
   @IsNumber()
-  deduction: number;
+  deduction?: number;
   @ApiProperty({ enum: SalaryStatus })
+  @IsOptional()
   @IsEnum(SalaryStatus)
-  status: SalaryStatus;
+  status?: SalaryStatus;
+}
+
+export class QuerySalaryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  month?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  year?: number;
+
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+
+  @IsOptional()
+  @IsEnum(SalaryStatus)
+  status?: SalaryStatus;
 }
 
 export class CalculateAllSalaryDto {

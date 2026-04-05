@@ -10,6 +10,7 @@ import type {
     Salary,
     CreateSalaryDto,
     UpdateSalaryDto,
+    HrStatisticsReport,
 } from "@/types/hr.type"
 import type { BaseFilters, PaginatedResponse } from "@/types/common.type"
 
@@ -51,7 +52,7 @@ export const employeeApi = {
         return res.data;
     },
     getHrStatistics: async (params?: { month?: number; year?: number }) => {
-        const res = await axiosInstance.get('/employees/statistics/hr-report', { params });
+        const res = await axiosInstance.get<HrStatisticsReport>('/employees/statistics/hr-report', { params });
         return res.data;
     },
 };
@@ -73,9 +74,9 @@ export const leaveRequestApi = {
     },
 
     approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto) => {
+        const endpoint = data.status === 'APPROVED' ? 'approve' : 'reject';
         const res = await axiosInstance.patch<LeaveRequest>(
-            `/leave-requests/${id}/status`,
-            data
+            `/leave-requests/${id}/${endpoint}`,
         );
         return res.data;
     },
@@ -105,7 +106,7 @@ export const salaryApi = {
         return res.data;
     },
     calculateSalary: async (data: CreateSalaryDto) => {
-        const res = await axiosInstance.post('/salaries/calculate', data);
+        const res = await axiosInstance.post('/salaries', data);
         return res.data;
     },
     calculateAllSalaries: async (data: { month: number; year: number }) => {

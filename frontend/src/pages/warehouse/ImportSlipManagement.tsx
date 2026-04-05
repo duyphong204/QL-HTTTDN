@@ -6,6 +6,7 @@ import { Plus, Trash2, Eye } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { useClientTable } from '@/hooks/useClientTable'
+import { AppModal } from '@/components/common/AppModal'
 
 export default function ImportSlipManagement() {
     const {
@@ -143,14 +144,13 @@ export default function ImportSlipManagement() {
             </div>
 
             {/* Create Form Modal */}
-            {formOpen && (
-                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900">Tạo phiếu nhập kho</h2>
-                            <button onClick={() => setFormOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg">✕</button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <AppModal
+                isOpen={formOpen}
+                onClose={() => setFormOpen(false)}
+                title="Tạo phiếu nhập kho"
+                maxWidthClassName="max-w-2xl"
+            >
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
                             {/* Nhà cung cấp */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Nhà cung cấp *</label>
@@ -211,23 +211,19 @@ export default function ImportSlipManagement() {
                                     Tạo phiếu nhập
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                </form>
+            </AppModal>
 
             {/* Detail Modal */}
-            {selectedStockIn && (
-                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Chi tiết phiếu nhập</h2>
-                                <p className="text-xs text-gray-500 mt-0.5">NCC: {selectedStockIn.supplier?.name}</p>
-                            </div>
-                            <button onClick={clearSelectedStockIn} className="p-1.5 hover:bg-gray-100 rounded-lg">✕</button>
-                        </div>
-                        <div className="p-6 space-y-4">
+            <AppModal
+                isOpen={Boolean(selectedStockIn)}
+                onClose={clearSelectedStockIn}
+                title="Chi tiết phiếu nhập"
+                subtitle={selectedStockIn ? `NCC: ${selectedStockIn.supplier?.name || '—'}` : undefined}
+                maxWidthClassName="max-w-lg"
+            >
+                {selectedStockIn && (
+                    <div className="p-6 space-y-4">
                             <table className="w-full text-sm">
                                 <thead className="border-b border-gray-100">
                                     <tr className="text-gray-500 text-xs uppercase tracking-wide">
@@ -256,10 +252,9 @@ export default function ImportSlipManagement() {
                                     </tr>
                                 </tfoot>
                             </table>
-                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </AppModal>
         </div>
     )
 }

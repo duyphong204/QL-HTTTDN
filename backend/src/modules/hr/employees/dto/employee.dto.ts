@@ -42,6 +42,11 @@ export class UpdateEmployeeDto {
   @IsNumber()
   @IsOptional()
   baseSalary?: number;
+
+  @ApiProperty({ required: false })
+  @IsDateString()
+  @IsOptional()
+  effectiveDate?: string;
 }
 export class CreateEmployeeFromUserDto {
   @ApiProperty({ required: false })
@@ -124,4 +129,9 @@ export class QueryEmployeeDto {
   @IsOptional()
   @IsString()
   position?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Type(() => Boolean)
+  isActive?: boolean;
 }

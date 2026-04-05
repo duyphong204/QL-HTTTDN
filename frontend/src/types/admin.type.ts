@@ -53,3 +53,37 @@ export interface StockReport {
     lowStockProducts: number  
     totalValue: number
 }
+
+export interface AdminDashboardReport {
+    period: {
+        month?: number
+        year: number
+    }
+    generatedAt: string
+    sales: {
+        totalOrders: number
+        totalItemsSold: number
+        totalRevenue: number
+        totalProfit: number
+    }
+    warehouse: {
+        totalStockIns: number
+        totalImportValue: number
+        totalImportQuantity: number
+        totalProductTypes: number
+        totalStockQuantity: number
+        lowStockProducts: {
+            id: string
+            name: string
+            stockQuantity: number
+            minStock: number
+        }[]
+    }
+    hr: {
+        totalEmployees: number
+        totalResigned: number
+        headcount: number
+        totalSalaryPaid: number
+        totalBonus: number
+    }
+}

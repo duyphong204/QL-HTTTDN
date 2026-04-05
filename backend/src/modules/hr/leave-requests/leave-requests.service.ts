@@ -9,41 +9,45 @@ import { CreateLeaveDto } from './dto/leave.dto';
 
 @Injectable()
 export class LeaveRequestsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateLeaveDto) {
+  // Helper nội bộ để lấy ID nhân viên, tránh lặp code
+  private async getEmployeeOrThrow(userId: string) {
     const employee = await this.prisma.employee.findUnique({
       where: { userId },
-      select: { id: true },
+      select: { id: true, code: true },
     });
-    if (!employee) {
-      throw new NotFoundException('Không tìm thấy nhân viên');
-    }
-    const startDate = new Date(dto.startDate);
-    const endDate = new Date(dto.endDate);
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+    return employee;
+  }
 
-    if (endDate < startDate) {
+  async create(userId: string, dto: CreateLeaveDto) {
+    const employee = await this.getEmployeeOrThrow(userId);
+
+    const start = new Date(dto.startDate);
+    const end = new Date(dto.endDate);
+
+    if (end < start) {
       throw new BadRequestException('Ngày kết thúc phải sau ngày bắt đầu');
     }
+
     return this.prisma.leaveRequest.create({
       data: {
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
+        startDate: start,
+        endDate: end,
         type: dto.type,
         reason: dto.reason,
         employeeId: employee.id,
       },
     });
   }
+
   async getMyRequests(userId: string) {
-    const employee = await this.prisma.employee.findUnique({ where: { userId } });
-    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+    const employee = await this.getEmployeeOrThrow(userId);
     const requests = await this.prisma.leaveRequest.findMany({
       where: { employeeId: employee.id },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true, type: true, startDate: true, endDate: true,
-        reason: true, status: true, createdAt: true,
+      include: {
         employee: {
           select: {
             user: { select: { profile: { select: { fullName: true } } } },
@@ -51,42 +55,46 @@ export class LeaveRequestsService {
         },
       },
     });
+
     return requests.map((item) => ({
-      id: item.id,
+      ...item,
       employeeName: item.employee.user.profile?.fullName ?? 'Bạn',
-      type: item.type,
-      startDate: item.startDate,
-      endDate: item.endDate,
-      reason: item.reason,
-      status: item.status,
-      createdAt: item.createdAt,
+      // Loại bỏ field employee lồng nhau để trả về đúng format cũ
+      employee: undefined,
     }));
   }
-  async findAll() {
+
+  async findAll(query?: {
+    status?: string;
+    type?: string;
+    employeeId?: string;
+    year?: string;
+  }) {
+    const { status, type, employeeId, year } = query || {};
+
+    // Xử lý filter năm gọn hơn
+    const dateFilter = year
+      ? {
+          createdAt: {
+            gte: new Date(Number(year), 0, 1),
+            lte: new Date(Number(year), 11, 31, 23, 59, 59),
+          },
+        }
+      : {};
+
     const leaveRequests = await this.prisma.leaveRequest.findMany({
-      orderBy: {
-        createdAt: 'desc',
+      where: {
+        status,
+        type,
+        employeeId,
+        ...dateFilter,
       },
-      select: {
-        id: true,
-        type: true,
-        startDate: true,
-        endDate: true,
-        reason: true,
-        status: true,
-        createdAt: true,
+      orderBy: { createdAt: 'desc' },
+      include: {
         employee: {
           select: {
             code: true,
-            user: {
-              select: {
-                profile: {
-                  select: {
-                    fullName: true,
-                  },
-                },
-              },
-            },
+            user: { select: { profile: { select: { fullName: true } } } },
           },
         },
       },
@@ -103,38 +111,35 @@ export class LeaveRequestsService {
       createdAt: item.createdAt,
     }));
   }
+
   async updateStatus(id: string, status: string, adminId: string) {
-    const leave = await this.prisma.leaveRequest.findUnique({
-      where: { id },
-    });
+    const leave = await this.prisma.leaveRequest.findUnique({ where: { id } });
 
-    if (!leave) {
-      throw new NotFoundException('Không tìm thấy đơn nghỉ');
-    }
-
-    if (leave.status !== 'PENDING') {
+    if (!leave) throw new NotFoundException('Không tìm thấy đơn nghỉ');
+    if (leave.status !== 'PENDING')
       throw new BadRequestException('Đơn đã được xử lý');
-    }
 
     return this.prisma.leaveRequest.update({
       where: { id },
-      data: {
-        status,
-        approvedById: adminId,
-      },
+      data: { status, approvedById: adminId },
     });
   }
+
   async delete(id: string, userId: string) {
     const leave = await this.prisma.leaveRequest.findUnique({
       where: { id },
-      include: { employee: { select: { userId: true } } },
+      select: {
+        status: true,
+        employee: { select: { userId: true } },
+      },
     });
+
     if (!leave) throw new NotFoundException('Không tìm thấy đơn nghỉ');
-    // Kiểm tra quyền sở hữu
     if (leave.employee.userId !== userId)
       throw new ForbiddenException('Bạn không có quyền xóa đơn này');
     if (leave.status !== 'PENDING')
       throw new BadRequestException('Chỉ có thể xóa đơn đang chờ duyệt');
+
     return this.prisma.leaveRequest.delete({ where: { id } });
   }
 }
