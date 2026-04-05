@@ -16,6 +16,14 @@ const unwrapResponse = <T>(response: any): T => {
     "data" in response &&
     "success" in response
   ) {
+    // Preserve paginated shape expected by frontend stores: { data, meta }
+    if (response.meta !== undefined) {
+      return {
+        data: response.data,
+        meta: response.meta,
+      } as T;
+    }
+
     return response.data as T;
   }
   return response as T;
