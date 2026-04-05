@@ -115,8 +115,8 @@ export class ProductService {
     return (
       typeof file === 'object' &&
       file !== null &&
-      'buffer' in file &&
-      !!(file as { buffer?: unknown }).buffer
+      ((('buffer' in file) && !!(file as { buffer?: unknown }).buffer) ||
+        (('path' in file) && typeof (file as { path?: unknown }).path === 'string'))
     );
   }
 
