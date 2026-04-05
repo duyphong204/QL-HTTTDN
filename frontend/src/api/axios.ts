@@ -23,16 +23,20 @@ export const axiosInstance = axios.create({
   timeout: API_CONFIG.TIMEOUT,
   withCredentials: true,
   headers: {
-    "Content-Type": "application/json",
+    Accept: "application/json",
   },
 });
 
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Let browser set multipart boundaries for FormData uploads.
-    if (config.data instanceof FormData && config.headers) {
-      delete (config.headers as Record<string, string>)["Content-Type"];
-      delete (config.headers as Record<string, string>)["content-type"];
+    if (config.data instanceof FormData) {
+      if (config.headers && typeof (config.headers as any).set === "function") {
+        (config.headers as any).set("Content-Type", undefined);
+      } else if (config.headers) {
+        delete (config.headers as Record<string, string>)["Content-Type"];
+        delete (config.headers as Record<string, string>)["content-type"];
+      }
     }
 
     if (accessToken && config.headers) {
