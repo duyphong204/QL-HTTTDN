@@ -50,12 +50,22 @@ export const AppRouter = () => {
   return (
     <>
       <Routes>
+        {/* Auth Routes - không protected */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-          <Route path="/admin" element={<HomePage />} />
-          <Route path="/admin/dashboard" element={<HomePage />} />
+        {/* Admin Routes - mỗi route có ProtectedRoute riêng */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={
+            <ProtectedRoute roles={["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"]}>
+              <HomePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute roles={["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"]}>
+              <HomePage />
+            </ProtectedRoute>
+          } />
 
           <Route path="/admin/users" element={
             <ProtectedRoute roles={rolesFor("/admin/users")}><UserManagement /></ProtectedRoute>
