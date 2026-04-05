@@ -4,6 +4,14 @@ import type { Category } from "@/types/warehouse.type";
 import { toast } from "sonner";
 import type { PaginationMeta } from "@/types/common.type";
 
+// Helper function to remove diacritics for Vietnamese search
+const normalizeString = (str: string): string => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 interface CategoryFilters {
   page: number;
   limit: number;
@@ -50,8 +58,9 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       let filtered = data;
 
       if (filters.search) {
+        const normalizedSearch = normalizeString(filters.search);
         filtered = filtered.filter((cat) =>
-          cat.name.toLowerCase().includes(filters.search?.toLowerCase() || ""),
+          normalizeString(cat.name).includes(normalizedSearch),
         );
       }
 
