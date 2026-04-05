@@ -84,6 +84,7 @@ export interface ProductQuery {
 export interface WarehouseReport {
   totalStockIns: number;
   totalImportValue: number;
+  totalImportQuantity?: number;
   totalProductTypes: number;
   totalStockQuantity: number;
   lowStockProducts: Array<{

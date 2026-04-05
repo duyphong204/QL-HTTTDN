@@ -34,14 +34,14 @@ export const useAdminStore = create<AdminStoreState>((set) => ({
           generatedAt: new Date().toISOString(),
           sales: {
             totalOrders: sales.totalOrders,
-            totalItemsSold: sales.totalItemsSold,
+            totalItemsSold: sales.totalItemsSold ?? sales.totalProductsSold ?? 0,
             totalRevenue: sales.totalRevenue,
             totalProfit: sales.totalProfit,
           },
           warehouse: {
             totalStockIns: warehouse.totalStockIns,
             totalImportValue: warehouse.totalImportValue,
-            totalImportQuantity: warehouse.totalImportQuantity,
+            totalImportQuantity: warehouse.totalImportQuantity ?? 0,
             totalProductTypes: warehouse.totalProductTypes,
             totalStockQuantity: warehouse.totalStockQuantity,
             lowStockProducts: warehouse.lowStockProducts,
