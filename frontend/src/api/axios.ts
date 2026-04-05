@@ -29,6 +29,12 @@ export const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Let browser set multipart boundaries for FormData uploads.
+    if (config.data instanceof FormData && config.headers) {
+      delete (config.headers as Record<string, string>)["Content-Type"];
+      delete (config.headers as Record<string, string>)["content-type"];
+    }
+
     if (accessToken && config.headers) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }

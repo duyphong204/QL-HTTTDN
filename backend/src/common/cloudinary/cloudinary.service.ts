@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
 
@@ -18,6 +18,24 @@ export class CloudinaryService {
   }
 
   async uploadImage(file: Express.Multer.File): Promise<string> {
+    if (!file.mimetype?.startsWith('image/')) {
+      throw new BadRequestException('Chỉ hỗ trợ upload file hình ảnh');
+    }
+
+    if (file.path) {
+      const uploaded = await cloudinary.uploader.upload(file.path, {
+        folder: 'products',
+        resource_type: 'image',
+        quality: 'auto',
+        fetch_format: 'auto',
+      });
+      return uploaded.secure_url;
+    }
+
+    if (!file.buffer) {
+      throw new BadRequestException('Không đọc được dữ liệu ảnh upload');
+    }
+
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         {

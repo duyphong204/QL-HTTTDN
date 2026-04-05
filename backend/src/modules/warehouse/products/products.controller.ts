@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -23,6 +24,21 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
+
+const productImageUploadOptions = {
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (
+    _req: unknown,
+    file: Express.Multer.File,
+    cb: (error: Error | null, acceptFile: boolean) => void,
+  ) => {
+    if (!file.mimetype?.startsWith('image/')) {
+      cb(new BadRequestException('Chỉ cho phép upload file hình ảnh') as Error, false);
+      return;
+    }
+    cb(null, true);
+  },
+};
 
 @Controller('products')
 export class ProductController {
@@ -49,7 +65,7 @@ export class ProductController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', productImageUploadOptions))
   create(
     @Body() dto: CreateProductDto,
     @UploadedFile() file?: Express.Multer.File,
@@ -60,7 +76,7 @@ export class ProductController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', productImageUploadOptions))
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
