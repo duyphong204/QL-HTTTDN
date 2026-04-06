@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ROLE_OPTIONS } from "@/constants/role"
+import { EMPLOYEE_ROLE_OPTIONS } from "@/constants/role"
 import type { CreateEmployeeDto, UpdateEmployeeDto, Employee } from "@/types/hr.type"
 import { AppModal } from "@/components/common/AppModal"
 
@@ -122,7 +122,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSubmit, editingEmployee }
               <label className="block text-sm font-medium text-gray-700 mb-1">Quyền / Chức vụ</label>
               <select required name="position" value={form.position} onChange={handleChange} className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none bg-white">
                 <option value="" disabled>Chọn quyền</option>
-                {ROLE_OPTIONS.map((option) => (
+                {EMPLOYEE_ROLE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

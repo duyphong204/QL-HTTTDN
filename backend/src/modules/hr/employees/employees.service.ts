@@ -19,7 +19,7 @@ import {
 import { Role } from 'src/common/enums/role.enum';
 @Injectable()
 export class EmployeesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async assertEmployeeNotAdminByUserId(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -49,6 +49,7 @@ export class EmployeesService {
       },
     });
   }
+
   private async generateEmployeeCode(
     tx: Prisma.TransactionClient,
   ): Promise<string> {
@@ -184,11 +185,17 @@ export class EmployeesService {
     const skip = calculatePaginationSkip(page, limit);
 
     const where: Prisma.EmployeeWhereInput = {
+      user: {
+        role: {
+          notIn: [Role.ADMIN, Role.CUSTOMER],
+        },
+      },
       ...(isActive === true
         ? { resignDate: null }
         : isActive === false
           ? { resignDate: { not: null } }
-          : { resignDate: null }),
+          // : { resignDate: null }),
+          : {}),
       ...(search && {
         OR: [
           { code: { contains: search, mode: 'insensitive' } },
@@ -219,6 +226,7 @@ export class EmployeesService {
           user: {
             select: {
               email: true,
+              role: true,
               profile: {
                 select: {
                   fullName: true,

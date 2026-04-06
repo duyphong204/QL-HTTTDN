@@ -25,19 +25,19 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('leave-requests')
 export class LeaveRequestsController {
-  constructor(private readonly leaveRequestsService: LeaveRequestsService) {}
-  @Roles(Role.EMPLOYEE)
+  constructor(private readonly leaveRequestsService: LeaveRequestsService) { }
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   @Post()
   async create(@Request() req: any, @Body() dto: CreateLeaveDto) {
     return this.leaveRequestsService.create(req.user.id, dto);
   }
   @Get('me')
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   async getMyRequests(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
   @Get('my')
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   async getMyRequestsAlias(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
@@ -74,7 +74,7 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.findAll(query);
   }
   @Delete(':id')
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   async delete(@Param('id') id: string, @Request() req: any) {
     return this.leaveRequestsService.delete(id, req.user.id);
   }

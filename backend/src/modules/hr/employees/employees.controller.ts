@@ -28,9 +28,9 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) {}
+  constructor(private readonly employeesService: EmployeesService) { }
   @Get('me')
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   getMe(@Request() req: any) {
     return this.employeesService.getProfile(req.user.id);
   }
@@ -51,7 +51,7 @@ export class EmployeesController {
     );
   }
   @Patch('me') //Nhân viên tự sửa thông tin
-  @Roles(Role.EMPLOYEE)
+  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
   updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
     return this.employeesService.updateMe(req.user.id, dto);
   }

@@ -15,3 +15,15 @@ export const ROLE_OPTIONS: Array<{ value: Role; label: string }> = (
   value,
   label: config.label,
 }));
+
+const EMPLOYEE_ROLE_VALUES: Role[] = [
+  "HR_MANAGER",
+  "WAREHOUSE_MANAGER",
+  "SALES_MANAGER",
+  "EMPLOYEE",
+]
+
+export const EMPLOYEE_ROLE_OPTIONS: Array<{ value: Role; label: string }> = EMPLOYEE_ROLE_VALUES.map((value) => ({
+  value,
+  label: ROLE_BADGE[value].label,
+}));

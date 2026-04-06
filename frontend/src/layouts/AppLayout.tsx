@@ -101,7 +101,7 @@ const AppLayout = () => {
                     <span className="ml-4 font-bold text-gray-800">Electronics Store</span>
                 </div>
 
-                <div className="p-4 sm:p-6 w-full max-w-full overflow-hidden">
+                <div className="p-2 sm:p-4 w-full max-w-full overflow-hidden">
                     <Outlet />
                 </div>
             </main>
