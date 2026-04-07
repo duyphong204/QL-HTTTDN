@@ -126,6 +126,13 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         roles: ["EMPLOYEE", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
         inSidebar: true,
     },
+    {
+        path: "/warehouse/categories",
+        title: "Danh mục sản phẩm",
+        icon: Package,
+        roles: ["WAREHOUSE_MANAGER"],
+        inSidebar: true,
+    },
 ];
 
 export const rolesFor = (path: string): Role[] =>

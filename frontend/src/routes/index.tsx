@@ -25,6 +25,7 @@ import ImportSlipManagement from '@/pages/warehouse/ImportSlipManagement';
 import WarehouseReportPage from '@/pages/warehouse/WarehouseReportPage';
 import ExportSlipManagement from '@/pages/sales/ExportSlipManagement';
 import SalesReportPage from '@/pages/sales/SalesReportPage';
+import CategoryManagement from '@/pages/warehouse/CategoryManagement';
 
 
 export const AppRouter = () => {
@@ -86,6 +87,9 @@ export const AppRouter = () => {
           } />
           <Route path="/warehouse/reports" element={
             <ProtectedRoute roles={rolesFor("/warehouse/reports")}><WarehouseReportPage /></ProtectedRoute>
+          } />
+          <Route path="/warehouse/categories" element={
+            <ProtectedRoute roles={rolesFor("/warehouse/categories")}><CategoryManagement /></ProtectedRoute>
           } />
           <Route path="/sales/export-slips" element={
             <ProtectedRoute roles={rolesFor("/sales/export-slips")}><ExportSlipManagement /></ProtectedRoute>

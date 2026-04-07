@@ -6,12 +6,17 @@ import { Readable } from 'stream';
 export class CloudinaryService {
   private extractPublicIdFromUrl(imageUrl: string): string | null {
     try {
-      const parsed = new URL(imageUrl);
-      // Typical shape: /.../upload/v1234567890/products/filename.ext
-      const match = parsed.pathname.match(
-        /\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+$/,
-      );
-      return match?.[1] ?? null;
+      const parts = imageUrl.split('/');
+      const uploadIndex = parts.findIndex(part => part === 'upload');
+      if (uploadIndex === -1) return null;
+
+      const remainingParts = parts.slice(uploadIndex + 1);
+      if (remainingParts[0].startsWith('v')) {
+        remainingParts.shift();
+      }
+
+      const publicIdWithExtension = remainingParts.join('/');
+      return publicIdWithExtension.replace(/\.[^/.]+$/, "");
     } catch {
       return null;
     }
@@ -27,9 +32,7 @@ export class CloudinaryService {
           fetch_format: 'auto',
         },
         (error, result: UploadApiResponse) => {
-          if (error) {
-            return reject(new Error(error.message));
-          }
+          if (error) return reject(new Error(error.message));
           resolve(result.secure_url);
         },
       );
@@ -39,9 +42,7 @@ export class CloudinaryService {
 
   async deleteImage(imageUrl: string): Promise<void> {
     const publicId = this.extractPublicIdFromUrl(imageUrl);
-    if (!publicId) {
-      return;
-    }
+    if (!publicId) return;
     await cloudinary.uploader.destroy(publicId);
   }
 }

@@ -7,6 +7,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import { StockInService } from './stock-in.service';
 import { CreateStockInDto } from './dto/stock-in.dto';
@@ -18,7 +19,7 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('stock-ins')
 export class StockInController {
-  constructor(private readonly stockInService: StockInService) {}
+  constructor(private readonly stockInService: StockInService) { }
 
   @Get()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
@@ -36,5 +37,11 @@ export class StockInController {
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   create(@Body() dto: CreateStockInDto, @Request() req: any) {
     return this.stockInService.createStockIn(dto, req.user.id);
+  }
+
+  @Patch(':id/confirm')
+  @Roles(Role.ADMIN)
+  confirm(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    return this.stockInService.confirmStockIn(id, req.user.id);
   }
 }

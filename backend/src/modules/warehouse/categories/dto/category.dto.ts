@@ -1,8 +1,10 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class CreateCategoryDto {
-  @IsString({ message: 'Tên danh mục phải là chuỗi' })
+  @IsString()
   @IsNotEmpty({ message: 'Tên danh mục không được để trống' })
   @MinLength(2, { message: 'Tên danh mục phải có ít nhất 2 ký tự' })
-  name!: string;
+  name: string;
 }
+
+export class UpdateCategoryDto extends CreateCategoryDto { }

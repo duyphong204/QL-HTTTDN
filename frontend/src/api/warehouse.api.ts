@@ -1,7 +1,6 @@
 import { axiosInstance } from './axios';
 import type {
   Product,
-  Category,
   Supplier,
   CreateSupplierDto,
   UpdateSupplierDto,
@@ -13,6 +12,7 @@ import type {
   ProductResponse,
   WarehouseReport,
 } from '@/types/warehouse.type';
+import type { Category } from '@/types/category.type';
 import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.type';
 
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
@@ -35,24 +35,21 @@ const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
 };
 
 export const categoryApi = {
-  getCategories: async () => {
+  getAll: async () => {
     const res = await axiosInstance.get<Category[]>('/categories');
     return res.data;
   },
-
-  createCategory: async (data: { name: string }) => {
-    const res = await axiosInstance.post<Category>('/categories', data);
+  create: async (name: string) => {
+    const res = await axiosInstance.post<Category>('/categories', { name });
     return res.data;
   },
-
-  updateCategory: async (id: string, data: { name: string }) => {
-    const res = await axiosInstance.patch<Category>('/categories/' + id, data);
+  update: async (id: string, name: string) => {
+    const res = await axiosInstance.patch<Category>(`/categories/${id}`, { name });
     return res.data;
   },
-
-  deleteCategory: async (id: string) => {
-    await axiosInstance.delete('/categories/' + id);
-  },
+  delete: async (id: string) => {
+    await axiosInstance.delete(`/categories/${id}`);
+  }
 };
 
 export const supplierApi = {
@@ -124,6 +121,11 @@ export const stockInApi = {
 
   createStockIn: async (data: CreateStockInDto) => {
     const res = await axiosInstance.post<StockIn>('/stock-ins', data);
+    return res.data;
+  },
+
+  confirmStockIn: async (id: string) => {
+    const res = await axiosInstance.patch<StockIn>(`/stock-ins/${id}/confirm`);
     return res.data;
   },
 

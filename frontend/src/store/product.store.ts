@@ -7,9 +7,9 @@ import type {
   ProductResponse,
   CreateProductDto,
   UpdateProductDto,
-  Category,
   Supplier,
 } from '@/types/warehouse.type'
+import type { Category } from '@/types/category.type'
 import type { BaseFilters, SortOrder } from '@/types/common.type'
 import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from '@/store/store.helpers'
 
@@ -139,7 +139,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
 
   fetchCategories: async () => {
     try {
-      const data = await categoryApi.getCategories()
+      const data = await categoryApi.getAll()
       set({ categories: data })
     } catch (error: unknown) {
       const msg = getErrorMessage(error, 'Không thể tải danh mục')

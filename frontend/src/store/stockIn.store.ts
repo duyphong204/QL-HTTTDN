@@ -15,6 +15,7 @@ interface StockInState {
   fetchStockInById: (id: string) => Promise<void>
   clearSelectedStockIn: () => void
   createTicket: (data: CreateStockInDto) => Promise<void>
+  confirmTicket: (id: string) => Promise<void>
 }
 
 export const useStockInStore = create<StockInState>((set, get) => ({
@@ -80,6 +81,26 @@ export const useStockInStore = create<StockInState>((set, get) => ({
 
   clearSelectedStockIn: () => {
     set({ selectedStockIn: null })
+  },
+
+  confirmTicket: async (id: string) => {
+    set({ isLoading: true })
+    try {
+      await stockInApi.confirmStockIn(id)
+      toast.success('Xác nhận nhập kho thành công. Tồn kho đã được cập nhật!')
+      await get().fetchStockIns()
+
+      if (get().selectedStockIn?.id === id) {
+        await get().fetchStockInById(id)
+      }
+      await get().fetchReferenceData()
+    } catch (error: unknown) {
+      const msg = getErrorMessage(error, 'Xác nhận nhập kho thất bại')
+      toast.error(msg)
+      throw error
+    } finally {
+      set({ isLoading: false })
+    }
   },
 
   createTicket: async (data: CreateStockInDto) => {

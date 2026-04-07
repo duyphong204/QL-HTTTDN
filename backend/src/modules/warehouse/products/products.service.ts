@@ -17,7 +17,7 @@ export class ProductService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
-  ) {}
+  ) { }
 
   async findAll(query: QueryProductDto) {
     const {
@@ -31,17 +31,22 @@ export class ProductService {
     } = query;
     const skip = calculatePaginationSkip(page, limit);
 
-    // 1. Xây dựng bộ lọc động
+    // 1. Bộ lọc động + Soft Delete (Chỉ lấy sản phẩm chưa bị xóa)
     const where: Prisma.ProductWhereInput = {
-      ...(search && { name: { contains: search, mode: 'insensitive' } }),
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
       ...(categoryId && { categoryId }),
       ...(supplierId && { supplierId }),
     };
 
-    // 2. Mapping Sort Order (Tránh If/Else lồng nhau)
+    // 2. Mapping Sort Order
     const sortMapping = {
       price: { price: sortOrder },
-      costPrice: { costPrice: sortOrder },
       stockQuantity: { stockQuantity: sortOrder },
       name: { name: sortOrder },
     };
@@ -65,11 +70,11 @@ export class ProductService {
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+    const product = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null },
       include: { category: true, supplier: true },
     });
-    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm');
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm hoặc đã bị xóa');
     return product;
   }
 
@@ -89,7 +94,6 @@ export class ProductService {
     let imageUrl = existing.imageUrl;
 
     if (file) {
-      // Chỉ xóa ảnh cũ sau khi đã upload ảnh mới thành công (để tránh mất ảnh nếu upload fail)
       const newImageUrl = await this.cloudinary.uploadImage(file);
       if (existing.imageUrl) {
         await this.cloudinary.deleteImage(existing.imageUrl).catch(() => null);
@@ -104,20 +108,16 @@ export class ProductService {
   }
 
   async remove(id: string) {
-    const product = await this.findOne(id);
-
-    // Xóa ảnh trên Cloudinary trước khi xóa record trong DB
-    if (product.imageUrl) {
-      await this.cloudinary.deleteImage(product.imageUrl).catch(() => null);
-    }
-
-    return this.prisma.product.delete({ where: { id } });
+    await this.findOne(id);
+    return this.prisma.product.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 
   async getWarehouseReport(month?: number, year?: number) {
     const targetYear = year || new Date().getFullYear();
 
-    // Tạo khoảng thời gian chính xác
     const startDate = month
       ? new Date(targetYear, month - 1, 1)
       : new Date(targetYear, 0, 1);
@@ -125,39 +125,35 @@ export class ProductService {
       ? new Date(targetYear, month, 0, 23, 59, 59)
       : new Date(targetYear, 11, 31, 23, 59, 59);
 
-    const where: Prisma.StockInWhereInput = {
-      date: { gte: startDate, lte: endDate },
-    };
-
-    // TỐI ƯU: Sử dụng Aggregate thay vì mảng reduce
-    const [stockInStats, stockInDetailStats, productStats, lowStockProducts] =
-      await Promise.all([
-        this.prisma.stockIn.aggregate({
-          where,
-          _sum: { totalAmount: true },
-          _count: { id: true },
-        }),
-        this.prisma.stockInDetail.aggregate({
-          where: { stockIn: where },
-          _sum: { quantity: true },
-        }),
-        this.prisma.product.aggregate({
-          _sum: { stockQuantity: true },
-          _count: { id: true },
-        }),
-        this.prisma.$queryRaw<any[]>`
-        SELECT id, name, "stockQuantity", "minStock"
-        FROM "Product"
-        WHERE "stockQuantity" <= "minStock"
-        ORDER BY "stockQuantity" ASC
-      `,
-      ]);
+    const [stockInStats, productStats, lowStockProducts] = await Promise.all([
+      // Thống kê nhập kho
+      this.prisma.stockIn.aggregate({
+        where: { date: { gte: startDate, lte: endDate } },
+        _sum: { totalAmount: true },
+        _count: { id: true },
+      }),
+      this.prisma.product.aggregate({
+        where: { deletedAt: null },
+        _sum: { stockQuantity: true },
+        _count: { id: true },
+      }),
+      this.prisma.product.findMany({
+        where: {
+          deletedAt: null,
+          OR: [
+            { stockQuantity: { lte: 10 } },
+          ]
+        },
+        select: { id: true, name: true, stockQuantity: true, minStock: true },
+        orderBy: { stockQuantity: 'asc' },
+        take: 10,
+      }),
+    ]);
 
     return {
       period: { month, year: targetYear },
       totalStockIns: stockInStats._count.id,
       totalImportValue: stockInStats._sum.totalAmount || 0,
-      totalImportQuantity: stockInDetailStats._sum.quantity || 0,
       totalProductTypes: productStats._count.id,
       totalStockQuantity: productStats._sum.stockQuantity || 0,
       lowStockProducts,
