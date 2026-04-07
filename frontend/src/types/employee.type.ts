@@ -16,6 +16,7 @@ export interface EmployeeProfile {
 
 // DTO cho nhân viên tự cập nhật thông tin cá nhân (khác với UpdateProfileDto của admin/hr)
 export interface UpdateMyProfileDto {
+  fullName?: string
   phone?: string
   address?: string
   avatar?: string

@@ -62,7 +62,7 @@ model Employee {
   baseSalary   Float
   joinDate     DateTime @default(now())
   resignDate   DateTime?
-  
+  deletedAt    DateTime?
   salaries      Salary[]
   leaveRequests LeaveRequest[]
   jobHistories  JobHistory[]

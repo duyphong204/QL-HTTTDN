@@ -137,12 +137,8 @@ axiosInstance.interceptors.response.use(
 
     const apiError = error.response?.data as ApiErrorResponse;
     if (apiError?.message) {
-      const message = Array.isArray(apiError.message)
-        ? apiError.message.join(', ')
-        : typeof apiError.message === 'string'
-          ? apiError.message
-          : apiError.error || 'Lỗi không xác định';
-      return Promise.reject(new Error(message));
+      // Log lỗi API (optional, for debugging)
+      console.error('API Error:', apiError);
     }
 
     return Promise.reject(error);

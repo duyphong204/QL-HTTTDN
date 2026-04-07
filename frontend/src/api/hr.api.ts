@@ -17,6 +17,7 @@ import type { BaseFilters, PaginatedResponse } from "@/types/common.type"
 type EmployeeFilters = BaseFilters & {
     department?: string;
     position?: string;
+    isActive?: boolean;
 };
 
 export const employeeApi = {

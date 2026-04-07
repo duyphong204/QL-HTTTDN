@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const { myProfile, fetchMyProfile, updateMyProfile, isLoadingProfile } = useEmployeeStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
+    fullName: "",
     phone: "",
     address: "",
     avatar: "",
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const handleEdit = () => {
     const profile = myProfile?.user.profile
     setFormData({
+      fullName: profile?.fullName || "",
       phone: profile?.phone || "",
       address: profile?.address || "",
       avatar: profile?.avatar || "",
@@ -57,7 +59,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 animate-in fade-in duration-500">
-      
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -77,7 +79,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Left Column: Quick View */}
         <div className="space-y-6">
           <Card className="border-none shadow-md bg-white">
@@ -91,7 +93,7 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-              
+
               <h2 className="text-xl font-bold text-slate-800">{profile?.fullName}</h2>
               <Badge variant="secondary" className="mt-2 bg-blue-50 text-blue-700 hover:bg-blue-100 border-none px-3">
                 {myProfile?.user.role || "Nhân viên"}
@@ -134,24 +136,28 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InfoBlock label="Họ và tên" value={profile?.fullName} />
-                <InfoBlock 
-                  label="Ngày sinh" 
+                <InfoBlock
+                  label="Họ và tên"
+                  isEditing={isEditing}
+                  input={<Input name="fullName" value={formData.fullName} onChange={handleChange} />}
+                  value={profile?.fullName || "Chưa cập nhật"} />
+                <InfoBlock
+                  label="Ngày sinh"
                   isEditing={isEditing}
                   input={<Input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className="focus:ring-blue-500" />}
-                  value={profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString('vi-VN') : "Chưa cập nhật"} 
+                  value={profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
                 />
-                <InfoBlock 
-                  label="Số điện thoại" 
+                <InfoBlock
+                  label="Số điện thoại"
                   isEditing={isEditing}
                   input={<Input name="phone" value={formData.phone} onChange={handleChange} placeholder="090..." />}
-                  value={profile?.phone || "Chưa cập nhật"} 
+                  value={profile?.phone || "Chưa cập nhật"}
                 />
-                <InfoBlock 
-                  label="Địa chỉ" 
+                <InfoBlock
+                  label="Địa chỉ"
                   isEditing={isEditing}
                   input={<Input name="address" value={formData.address} onChange={handleChange} />}
-                  value={profile?.address || "Chưa cập nhật"} 
+                  value={profile?.address || "Chưa cập nhật"}
                 />
               </div>
 

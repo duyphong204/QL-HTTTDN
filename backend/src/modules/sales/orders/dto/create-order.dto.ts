@@ -8,26 +8,29 @@ import {
 import { Type } from 'class-transformer';
 
 class OrderItemDto {
-  @IsString()
-  productId: string;
+  @IsString({ message: 'ID sản phẩm phải là chuỗi' })
+  productId!: string;
 
-  @IsNumber()
-  @Min(1)
-  quantity: number;
+  @IsNumber({}, { message: 'Số lượng phải là số' })
+  @Min(1, { message: 'Số lượng phải ít nhất 1' })
+  quantity!: number;
 }
 
 export class CreateOrderDto {
-  @IsString()
-  fullName: string;
+  @IsString({ message: 'Họ tên phải là chuỗi' })
+  fullName!: string;
 
-  @IsString()
-  phone: string;
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
+  phone!: string;
 
-  @IsString()
-  address: string;
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
+  address!: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
+  @IsArray({ message: 'Danh sách sản phẩm phải là mảng' })
+  @ValidateNested({
+    each: true,
+    message: 'Mỗi sản phẩm trong đơn hàng không hợp lệ',
+  })
   @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  items!: OrderItemDto[];
 }

@@ -1,47 +1,38 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IsIn, IsInt, Min } from 'class-validator';
 
 export class CreateSupplierDto {
-  @ApiProperty({ example: 'Công ty ABC', description: 'Tên nhà cung cấp' })
-  @IsString()
-  @IsNotEmpty({ message: 'Tên không được để trống' })
+  @IsString({ message: 'Tên nhà cung cấp phải là chuỗi' })
+  @IsNotEmpty({ message: 'Tên nhà cung cấp không được để trống' })
   name: string;
 
-  @ApiProperty({ example: '123 Đường Láng, Hà Nội', description: 'Địa chỉ' })
-  @IsString()
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ example: '0987654321', description: 'Số điện thoại' })
-  @IsString()
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ example: 'contact@abc.com', description: 'Email liên hệ' })
   @IsEmail({}, { message: 'Email không hợp lệ' })
   @IsOptional()
   email?: string;
 }
 
 export class UpdateSupplierDto {
-  @ApiProperty({ example: 'Công ty ABC', description: 'Tên nhà cung cấp' })
-  @IsString()
+  @IsString({ message: 'Tên nhà cung cấp phải là chuỗi' })
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ example: '123 Đường Láng, Hà Nội', description: 'Địa chỉ' })
-  @IsString()
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ example: '0987654321', description: 'Số điện thoại' })
-  @IsString()
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ example: 'contact@abc.com', description: 'Email liên hệ' })
   @IsEmail({}, { message: 'Email không hợp lệ' })
   @IsOptional()
   email?: string;
@@ -49,26 +40,26 @@ export class UpdateSupplierDto {
 
 export class QuerySupplierDto {
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Từ khóa tìm kiếm phải là chuỗi' })
   search?: string;
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'Trang phải là số nguyên' })
+  @Min(1, { message: 'Trang phải ít nhất 1' })
   page?: number = 1;
 
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'Giới hạn phải là số nguyên' })
+  @Min(1, { message: 'Giới hạn phải ít nhất 1' })
   limit?: number = 10;
 
   @IsOptional()
-  @IsIn(['name', 'email', 'phone'])
+  @IsIn(['name', 'email', 'phone'], { message: 'Sắp xếp theo không hợp lệ' })
   sortBy?: 'name' | 'email' | 'phone' = 'name';
 
   @IsOptional()
-  @IsIn(['asc', 'desc'])
+  @IsIn(['asc', 'desc'], { message: 'Thứ tự sắp xếp không hợp lệ' })
   sortOrder?: 'asc' | 'desc' = 'asc';
 }

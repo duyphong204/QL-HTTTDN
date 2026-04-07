@@ -28,17 +28,69 @@ import { ValidationPipe } from '@nestjs/common';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('employees')
 export class EmployeesController {
-  constructor(private readonly employeesService: EmployeesService) { }
+  constructor(private readonly employeesService: EmployeesService) {}
+
+  // ==================== EMPLOYEE SELF SERVICE ====================
   @Get('me')
-  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
+  @Roles(
+    Role.EMPLOYEE,
+    Role.HR_MANAGER,
+    Role.WAREHOUSE_MANAGER,
+    Role.SALES_MANAGER,
+  )
   getMe(@Request() req: any) {
     return this.employeesService.getProfile(req.user.id);
   }
+
+  @Patch('me')
+  @Roles(
+    Role.EMPLOYEE,
+    Role.HR_MANAGER,
+    Role.WAREHOUSE_MANAGER,
+    Role.SALES_MANAGER,
+  )
+  updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
+    return this.employeesService.updateMe(req.user.id, dto);
+  }
+
   @Get(':id/job-history')
   @Roles(Role.ADMIN, Role.HR_MANAGER, Role.EMPLOYEE)
   getJobHistory(@Param('id') id: string, @Request() req: any) {
     return this.employeesService.getJobHistory(id, req.user);
   }
+
+  // ==================== MANAGER / HR ====================
+  @Post()
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  create(@Body() dto: CreateEmployeeDto) {
+    return this.employeesService.create(dto);
+  }
+
+  @Get()
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  findAll(@Query() query?: QueryEmployeeDto) {
+    return this.employeesService.findAll(query);
+  }
+
+  @Get(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER, Role.EMPLOYEE)
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.employeesService.getEmployeeById(id, req.user);
+  }
+
+  // Thay đổi chức vụ + lương (có effectiveDate)
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
+    return this.employeesService.updateEmployee(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  remove(@Param('id') id: string) {
+    return this.employeesService.remove(id);
+  }
+
   @Get('statistics/hr-report')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   getHrStatistics(
@@ -49,43 +101,5 @@ export class EmployeesController {
       month ? Number(month) : undefined,
       year ? Number(year) : undefined,
     );
-  }
-  @Patch('me') //Nhân viên tự sửa thông tin
-  @Roles(Role.EMPLOYEE, Role.HR_MANAGER, Role.WAREHOUSE_MANAGER, Role.SALES_MANAGER)
-  updateMe(@Request() req: any, @Body() dto: UpdateProfileDto) {
-    return this.employeesService.updateMe(req.user.id, dto);
-  }
-  @Post('')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async create(@Body() dto: CreateEmployeeDto) {
-    return this.employeesService.create(dto);
-  }
-  @Get()
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async findAll(@Query() query?: QueryEmployeeDto) {
-    return this.employeesService.findAll(query);
-  }
-  @Patch(':id')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async update(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
-    return this.employeesService.update(id, dto);
-  }
-  @Patch(':id/position')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async updatePosition(
-    @Param('id') id: string,
-    @Body() dto: UpdateEmployeeDto,
-  ) {
-    return this.employeesService.updatePosition(id, dto);
-  }
-  @Delete(':id')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  async remove(@Param('id') id: string) {
-    return this.employeesService.remove(id);
-  }
-  @Get(':id')
-  @Roles(Role.ADMIN, Role.HR_MANAGER, Role.EMPLOYEE)
-  async findOne(@Param('id') id: string, @Request() req: any) {
-    return this.employeesService.getEmployeeById(id, req.user);
   }
 }

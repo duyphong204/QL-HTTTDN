@@ -21,6 +21,7 @@ import { getErrorMessage, mergeFiltersWithPageReset } from "@/store/store.helper
 type EmployeeFilters = BaseFilters & {
   department?: string;
   position?: string;
+  isActive?: boolean;
 };
 
 interface HrState {
@@ -95,6 +96,7 @@ export const useHrStore = create<HrState>((set, get) => ({
     sortOrder: "asc" as SortOrder,
     department: "",
     position: "",
+    isActive: true,
   },
   leaveRequests: [],
   salaries: [],
@@ -132,6 +134,7 @@ export const useHrStore = create<HrState>((set, get) => ({
         sortOrder: filters.sortOrder as SortOrder,
         department: filters.department,
         position: filters.position,
+        isActive: filters.isActive,
       })
 
       set({

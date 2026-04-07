@@ -1,34 +1,31 @@
-// backend/src/modules/warehouse/stock-in/dto/stock-in.dto.ts
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsNotEmpty,
   IsNumber,
   IsPositive,
-  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 
 export class StockInDetailDto {
-  @IsUUID()
+  @IsUUID(undefined, { message: 'ID sản phẩm không hợp lệ' })
   productId: string;
 
-  @IsNumber()
-  @IsPositive()
+  @IsNumber({}, { message: 'Số lượng phải là số' })
+  @IsPositive({ message: 'Số lượng phải lớn hơn 0' })
   quantity: number;
 
-  @IsNumber()
-  @IsPositive()
+  @IsNumber({}, { message: 'Giá nhập phải là số' })
+  @IsPositive({ message: 'Giá nhập phải lớn hơn 0' })
   price: number; // Giá nhập (historical cost price)
 }
 
 export class CreateStockInDto {
-  @IsUUID()
+  @IsUUID(undefined, { message: 'ID nhà cung cấp không hợp lệ' })
   supplierId: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
+  @IsArray({ message: 'Chi tiết nhập kho phải là mảng' })
+  @ValidateNested({ each: true, message: 'Mỗi chi tiết nhập kho không hợp lệ' })
   @Type(() => StockInDetailDto)
   details: StockInDetailDto[];
 }

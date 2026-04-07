@@ -13,39 +13,55 @@ import {
 import { Role } from 'src/common/enums/role.enum';
 
 export class ProfileDto {
-  @IsString()
-  fullName: string;
+  @IsString({ message: 'Họ tên phải là chuỗi' })
+  fullName!: string;
 }
 
 export class UpdateProfileDto {
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Họ tên phải là chuỗi' })
   fullName?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
+  phone?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
+  address?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Avatar phải là chuỗi URL' })
+  avatar?: string;
+
+  @IsOptional()
+  @Type(() => Date)
+  dateOfBirth?: Date;
 }
 
 export class CreateUserDto {
-  @IsEmail()
-  email: string;
+  @IsEmail({}, { message: 'Email không hợp lệ' })
+  email!: string;
 
-  @IsString()
-  @MinLength(6)
-  password: string;
+  @IsString({ message: 'Mật khẩu phải là chuỗi' })
+  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
+  password!: string;
 
-  @IsEnum(Role)
-  role: Role;
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  role!: Role;
 
-  @ValidateNested()
+  @ValidateNested({ message: 'Thông tin profile không hợp lệ' })
   @Type(() => ProfileDto)
-  profile: ProfileDto;
+  profile!: ProfileDto;
 }
 
 export class UpdateUserDto {
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: 'Email không hợp lệ' })
   email?: string;
 
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
   role?: Role;
 
   @IsOptional()
@@ -86,4 +102,12 @@ export class QueryUsersDto {
   @IsOptional()
   @Type(() => Boolean)
   isActive?: boolean;
+}
+export class ChangeRoleDto {
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  role!: Role;
+}
+export class ToggleActiveDto {
+  @Type(() => Boolean)
+  isActive!: boolean;
 }

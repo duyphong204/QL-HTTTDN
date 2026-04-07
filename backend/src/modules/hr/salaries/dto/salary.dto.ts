@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -15,72 +14,70 @@ export enum SalaryStatus {
   PAID = 'PAID',
 }
 export class CreateSalaryDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  employeeId: string;
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  @Min(1)
-  @Max(12)
-  month: number;
-  @ApiProperty({ example: 2024 })
-  @IsNumber()
-  year: number;
-  @ApiProperty({ description: 'Tiền thưởng' })
-  @IsNumber()
-  bonus: number;
-  @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
-  @IsNumber()
-  deduction: number;
-  @ApiProperty({ enum: SalaryStatus, required: false })
+  @IsString({ message: 'ID nhân viên phải là chuỗi' })
+  @IsNotEmpty({ message: 'ID nhân viên không được để trống' })
+  employeeId!: string;
+
+  @IsNumber({}, { message: 'Tháng phải là số' })
+  @Min(1, { message: 'Tháng phải từ 1 đến 12' })
+  @Max(12, { message: 'Tháng phải từ 1 đến 12' })
+  month!: number;
+
+  @IsNumber({}, { message: 'Năm phải là số' })
+  year!: number;
+
+  @IsNumber({}, { message: 'Tiền thưởng phải là số' })
   @IsOptional()
-  @IsEnum(SalaryStatus)
+  bonus?: number;
+
+  @IsNumber({}, { message: 'Tiền khấu trừ phải là số' })
+  @IsOptional()
+  deduction?: number;
+
+  @IsOptional()
+  @IsEnum(SalaryStatus, { message: 'Trạng thái lương không hợp lệ' })
   status?: SalaryStatus;
 }
 export class UpdateSalaryDto {
-  @ApiProperty({ description: 'Tiền thưởng' })
   @IsOptional()
-  @IsNumber()
+  @IsNumber({}, { message: 'Tiền thưởng phải là số' })
   bonus?: number;
-  @ApiProperty({ description: 'Tiền phạt/khấu trừ' })
+
   @IsOptional()
-  @IsNumber()
+  @IsNumber({}, { message: 'Tiền khấu trừ phải là số' })
   deduction?: number;
-  @ApiProperty({ enum: SalaryStatus })
+
+  @IsEnum(SalaryStatus, { message: 'Trạng thái lương không hợp lệ' })
   @IsOptional()
-  @IsEnum(SalaryStatus)
   status?: SalaryStatus;
 }
 
 export class QuerySalaryDto {
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({}, { message: 'Tháng phải là số' })
   month?: number;
 
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({}, { message: 'Năm phải là số' })
   year?: number;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'ID nhân viên phải là chuỗi' })
   employeeId?: string;
 
   @IsOptional()
-  @IsEnum(SalaryStatus)
+  @IsEnum(SalaryStatus, { message: 'Trạng thái lương không hợp lệ' })
   status?: SalaryStatus;
 }
 
 export class CalculateAllSalaryDto {
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  @Min(1)
-  @Max(12)
-  month: number;
+  @IsNumber({}, { message: 'Tháng phải là số' })
+  @Min(1, { message: 'Tháng phải từ 1 đến 12' })
+  @Max(12, { message: 'Tháng phải từ 1 đến 12' })
+  month!: number;
 
-  @ApiProperty({ example: 2026 })
-  @IsNumber()
-  year: number;
+  @IsNumber({}, { message: 'Năm phải là số' })
+  year!: number;
 }

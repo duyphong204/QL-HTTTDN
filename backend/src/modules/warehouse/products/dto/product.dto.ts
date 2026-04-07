@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsIn,
@@ -10,85 +9,71 @@ import {
 } from 'class-validator';
 
 export class CreateProductDto {
-  @ApiProperty({ example: 'iPhone 15' })
-  @IsString()
+  @IsString({ message: 'Tên sản phẩm phải là chuỗi' })
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })
-  name: string;
+  name!: string;
 
-  @ApiProperty({ example: 'Sản phẩm cao cấp', required: false })
-  @IsString()
+  @IsString({ message: 'Mô tả phải là chuỗi' })
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 25000000 })
   @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  price: number;
+  @IsNumber({}, { message: 'Giá bán phải là số' })
+  @Min(0, { message: 'Giá bán phải lớn hơn hoặc bằng 0' })
+  price!: number;
 
-  @ApiProperty({ example: 22000000 })
   @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  costPrice: number;
+  @IsNumber({}, { message: 'Giá gốc phải là số' })
+  @Min(0, { message: 'Giá gốc phải lớn hơn hoặc bằng 0' })
+  costPrice!: number;
 
-  @ApiProperty({ example: 50 })
   @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  stockQuantity: number;
+  @IsNumber({}, { message: 'Số lượng tồn kho phải là số' })
+  @Min(0, { message: 'Số lượng tồn kho phải lớn hơn hoặc bằng 0' })
+  stockQuantity!: number;
 
-  @ApiProperty({ description: 'ID thư mục' })
-  @IsString()
-  @IsNotEmpty()
-  categoryId: string;
+  @IsString({ message: 'ID thư mục phải là chuỗi' })
+  @IsNotEmpty({ message: 'ID thư mục không được để trống' })
+  categoryId!: string;
 
-  @ApiProperty({ description: 'ID NCC' })
-  @IsString()
-  @IsNotEmpty()
-  supplierId: string;
+  @IsString({ message: 'ID nhà cung cấp phải là chuỗi' })
+  @IsNotEmpty({ message: 'ID nhà cung cấp không được để trống' })
+  supplierId!: string;
 }
 
 export class UpdateProductDto {
-  @ApiProperty({ example: 'iPhone 15 Pro Max' })
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })
   name?: string;
 
-  @ApiProperty({ example: 'Sản phẩm cao cấp từ Apple', required: false })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 25000000 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   price?: number; // Giá bán
 
-  @ApiProperty({ example: 22000000 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   costPrice?: number; // Giá nhập
 
-  @ApiProperty({ example: 50 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   stockQuantity?: number; // Số lượng tồn kho
 
-  @ApiProperty({ description: 'ID của danh mục sản phẩm' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   categoryId?: string;
 
-  @ApiProperty({ description: 'ID của nhà cung cấp' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()

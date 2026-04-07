@@ -1,136 +1,135 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEmail,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   Min,
+  MinLength,
 } from 'class-validator';
+import { Role } from 'src/common/enums/role.enum';
+
 export class UpdateProfileDto {
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsString({ message: 'Họ tên phải là chuỗi' })
+  @IsOptional()
+  fullName?: string;
+
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
   @IsOptional()
   phone?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsString({ message: 'Avatar phải là chuỗi' })
   @IsOptional()
   avatar?: string;
 
-  @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
   dateOfBirth?: string;
 }
+
+// DTO dùng để HR cập nhật thông tin nhân sự (bao gồm role)
 export class UpdateEmployeeDto {
-  @ApiProperty()
-  @IsString()
+  @IsString({ message: 'Phòng ban phải là chuỗi' })
   @IsOptional()
   department?: string;
-  @ApiProperty()
-  @IsString()
+
+  @IsString({ message: 'Chức vụ phải là chuỗi' })
   @IsOptional()
   position?: string;
-  @ApiProperty()
-  @IsNumber()
+
+  @IsNumber({}, { message: 'Lương cơ bản phải là số' })
   @IsOptional()
   baseSalary?: number;
 
-  @ApiProperty({ required: false })
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  @IsOptional()
+  role?: Role;
+
   @IsDateString()
   @IsOptional()
   effectiveDate?: string;
 }
+
+// DTO dùng khi gán nhân viên cho user đã tồn tại (nếu có nhu cầu)
 export class CreateEmployeeFromUserDto {
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsString({ message: 'Phòng ban phải là chuỗi' })
   @IsOptional()
   department?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @IsString({ message: 'Chức vụ phải là chuỗi' })
   @IsOptional()
   position?: string;
 
-  @ApiProperty({ example: 10000000 })
-  @IsNumber()
-  @Min(0)
-  baseSalary: number;
+  @IsNumber({}, { message: 'Lương cơ bản phải là số' })
+  @Min(0, { message: 'Lương cơ bản phải lớn hơn hoặc bằng 0' })
+  baseSalary!: number;
 
-  @ApiProperty({ required: false })
   @IsDateString()
   @IsOptional()
   joinDate?: string;
 }
+
 export class CreateEmployeeDto {
-  @IsEmail()
-  email: string;
+  @IsEmail({}, { message: 'Email không hợp lệ' })
+  email!: string;
 
-  @IsString()
-  password: string;
+  @IsString({ message: 'Mật khẩu phải là chuỗi' })
+  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
+  password!: string;
 
-  @IsString()
-  fullName: string;
+  @IsString({ message: 'Họ tên phải là chuỗi' })
+  fullName!: string;
 
-  @IsString()
-  phone?: string;
-
-  @IsString()
+  @IsString({ message: 'Phòng ban phải là chuỗi' })
+  @IsOptional()
   department?: string;
 
-  @IsString()
+  @IsString({ message: 'Chức vụ phải là chuỗi' })
+  @IsOptional()
   position?: string;
 
-  @IsNumber()
-  baseSalary: number;
+  @IsNumber({}, { message: 'Lương cơ bản phải là số' })
+  @Min(0, { message: 'Lương cơ bản phải lớn hơn hoặc bằng 0' })
+  baseSalary!: number;
 }
 
 export class QueryEmployeeDto {
-  @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Từ khóa tìm kiếm phải là chuỗi' })
   search?: string;
 
-  @ApiProperty({ required: false, default: 1 })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({}, { message: 'Trang phải là số' })
   page?: number;
 
-  @ApiProperty({ required: false, default: 10 })
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({}, { message: 'Giới hạn phải là số' })
   limit?: number;
 
-  @ApiProperty({ required: false, default: 'code' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Sắp xếp theo phải là chuỗi' })
   sortBy?: string;
 
-  @ApiProperty({ required: false, default: 'asc', enum: ['asc', 'desc'] })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Thứ tự sắp xếp không hợp lệ' })
   sortOrder?: 'asc' | 'desc';
 
-  @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Phòng ban phải là chuỗi' })
   department?: string;
 
-  @ApiProperty({ required: false })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Chức vụ phải là chuỗi' })
   position?: string;
 
-  @ApiProperty({ required: false })
   @IsOptional()
   @Type(() => Boolean)
   isActive?: boolean;

@@ -1,33 +1,41 @@
 export const getErrorMessage = (error: unknown, fallback = 'Lỗi không xác định'): string => {
-  if (error instanceof Error) {
-    return error.message
-  }
-
   if (typeof error === 'object' && error !== null) {
     const response = error as {
       response?: {
         data?: {
-          message?: string | string[] | Record<string, string | string[]>
-          error?: string
+          message?: unknown
         }
         status?: number
       }
-      message?: string
     }
 
     const apiMessage = response.response?.data?.message
-    if (Array.isArray(apiMessage)) {
-      return apiMessage.join(', ')
+    if (apiMessage) {
+      // Chỉ lấy và format message từ backend
+      if (Array.isArray(apiMessage)) {
+        const messages: string[] = []
+        for (const item of apiMessage) {
+          if (typeof item === 'string') {
+            messages.push(item)
+          } else if (typeof item === 'object' && item !== null) {
+            Object.values(item).forEach(val => {
+              if (typeof val === 'string') {
+                messages.push(val)
+              } else if (Array.isArray(val)) {
+                messages.push(...val.filter(v => typeof v === 'string'))
+              }
+            })
+          }
+        }
+        return messages.length > 0 ? messages.join(', ') : fallback
+      }
+
+      if (typeof apiMessage === 'string') {
+        return apiMessage
+      }
     }
 
-    if (typeof apiMessage === 'string') {
-      return apiMessage
-    }
-
-    if (response.response?.data?.error) {
-      return response.response.data.error
-    }
-
+    // Fallback cho status codes nếu không có message
     if (response.response?.status === 401) {
       return 'Phiên đăng nhập đã hết hạn'
     }
@@ -39,10 +47,10 @@ export const getErrorMessage = (error: unknown, fallback = 'Lỗi không xác đ
     if (response.response?.status === 404) {
       return 'Không tìm thấy dữ liệu'
     }
+  }
 
-    if (typeof response.message === 'string') {
-      return response.message
-    }
+  if (error instanceof Error) {
+    return error.message
   }
 
   return fallback
