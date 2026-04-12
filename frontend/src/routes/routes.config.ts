@@ -18,7 +18,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         path: "/admin/dashboard",
         title: "Tổng quan",
         icon: LayoutDashboard,
-        roles: ["HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
+        roles: ["HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER", "ADMIN"],
         inSidebar: true,
     },
     {
@@ -130,7 +130,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         path: "/warehouse/categories",
         title: "Danh mục sản phẩm",
         icon: Package,
-        roles: ["WAREHOUSE_MANAGER"],
+        roles: ["WAREHOUSE_MANAGER", "ADMIN"],
         inSidebar: true,
     },
 ];

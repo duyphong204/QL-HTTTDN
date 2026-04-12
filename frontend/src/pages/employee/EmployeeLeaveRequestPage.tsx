@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useState } from "react"
+import { useLeaveRequestManagement } from "@/hooks/useLeaveRequestManagement"
 import { Plus, Trash2, Loader2 } from "lucide-react"
 import dayjs from "dayjs"
 
-import { useEmployeeStore } from "@/store/employee.store"
-import { useClientTable } from "@/hooks/useClientTable"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import { AppModal } from "@/components/common/AppModal"
 
-import type { LeaveRequest, CreateLeaveRequestDto } from "@/types/hr.type"
+import type { LeaveRequest } from "@/types/hr.type"
 
 const TYPE_LABEL: Record<string, string> = {
   ANNUAL: "Nghỉ phép",
@@ -30,56 +28,21 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function EmployeeLeaveRequestPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-
-  const [form, setForm] = useState<CreateLeaveRequestDto>({
-    type: "ANNUAL",
-    startDate: "",
-    endDate: "",
-    reason: "",
-  })
-
   const {
-    myLeaveRequests,
     isLoadingLeave,
-    fetchMyLeaveRequests,
-    createLeaveRequest,
-    deleteLeaveRequest,
-  } = useEmployeeStore()
-
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: myLeaveRequests,
-    pageSize: 10,
-    searchFn: (item, keyword) => {
-      const reason = item.reason?.toLowerCase() ?? ""
-      const type = (TYPE_LABEL[item.type] ?? item.type).toLowerCase()
-      return reason.includes(keyword) || type.includes(keyword)
-    },
-  })
-
-  useEffect(() => {
-    fetchMyLeaveRequests()
-  }, [fetchMyLeaveRequests])
-
-  const handleChange = (key: keyof CreateLeaveRequestDto, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
-
-  const handleSubmit = async () => {
-    if (!form.startDate || !form.endDate || !form.reason) {
-      alert("Vui lòng điền đầy đủ thông tin")
-      return
-    }
-    await createLeaveRequest(form)
-    setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" })
-    setDialogOpen(false)
-  }
-
-  const handleDelete = useCallback(async (id: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa đơn này?")) {
-      await deleteLeaveRequest(id)
-    }
-  }, [deleteLeaveRequest])
+    pagedData,
+    meta,
+    searchTerm,
+    setSearchTerm,
+    page,
+    setPage,
+    dialogOpen,
+    setDialogOpen,
+    form,
+    handleChange,
+    handleSubmit,
+    handleDelete,
+  } = useLeaveRequestManagement()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

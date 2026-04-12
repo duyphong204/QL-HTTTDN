@@ -1,64 +1,27 @@
-import { useCallback, useState } from "react";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
-import { useSupplierStore } from "@/store/supplier.store";
-import { SupplierFormModal } from "./components/SupplierFormModal";
-import type { Supplier } from "@/types/warehouse.type";
-import type { CreateSupplierValues } from "@/schemas/supplier.schema";
-import { usePaginatedList } from "@/hooks/usePaginatedList";
-import { DataTableToolbar } from "@/components/common/DataTableToolbar";
-import { PaginationControls } from "@/components/common/PaginationControls";
+import { useSupplierManagement } from "@/hooks/useSupplierManagement"
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
+import { SupplierFormModal } from "@/components/forms/SupplierFormModal"
+import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { PaginationControls } from "@/components/common/PaginationControls"
 
 export default function SupplierManagement() {
   const {
     suppliers,
     meta,
     isLoading,
+    modalOpen,
+    setModalOpen,
+    editingSupplier,
+    searchTerm,
+    setSearchTerm,
     filters,
-    fetchSuppliers,
-    addSupplier,
-    updateSupplier,
-    deleteSupplier,
-    setFilters,
-  } = useSupplierStore();
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchSuppliers,
-    debounceMs: 500,
-  });
-
-  const openCreateModal = () => {
-    setEditingSupplier(null);
-    setModalOpen(true);
-  };
-
-  const openEditModal = useCallback((supplier: Supplier) => {
-    setEditingSupplier(supplier);
-    setModalOpen(true);
-  }, []);
-
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Bạn có chắc muốn xóa nhà cung cấp: ${name}?`)) {
-      await deleteSupplier(id);
-    }
-  };
-
-  const handleFormSubmit = async (data: CreateSupplierValues) => {
-    try {
-      if (editingSupplier) {
-        await updateSupplier(editingSupplier.id, data);
-      } else {
-        await addSupplier(data);
-      }
-      setModalOpen(false);
-    } catch {
-      // toast is handled in store
-    }
-  };
+    updateFilters,
+    goToPage,
+    openCreateModal,
+    openEditModal,
+    handleDelete,
+    handleFormSubmit,
+  } = useSupplierManagement()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

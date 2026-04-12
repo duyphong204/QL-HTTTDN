@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
+import { useSalaryManagement } from "@/hooks/useSalaryManagement"
 import { Printer } from "lucide-react"
 
-import { useEmployeeStore } from "@/store/employee.store"
 import {
   Select,
   SelectContent,
@@ -10,76 +9,23 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const currentYear = new Date().getFullYear()
-const YEARS = [currentYear, currentYear - 1, currentYear - 2]
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(n || 0)
-
 export default function MySalaryPage() {
-  const { mySalaries, isLoadingSalary, fetchMySalaries, myProfile } = useEmployeeStore()
-  const [filterYear, setFilterYear] = useState(String(currentYear))
-  const [filterMonth, setFilterMonth] = useState("ALL")
-
-  useEffect(() => {
-    const params: { year?: number; month?: number } = {
-      year: Number(filterYear),
-    }
-
-    if (filterMonth !== "ALL") {
-      params.month = Number(filterMonth)
-    }
-
-    fetchMySalaries(params)
-  }, [filterYear, filterMonth, fetchMySalaries])
-
-  const monthlySalary = useMemo(() => {
-    if (filterMonth === "ALL") return null
-    const month = Number(filterMonth)
-    return mySalaries.find((s) => s.month === month && s.year === Number(filterYear)) || null
-  }, [mySalaries, filterMonth, filterYear])
-
-  const yearlySummary = useMemo(() => {
-    const rows = MONTHS.map((m) => {
-      const salary = mySalaries.find((s) => s.month === m && s.year === Number(filterYear))
-      return {
-        month: m,
-        baseSalary: salary?.employee?.baseSalary || 0,
-        bonus: salary?.bonus || 0,
-        deduction: salary?.deduction || 0,
-        amount: salary?.amount || 0,
-        status: salary?.status || "PENDING",
-      }
-    })
-
-    const totalAmount = rows.reduce((sum, r) => sum + r.amount, 0)
-    const totalBonus = rows.reduce((sum, r) => sum + r.bonus, 0)
-    const totalDeduction = rows.reduce((sum, r) => sum + r.deduction, 0)
-
-    return {
-      rows,
-      totalAmount,
-      totalBonus,
-      totalDeduction,
-    }
-  }, [mySalaries, filterYear])
-
-  const printMonthly = () => {
-    if (filterMonth === "ALL") return
-    document.body.classList.add("print-monthly")
-    window.print()
-    document.body.classList.remove("print-monthly")
-  }
-
-  const printYearly = () => {
-    document.body.classList.add("print-yearly")
-    window.print()
-    document.body.classList.remove("print-yearly")
-  }
+  const {
+    mySalaries,
+    myProfile,
+    isLoadingSalary,
+    monthlySalary,
+    yearlySummary,
+    filterYear,
+    setFilterYear,
+    filterMonth,
+    setFilterMonth,
+    printMonthly,
+    printYearly,
+    YEARS,
+    MONTHS,
+    formatCurrency,
+  } = useSalaryManagement()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

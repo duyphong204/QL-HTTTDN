@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Package, RefreshCw } from 'lucide-react';
-import { useProductStore } from '@/store/product.store';
+import { useProductStore } from '@/stores/product.store';
 import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
-import { ProductFormModal } from './components/ProductFormModal';
+import { ProductFormModal } from '@/components/forms/ProductFormModal';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { DataTableToolbar } from '@/components/common/DataTableToolbar';
 import { PaginationControls } from '@/components/common/PaginationControls';

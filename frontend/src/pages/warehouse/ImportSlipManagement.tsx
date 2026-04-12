@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useStockInStore } from '@/store/stockIn.store'
+import { useStockInStore } from '@/stores/stockIn.store'
 import { StockInStatus, type StockInDetailInput } from '@/types/warehouse.type'
 import { Plus, Trash2, Eye, CheckCircle2, User, Calendar, Tag } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'

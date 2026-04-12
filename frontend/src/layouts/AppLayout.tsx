@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { LogOut, Menu, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/auth.store";
+import { useAuthStore } from "@/stores/auth.store";
 import { ROUTE_CONFIGS } from "@/routes/routes.config";
 
 const AppLayout = () => {

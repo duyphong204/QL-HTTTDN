@@ -1,84 +1,29 @@
-import { useState } from "react";
-import { UserPlus, Pencil, Trash2 } from "lucide-react";
-import { useUserStore } from "@/store/user.store";
-import { UserFormModal } from "./components/UserFormModal";
-import { ROLE_BADGE } from "@/constants/role";
-import { usePaginatedList } from "@/hooks/usePaginatedList";
-import { DataTableToolbar } from "@/components/common/DataTableToolbar";
-import { PaginationControls } from "@/components/common/PaginationControls";
-import type { Role } from "@/types/auth.type";
-import type { User } from "@/types/user.type";
-
-type UserFormValues = {
-  email: string;
-  password?: string;
-  role: Role;
-  profile: {
-    fullName: string;
-  };
-};
+import { useUserManagement } from "@/hooks/useUserManagement"
+import { UserPlus, Pencil, Trash2 } from "lucide-react"
+import { UserFormModal } from "@/components/forms/UserFormModal"
+import { ROLE_BADGE } from "@/constants/role"
+import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { PaginationControls } from "@/components/common/PaginationControls"
+import type { Role } from "@/types/auth.type"
 
 export default function UserManagement() {
   const {
     users,
     meta,
     isLoading,
-    fetchUsers,
-    addUser,
-    updateUser,
-    deleteUser,
-    setFilters,
+    modalOpen,
+    setModalOpen,
+    editingUser,
+    searchTerm,
+    setSearchTerm,
     filters,
-  } = useUserStore();
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchUsers,
-    debounceMs: 300,
-  });
-
-  const openCreateModal = () => {
-    setEditingUser(null);
-    setModalOpen(true);
-  };
-
-  const openEditModal = (user: User) => {
-    setEditingUser(user);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id: string, email: string) => {
-    if (confirm("Bạn có chắc muốn xóa user: " + email + "?")) {
-      await deleteUser(id);
-    }
-  };
-
-  const handleFormSubmit = async (data: UserFormValues) => {
-    if (editingUser) {
-      await updateUser(editingUser.id, {
-        email: data.email,
-        role: data.role,
-        profile: {
-          fullName: data.profile.fullName,
-        },
-      });
-    } else {
-      await addUser({
-        email: data.email,
-        password: data.password || "",
-        role: data.role,
-        profile: {
-          fullName: data.profile.fullName,
-        },
-      });
-    }
-
-    setModalOpen(false);
-  };
+    updateFilters,
+    goToPage,
+    openCreateModal,
+    openEditModal,
+    handleDelete,
+    handleFormSubmit,
+  } = useUserManagement()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

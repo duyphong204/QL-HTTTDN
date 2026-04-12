@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { useHrStore } from "@/store/hr.store"
+import { useHrStore } from "@/stores/hr.store"
 
 import { UserPlus, Pencil, Trash2, Eye } from "lucide-react"
 
-import { EmployeeFormModal } from "./components/EmployeeFormModal"
-import { EmployeeDetailModal } from "./components/EmployeeDetailModal"
+import { EmployeeFormModal } from "@/components/forms/EmployeeFormModal"
+import { EmployeeDetailModal } from "@/components/modals/EmployeeDetailModal"
 
 import type { Employee } from "@/types/hr.type"
 import type { CreateEmployeeDto, UpdateEmployeeDto } from "@/types/hr.type"

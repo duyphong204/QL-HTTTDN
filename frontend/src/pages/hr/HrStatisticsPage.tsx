@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { useHrStore } from "@/store/hr.store"
+import { useHrStore } from "@/stores/hr.store"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"

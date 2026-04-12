@@ -1,6 +1,6 @@
 // frontend/src/pages/sales/ExportSlipManagement.tsx
 import { useEffect, useState } from 'react'
-import { useSalesStore } from '@/store/sales.store'
+import { useSalesStore } from '@/stores/sales.store'
 import { Plus, Trash2, FileText } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'

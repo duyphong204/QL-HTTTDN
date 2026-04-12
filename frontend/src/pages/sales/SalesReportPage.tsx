@@ -1,6 +1,6 @@
 // frontend/src/pages/sales/SalesReportPage.tsx
 import { useEffect, useState } from 'react'
-import { useSalesStore } from '@/store/sales.store'
+import { useSalesStore } from '@/stores/sales.store'
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Printer } from 'lucide-react'
 
 const formatCurrency = (n: number) =>

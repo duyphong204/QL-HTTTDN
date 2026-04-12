@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Tag, Layers, RefreshCw } from "lucide-react";
-import { useCategoryStore } from "@/store/category.store";
+import { useCategoryStore } from "@/stores/category.store";
 import { AppModal } from "@/components/common/AppModal";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { PaginationControls } from "@/components/common/PaginationControls";
@@ -14,7 +14,7 @@ export default function CategoryManagement() {
         categories,
         isLoading,
         fetchCategories,
-        addCategory,
+        createCategory,
         updateCategory,
         deleteCategory
     } = useCategoryStore();
@@ -45,11 +45,9 @@ export default function CategoryManagement() {
 
         try {
             if (editingCategory) {
-                // FIXED: Truyền { name } thay vì string name để khớp Type
-                await updateCategory(editingCategory.id, { name });
+                await updateCategory(editingCategory.id, name);
             } else {
-                // FIXED: Truyền { name } thay vì string name để khớp Type
-                await addCategory({ name });
+                await createCategory(name);
             }
             setModalOpen(false);
         } catch (error) {

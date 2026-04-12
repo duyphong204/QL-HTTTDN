@@ -3,8 +3,6 @@ import type { Product } from "./warehouse.type";
 
 export interface Category extends BaseEntity {
     name: string;
-
-    // Dùng để hiển thị số lượng sản phẩm thuộc danh mục này (nếu backend trả về _count)
     _count?: {
         products: number;
     };

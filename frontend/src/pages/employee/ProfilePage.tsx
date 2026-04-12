@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import { useEmployeeStore } from "@/store/employee.store"
+import { useProfileManagement } from "@/hooks/useProfileManagement"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,43 +8,16 @@ import { Badge } from "@/components/ui/badge"
 import { Mail, Briefcase, User, CreditCard } from "lucide-react"
 
 export default function ProfilePage() {
-  const { myProfile, fetchMyProfile, updateMyProfile, isLoadingProfile } = useEmployeeStore()
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-    address: "",
-    avatar: "",
-    dateOfBirth: "",
-  })
-
-  useEffect(() => {
-    fetchMyProfile()
-  }, [fetchMyProfile])
-
-  const handleEdit = () => {
-    const profile = myProfile?.user.profile
-    setFormData({
-      fullName: profile?.fullName || "",
-      phone: profile?.phone || "",
-      address: profile?.address || "",
-      avatar: profile?.avatar || "",
-      dateOfBirth: profile?.dateOfBirth ? profile.dateOfBirth.slice(0, 10) : "",
-    })
-    setIsEditing(true)
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
-
-  const handleSave = async () => {
-    await updateMyProfile({
-      ...formData,
-      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined,
-    })
-    setIsEditing(false)
-  }
+  const {
+    myProfile,
+    isLoadingProfile,
+    isEditing,
+    formData,
+    handleEdit,
+    handleChange,
+    handleSave,
+    handleCancel,
+  } = useProfileManagement()
 
   if (isLoadingProfile) {
     return (
@@ -72,7 +44,7 @@ export default function ProfilePage() {
           </Button>
         ) : (
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Hủy</Button>
+            <Button variant="outline" onClick={handleCancel}>Hủy</Button>
             <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Lưu thay đổi</Button>
           </div>
         )}

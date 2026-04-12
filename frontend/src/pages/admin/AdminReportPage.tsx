@@ -4,7 +4,7 @@ import {
   Printer, AlertTriangle, Loader2, TrendingUp, 
   UserCheck, Package 
 } from 'lucide-react'
-import { useAdminStore } from '@/store/admin.store'
+import { useAdminStore } from '@/stores/admin.store'
 
 // --- CONSTANTS & HELPERS ---
 const currentYear = new Date().getFullYear()

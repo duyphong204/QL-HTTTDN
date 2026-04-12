@@ -1,6 +1,6 @@
 import type { Role } from "@/types/auth.type";
 import { Navigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth.store";
+import { useAuthStore } from "@/stores/auth.store";
 
 const ProtectedRoute = ({
     children,

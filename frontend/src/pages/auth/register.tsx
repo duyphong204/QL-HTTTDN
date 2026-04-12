@@ -1,5 +1,5 @@
-import { SignupForm } from "./components/signup-form"
-import { useAuthStore } from "@/store/auth.store"
+import { SignupForm } from "@/components/forms/SignupForm"
+import { useAuthStore } from "@/stores/auth.store"
 import { Navigate } from "react-router-dom"
 
 export default function SignupPage() {

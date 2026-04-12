@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import dayjs from "dayjs"
 import { Check, X, RefreshCw, FileText } from "lucide-react"
 
-import { useHrStore } from "@/store/hr.store"
+import { useHrStore } from "@/stores/hr.store"
 import { useClientTable } from "@/hooks/useClientTable"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"

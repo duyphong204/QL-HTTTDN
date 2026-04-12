@@ -1,11 +1,20 @@
 import type { BaseEntity, PaginatedResponse } from "./common.type"
 import type { Category } from "./category.type";
+
+export type { Category };
 export interface Supplier extends BaseEntity {
   name: string
   address?: string
   phone?: string
   email?: string
   contactPerson?: string
+}
+
+export interface CreateSupplierDto {
+  name: string
+  phone?: string
+  email?: string
+  address?: string
 }
 
 /* =======================
@@ -116,6 +125,7 @@ export interface UpdateStockInDto {
   supplierId?: string
   date?: Date
   details?: StockInDetailInput[]
+  status?: string
 }
 
 /* =======================

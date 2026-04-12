@@ -6,6 +6,18 @@ export type Role =
     | "EMPLOYEE"
     | "CUSTOMER"
 
+export interface LoginValues {
+    email: string
+    password: string
+}
+
+export interface RegisterValues {
+    email: string
+    password: string
+    role: Role
+    fullName: string
+}
+
 export interface LoginRequest {
     email: string
     password: string

@@ -9,7 +9,7 @@ import ProductManagement from '@/pages/warehouse/ProductManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes } from 'react-router-dom';
-import { useAuthStore } from '@/store/auth.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import NotFoundPage from '@/pages/NotFoundPage';
