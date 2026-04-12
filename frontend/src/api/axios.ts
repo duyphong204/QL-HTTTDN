@@ -1,6 +1,7 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { API_CONFIG } from "@/constants";
+import { endpoints } from "@/api/endpoints";
 import type { ApiEnvelope, ApiErrorResponse } from "@/types/common.type";
 
 let accessToken: string | null = null;
@@ -77,8 +78,8 @@ axiosInstance.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes("/auth/refresh") &&
-      !originalRequest.url?.includes("/auth/login")
+      !originalRequest.url?.includes(endpoints.auth.refresh) &&
+      !originalRequest.url?.includes(endpoints.auth.login)
     ) {
 
       if (isRefreshing) {
@@ -99,7 +100,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         const refreshResponse = await axios.post(
-          `${API_CONFIG.BASE_URL}/auth/refresh`,
+          `${API_CONFIG.BASE_URL}${endpoints.auth.refresh}`,
           {},
           { withCredentials: true }
         );

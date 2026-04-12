@@ -4,15 +4,55 @@ import { LogOut, Menu, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
-import { ROUTE_CONFIGS } from "@/routes/routes.config";
+import { ROUTE_CONFIGS, type PortalId } from "@/routes/routes.config";
 
-const AppLayout = () => {
+const PORTAL_BRAND: Record<PortalId, { label: string; logoClass: string; activeNav: string }> = {
+    admin: {
+        label: "Cổng Quản trị",
+        logoClass: "bg-violet-600",
+        activeNav: "bg-violet-600 text-white shadow-md shadow-violet-200",
+    },
+    hr: {
+        label: "Cổng Nhân sự",
+        logoClass: "bg-emerald-600",
+        activeNav: "bg-emerald-600 text-white shadow-md shadow-emerald-200",
+    },
+    warehouse: {
+        label: "Cổng Quản lý kho",
+        logoClass: "bg-amber-600",
+        activeNav: "bg-amber-600 text-white shadow-md shadow-amber-200",
+    },
+    sales: {
+        label: "Cổng Kinh doanh",
+        logoClass: "bg-sky-600",
+        activeNav: "bg-sky-600 text-white shadow-md shadow-sky-200",
+    },
+    employee: {
+        label: "Cổng Nhân viên",
+        logoClass: "bg-slate-700",
+        activeNav: "bg-slate-700 text-white shadow-md shadow-slate-300",
+    },
+};
+
+interface PortalShellProps {
+    portal: PortalId;
+}
+
+/**
+ * Khung chung: sidebar + outlet. Lọc menu theo cổng + vai trò (tách UI Admin / HR / Kho / Sales / NV).
+ */
+const PortalShell = ({ portal }: PortalShellProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
     const { user, logout } = useAuthStore();
+    const brand = PORTAL_BRAND[portal];
 
     const filteredMenuItems = ROUTE_CONFIGS.filter(
-        (r) => r.inSidebar && user && r.roles.includes(user.role)
+        (r) =>
+            r.inSidebar &&
+            user &&
+            r.portals.includes(portal) &&
+            r.roles.includes(user.role)
     );
 
     return (
@@ -25,7 +65,6 @@ const AppLayout = () => {
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={cn(
                     "bg-white border-r border-gray-200 fixed inset-y-0 left-0 z-50 transition-all duration-300 transform",
@@ -35,16 +74,18 @@ const AppLayout = () => {
                 <div className="h-16 flex items-center justify-center border-b border-gray-200 px-4">
                     {isSidebarOpen ? (
                         <div className="flex items-center gap-2">
-                            <div className="bg-blue-600 p-1 rounded-md">
+                            <div className={cn("p-1 rounded-md", brand.logoClass)}>
                                 <Briefcase className="text-white h-5 w-5" />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-gray-800">Electronics Store</h1>
-                                <p className="text-xs text-gray-500">{user?.profile?.fullName || user?.email || "Admin"}</p>
+                                <h1 className="text-sm font-bold text-gray-800 leading-tight">{brand.label}</h1>
+                                <p className="text-xs text-gray-500">
+                                    {user?.profile?.fullName || user?.email || "—"}
+                                </p>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-blue-600 p-2 rounded-md hidden lg:block">
+                        <div className={cn("p-2 rounded-md hidden lg:block", brand.logoClass)}>
                             <Briefcase className="text-white h-6 w-6" />
                         </div>
                     )}
@@ -55,21 +96,25 @@ const AppLayout = () => {
                         const isActive = location.pathname.startsWith(item.path);
                         return (
                             <Link
-                                key={item.path}
+                                key={`${portal}-${item.path}-${item.title}`}
                                 to={item.path}
-                                onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                                }}
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                                     isActive
-                                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                                        ? brand.activeNav
                                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 )}
                                 title={item.title}
                             >
-                                <item.icon className={cn(
-                                    "h-5 w-5",
-                                    isActive ? "text-white" : "text-gray-500 group-hover:text-gray-700"
-                                )} />
+                                <item.icon
+                                    className={cn(
+                                        "h-5 w-5 shrink-0",
+                                        isActive ? "text-white" : "text-gray-500 group-hover:text-gray-700"
+                                    )}
+                                />
                                 {isSidebarOpen && <span className="font-medium text-sm">{item.title}</span>}
                             </Link>
                         );
@@ -77,10 +122,12 @@ const AppLayout = () => {
 
                     <div className="pt-4 mt-auto border-t border-gray-100">
                         <button
+                            type="button"
                             onClick={() => logout()}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left group hover:bg-red-50 text-gray-600 hover:text-red-600"
-                            )}>
+                            )}
+                        >
                             <LogOut className="h-5 w-5 text-gray-400 group-hover:text-red-500" />
                             {isSidebarOpen && <span className="font-medium text-sm">Đăng xuất</span>}
                         </button>
@@ -88,17 +135,17 @@ const AppLayout = () => {
                 </nav>
             </aside>
 
-            {/* Main Content */}
-            <main className={cn(
-                "flex-1 transition-all duration-300 min-h-screen flex flex-col w-full overflow-hidden",
-                isSidebarOpen ? "ml-0 lg:ml-64" : "ml-0 lg:ml-20"
-            )}>
-                {/* Mobile Header trigger */}
+            <main
+                className={cn(
+                    "flex-1 transition-all duration-300 min-h-screen flex flex-col w-full overflow-hidden",
+                    isSidebarOpen ? "ml-0 lg:ml-64" : "ml-0 lg:ml-20"
+                )}
+            >
                 <div className="lg:hidden h-16 bg-white border-b flex items-center px-4 sticky top-0 z-40 shrink-0">
                     <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                         <Menu className="h-6 w-6" />
                     </Button>
-                    <span className="ml-4 font-bold text-gray-800">Electronics Store</span>
+                    <span className="ml-4 font-bold text-gray-800">{brand.label}</span>
                 </div>
 
                 <div className="p-2 sm:p-4 w-full max-w-full overflow-hidden">
@@ -109,4 +156,4 @@ const AppLayout = () => {
     );
 };
 
-export default AppLayout;
+export default PortalShell;

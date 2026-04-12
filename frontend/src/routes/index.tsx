@@ -1,5 +1,5 @@
 import ProtectedRoute from './ProtectedRoute';
-import AdminLayout from '@/layouts/AppLayout';
+import RoleLayout from '@/layouts/RoleLayout';
 import HomePage from '@/pages/admin/HomePage';
 import UserManagement from '@/pages/admin/UserManagement';
 import SupplierManagement from '@/pages/admin/SupplierManagement';
@@ -41,7 +41,7 @@ export const AppRouter = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+        <Route element={<ProtectedRoute><RoleLayout /></ProtectedRoute>}>
           <Route path="/" element={<HomePage />} />
           <Route path="/admin" element={<HomePage />} />
           <Route path="/admin/dashboard" element={<HomePage />} />
@@ -51,6 +51,12 @@ export const AppRouter = () => {
           } />
           <Route path="/admin/report" element={
             <ProtectedRoute roles={rolesFor("/admin/report")}><AdminReportPage /></ProtectedRoute>
+          } />
+          <Route path="/admin/products" element={
+            <ProtectedRoute roles={rolesFor("/admin/products")}><ProductManagement /></ProtectedRoute>
+          } />
+          <Route path="/admin/suppliers" element={
+            <ProtectedRoute roles={rolesFor("/admin/suppliers")}><SupplierManagement /></ProtectedRoute>
           } />
 
           <Route path="/hr/employees" element={

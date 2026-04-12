@@ -1,25 +1,26 @@
 import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/types/auth.type"
 import type { User } from "@/types/user.type"
-import { apiGet, apiPost } from "@/api/base"
+import { apiGet, apiPost } from "@/api/client"
+import { endpoints } from "@/api/endpoints"
 
 export const authService = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
-        return apiPost<LoginResponse>("/auth/login", data);
+        return apiPost<LoginResponse>(endpoints.auth.login, data);
     },
 
     register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-        return apiPost<RegisterResponse>("/auth/register", data);
+        return apiPost<RegisterResponse>(endpoints.auth.register, data);
     },
 
     refresh: async (): Promise<{ accessToken: string }> => {
-        return apiPost<{ accessToken: string }>("/auth/refresh");
+        return apiPost<{ accessToken: string }>(endpoints.auth.refresh);
     },
 
     getProfile: async (): Promise<User> => {
-        return apiGet<User>("/auth/profile");
+        return apiGet<User>(endpoints.auth.profile);
     },
 
     logout: async (): Promise<void> => {
-        await apiPost<void>("/auth/logout");
+        await apiPost<void>(endpoints.auth.logout);
     },
 };

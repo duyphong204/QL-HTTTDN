@@ -1,5 +1,6 @@
 import type { UpdateProfileDto } from "@/types/user.type";
-import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/base"
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/client"
+import { endpoints } from "@/api/endpoints"
 import type {
     Employee,
     CreateEmployeeDto,
@@ -22,91 +23,93 @@ type EmployeeFilters = BaseFilters & {
 
 export const employeeService = {
     getEmployees: async (params?: EmployeeFilters): Promise<PaginatedResponse<Employee>> => {
-        return apiGet<PaginatedResponse<Employee>>("/employees", params);
+        return apiGet<PaginatedResponse<Employee>>(endpoints.employees.root, params);
     },
 
     getEmployeeById: async (id: string): Promise<Employee> => {
-        return apiGet<Employee>(`/employees/${id}`);
+        return apiGet<Employee>(endpoints.employees.byId(id));
     },
 
     createEmployee: async (data: CreateEmployeeDto): Promise<Employee> => {
-        return apiPost<Employee>("/employees", data);
+        return apiPost<Employee>(endpoints.employees.root, data);
     },
 
     updateEmployee: async (id: string, data: UpdateEmployeeDto): Promise<Employee> => {
-        return apiPatch<Employee>(`/employees/${id}`, data);
+        return apiPatch<Employee>(endpoints.employees.byId(id), data);
     },
 
     deleteEmployee: async (id: string): Promise<void> => {
-        await apiDelete(`/employees/${id}`);
+        await apiDelete(endpoints.employees.byId(id));
     },
 
     getMyProfile: async (): Promise<Employee> => {
-        return apiGet<Employee>('/employees/me');
+        return apiGet<Employee>(endpoints.employees.me);
     },
 
     updateMyProfile: async (data: UpdateProfileDto): Promise<Employee> => {
-        return apiPatch<Employee>('/employees/me', data);
+        return apiPatch<Employee>(endpoints.employees.me, data);
     },
 
     getHrStatistics: async (params?: { month?: number; year?: number }): Promise<HrStatisticsReport> => {
-        return apiGet<HrStatisticsReport>('/employees/statistics/hr-report', params);
+        return apiGet<HrStatisticsReport>(endpoints.employees.hrReport, params);
     },
 };
 
 export const leaveRequestService = {
     getLeaveRequests: async (): Promise<LeaveRequest[]> => {
-        return apiGet<LeaveRequest[]>("/leave-requests");
+        return apiGet<LeaveRequest[]>(endpoints.leaveRequests.root);
     },
 
     getMyLeaveRequests: async (): Promise<LeaveRequest[]> => {
-        return apiGet<LeaveRequest[]>("/leave-requests/me");
+        return apiGet<LeaveRequest[]>(endpoints.leaveRequests.me);
     },
 
     createLeaveRequest: async (data: CreateLeaveRequestDto): Promise<LeaveRequest> => {
-        return apiPost<LeaveRequest>("/leave-requests", data);
+        return apiPost<LeaveRequest>(endpoints.leaveRequests.root, data);
     },
 
     approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto): Promise<LeaveRequest> => {
-        const endpoint = data.status === 'APPROVED' ? 'approve' : 'reject';
-        return apiPatch<LeaveRequest>(`/leave-requests/${id}/${endpoint}`);
+        const path = data.status === 'APPROVED'
+            ? endpoints.leaveRequests.approve(id)
+            : endpoints.leaveRequests.reject(id);
+        return apiPatch<LeaveRequest>(path);
     },
 
     deleteLeaveRequest: async (id: string): Promise<void> => {
-        await apiDelete(`/leave-requests/${id}`);
+        await apiDelete(endpoints.leaveRequests.byId(id));
     }
 };
 
 export const salaryService = {
     getSalaries: async (params?: { month?: number; year?: number }): Promise<Salary[]> => {
-        return apiGet<Salary[]>("/salaries", params);
+        return apiGet<Salary[]>(endpoints.salaries.root, params);
     },
 
     createSalary: async (data: CreateSalaryDto): Promise<Salary> => {
-        return apiPost<Salary>("/salaries", data);
+        return apiPost<Salary>(endpoints.salaries.root, data);
     },
 
     updateSalary: async (id: string, data: UpdateSalaryDto): Promise<Salary> => {
-        return apiPatch<Salary>(`/salaries/${id}`, data);
+        return apiPatch<Salary>(endpoints.salaries.byId(id), data);
     },
 
     deleteSalary: async (id: string): Promise<void> => {
-        await apiDelete(`/salaries/${id}`);
+        await apiDelete(endpoints.salaries.byId(id));
     },
 
     getMySalaries: async (params?: { month?: number; year?: number }): Promise<Salary[]> => {
-        return apiGet<Salary[]>("/salaries/me", params);
+        return apiGet<Salary[]>(endpoints.salaries.me, params);
     },
 
     getSalaryReport: async (params?: { month?: number; year?: number }): Promise<any> => {
-        return apiGet<any>("/salaries/report", params);
+        return apiGet<any>(endpoints.salaries.report, params);
     },
 
     calculateAllSalaries: async (data: { month: number; year: number }): Promise<void> => {
-        await apiPost<void>("/salaries/calculate-all", data);
+        await apiPost<void>(endpoints.salaries.calculateAll, data);
     },
 
     calculateSalary: async (data: { employeeId: string; month: number; year: number }): Promise<void> => {
-        await apiPost<void>("/salaries/calculate", data);
+        await apiPost<void>(endpoints.salaries.calculate, data);
     },
 };

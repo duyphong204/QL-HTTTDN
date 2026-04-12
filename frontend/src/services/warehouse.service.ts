@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiDelete, toFormData } from '@/api/base';
+import { apiGet, apiPost, apiPatch, apiDelete, toFormData } from '@/api/client';
 import type {
   Product,
   Supplier,
