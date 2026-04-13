@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSalesStore } from '@/stores/sales.store'
+import { reportService } from '@/services/report.service'
+import type { RoleReportResponse } from '@/types/report.type'
 
 export type ReportPeriodType = 'month' | 'quarter' | 'year'
 
@@ -10,6 +12,8 @@ const formatCurrency = (n: number) =>
 
 export const useSalesReportPage = () => {
   const { stats, isLoadingStats, fetchStats, fetchStatsByPeriod } = useSalesStore()
+  const [reportData, setReportData] = useState<RoleReportResponse | null>(null)
+  const [isLoadingReport, setIsLoadingReport] = useState(false)
 
   const [periodType, setPeriodType] = useState<ReportPeriodType>('month')
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
@@ -29,6 +33,27 @@ export const useSalesReportPage = () => {
 
     void fetchStatsByPeriod({ year: Number(year) })
   }, [periodType, month, quarter, year, fetchStats, fetchStatsByPeriod])
+
+  useEffect(() => {
+    const loadReport = async () => {
+      setIsLoadingReport(true)
+      try {
+        const data = await reportService.getSalesReport({
+          year: Number(year),
+          month: periodType === 'month' ? Number(month) : undefined,
+          quarter: periodType === 'quarter' ? Number(quarter) : undefined,
+          period: periodType,
+        })
+        setReportData(data)
+      } catch {
+        setReportData(null)
+      } finally {
+        setIsLoadingReport(false)
+      }
+    }
+
+    void loadReport()
+  }, [periodType, month, quarter, year])
 
   const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
@@ -55,6 +80,8 @@ export const useSalesReportPage = () => {
     years,
     months,
     statCards,
+    reportData,
+    isLoadingReport,
     setPeriodType,
     setMonth,
     setQuarter,

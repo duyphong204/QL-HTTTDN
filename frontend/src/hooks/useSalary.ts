@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useEmployeeStore } from "@/stores/employee.store"
+import { reportService } from "@/services/report.service"
+import type { RoleReportResponse } from "@/types/report.type"
 
 const currentYear = new Date().getFullYear()
 const YEARS = [currentYear, currentYear - 1, currentYear - 2]
@@ -15,6 +17,8 @@ export const useSalary = () => {
   const { mySalaries, isLoadingSalary, fetchMySalaries, myProfile } = useEmployeeStore()
   const [filterYear, setFilterYear] = useState(String(currentYear))
   const [filterMonth, setFilterMonth] = useState("ALL")
+  const [salaryReport, setSalaryReport] = useState<RoleReportResponse | null>(null)
+  const [isLoadingSalaryReport, setIsLoadingSalaryReport] = useState(false)
 
   useEffect(() => {
     const params: { year?: number; month?: number } = {
@@ -27,6 +31,25 @@ export const useSalary = () => {
 
     fetchMySalaries(params)
   }, [filterYear, filterMonth, fetchMySalaries])
+
+  useEffect(() => {
+    const loadSalaryReport = async () => {
+      setIsLoadingSalaryReport(true)
+      try {
+        const data = await reportService.getEmployeeSalaryReport({
+          year: Number(filterYear),
+          month: filterMonth === "ALL" ? undefined : Number(filterMonth),
+        })
+        setSalaryReport(data)
+      } catch {
+        setSalaryReport(null)
+      } finally {
+        setIsLoadingSalaryReport(false)
+      }
+    }
+
+    void loadSalaryReport()
+  }, [filterYear, filterMonth])
 
   const monthlySalary = useMemo(() => {
     if (filterMonth === "ALL") return null
@@ -79,6 +102,8 @@ export const useSalary = () => {
     isLoadingSalary,
     monthlySalary,
     yearlySummary,
+    salaryReport,
+    isLoadingSalaryReport,
 
     // Filters
     filterYear,

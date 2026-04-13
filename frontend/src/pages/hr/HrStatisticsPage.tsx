@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react"
 import { useHrStatisticsPage } from "@/hooks/useHrStatisticsPage"
+import { RoleChartCard } from "@/components/common/reports/RoleChartCard"
 
 export default function HrStatisticsPage() {
     const {
@@ -13,6 +14,8 @@ export default function HrStatisticsPage() {
         totalBonus,
         totalBudget,
         isLoading,
+        reportData,
+        loadingReport,
         months,
         years,
         setMonth,
@@ -140,6 +143,33 @@ export default function HrStatisticsPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <div className="col-span-12 grid gap-6 lg:grid-cols-2">
+                    <RoleChartCard
+                        title="Lương theo phòng ban"
+                        chart={reportData?.charts?.salaryByDepartment}
+                        type="bar"
+                    />
+                    <RoleChartCard
+                        title="Tăng trưởng nhân sự"
+                        chart={reportData?.charts?.headcountGrowth}
+                        type="line"
+                    />
+                    <RoleChartCard
+                        title="Tỷ lệ nghỉ phép"
+                        chart={reportData?.charts?.leaveRatio}
+                        type="pie"
+                    />
+                    <RoleChartCard
+                        title="Tổng lương theo tháng/năm"
+                        chart={reportData?.charts?.monthlySalarySummary}
+                        type="line"
+                    />
+                </div>
+
+                {loadingReport && (
+                    <div className="col-span-12 text-center text-sm text-slate-400">Đang tải dữ liệu biểu đồ HR...</div>
+                )}
             </div>
         </div>
     )

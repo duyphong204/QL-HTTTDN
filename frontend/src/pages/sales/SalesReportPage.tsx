@@ -1,5 +1,6 @@
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Printer } from 'lucide-react'
 import { useSalesReportPage } from '@/hooks/useSalesReportPage'
+import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
 
 type PeriodType = 'month' | 'quarter' | 'year'
 
@@ -14,6 +15,8 @@ export default function SalesReportPage() {
         years,
         months,
         statCards,
+        reportData,
+        isLoadingReport,
         setPeriodType,
         setMonth,
         setQuarter,
@@ -75,24 +78,49 @@ export default function SalesReportPage() {
                 {isLoadingStats ? (
                     <div className="text-center py-20 text-gray-400">Đang tải thống kê...</div>
                 ) : stats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {statCards.map(card => {
-                            const Icon = card.icon === 'orders'
-                                ? ShoppingCart
-                                : card.icon === 'items'
-                                    ? BarChart3
-                                    : card.icon === 'revenue'
-                                        ? TrendingUp
-                                        : DollarSign
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {statCards.map(card => {
+                                const Icon = card.icon === 'orders'
+                                    ? ShoppingCart
+                                    : card.icon === 'items'
+                                        ? BarChart3
+                                        : card.icon === 'revenue'
+                                            ? TrendingUp
+                                            : DollarSign
 
-                            return (
-                            <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                <Icon size={20} className="text-blue-500 mb-3" />
-                                <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-                                <div className="text-sm text-gray-500 mt-1">{card.label}</div>
-                            </div>
-                            )
-                        })}
+                                return (
+                                <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                    <Icon size={20} className="text-blue-500 mb-3" />
+                                    <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+                                    <div className="text-sm text-gray-500 mt-1">{card.label}</div>
+                                </div>
+                                )
+                            })}
+                        </div>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <RoleChartCard
+                                title="Lợi nhuận theo kỳ"
+                                chart={reportData?.charts?.profitTrend}
+                                type="line"
+                            />
+                            <RoleChartCard
+                                title="Số lượng sản phẩm đã xuất"
+                                chart={reportData?.charts?.quantityByProduct}
+                                type="bar"
+                            />
+                            <RoleChartCard
+                                title="Doanh thu + lợi nhuận"
+                                chart={reportData?.charts?.revenueProfitComposed}
+                                type="composed"
+                                className="xl:col-span-2"
+                            />
+                        </div>
+
+                        {isLoadingReport && (
+                            <div className="text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ...</div>
+                        )}
                     </div>
                 )}
             </div>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useProductStore } from '@/stores/product.store'
+import { reportService } from '@/services/report.service'
+import type { RoleReportResponse } from '@/types/report.type'
 
 const currentYear = new Date().getFullYear()
 
@@ -8,6 +10,8 @@ const formatCurrency = (n: number) =>
 
 export const useWarehouseReportPage = () => {
   const { report, isLoadingReport, fetchReport } = useProductStore()
+  const [analyticsReport, setAnalyticsReport] = useState<RoleReportResponse | null>(null)
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
 
   const [month, setMonth] = useState('')
   const [year, setYear] = useState(String(currentYear))
@@ -18,6 +22,25 @@ export const useWarehouseReportPage = () => {
       year: Number(year),
     })
   }, [month, year, fetchReport])
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      setIsLoadingAnalytics(true)
+      try {
+        const data = await reportService.getWarehouseReport({
+          month: month ? Number(month) : undefined,
+          year: Number(year),
+        })
+        setAnalyticsReport(data)
+      } catch {
+        setAnalyticsReport(null)
+      } finally {
+        setIsLoadingAnalytics(false)
+      }
+    }
+
+    void loadAnalytics()
+  }, [month, year])
 
   const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
@@ -49,6 +72,8 @@ export const useWarehouseReportPage = () => {
     months,
     statCards,
     lowStockProducts,
+    analyticsReport,
+    isLoadingAnalytics,
     setMonth,
     setYear,
     handlePrint,

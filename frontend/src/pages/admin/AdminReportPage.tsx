@@ -4,6 +4,7 @@ import {
   UserCheck, Package 
 } from 'lucide-react'
 import { useAdminReportPage } from '@/hooks/useAdminReportPage'
+import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
 
 // --- MAIN PAGE COMPONENT ---
 export default function AdminReportPage() {
@@ -18,6 +19,8 @@ export default function AdminReportPage() {
     quickStats,
     detailStats,
     lowStockProducts,
+    analyticsReport,
+    isLoadingAnalytics,
     setYear,
     setMonth,
     handlePrint,
@@ -131,6 +134,30 @@ export default function AdminReportPage() {
                 items={detailStats.warehouse}
               />
             </div>
+
+            {/* CHARTS */}
+            <div className="grid gap-4 xl:grid-cols-2">
+              <RoleChartCard
+                title="Xu hướng doanh thu - lợi nhuận"
+                chart={analyticsReport?.charts?.trend}
+                type="line"
+                className="xl:col-span-2"
+              />
+              <RoleChartCard
+                title="Top 10 sản phẩm"
+                chart={analyticsReport?.charts?.topProducts}
+                type="bar"
+              />
+              <RoleChartCard
+                title="Cơ cấu theo danh mục"
+                chart={analyticsReport?.charts?.categoryDistribution}
+                type="pie"
+              />
+            </div>
+
+            {isLoadingAnalytics && (
+              <div className="text-center text-sm text-slate-400">Đang tải dữ liệu biểu đồ...</div>
+            )}
 
             {/* WARNING TABLE */}
             <LowStockTable products={lowStockProducts} />

@@ -1,5 +1,6 @@
 import { useSalary } from "@/hooks/useSalary"
 import { Printer } from "lucide-react"
+import { RoleChartCard } from "@/components/common/reports/RoleChartCard"
 
 import {
   Select,
@@ -16,6 +17,8 @@ export default function MySalaryPage() {
     isLoadingSalary,
     monthlySalary,
     yearlySummary,
+    salaryReport,
+    isLoadingSalaryReport,
     filterYear,
     setFilterYear,
     filterMonth,
@@ -110,6 +113,17 @@ export default function MySalaryPage() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 md:p-6 border-b border-gray-100">
+            <RoleChartCard
+              title="Biến động lương cá nhân"
+              chart={salaryReport?.charts?.salaryBreakdown}
+              type="bar"
+            />
+            {isLoadingSalaryReport && (
+              <div className="pt-2 text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ lương...</div>
+            )}
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">

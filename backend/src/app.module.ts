@@ -9,6 +9,7 @@ import { HRModule } from './modules/hr/hr.module';
 import { LoggingMiddleware } from './middlware/logging/logging.middleware';
 import { OrderModule } from './modules/sales/orders/order.module';
 import { StockOutModule } from './modules/sales/stock-out/stock-out.module';
+import { ReportModule } from './modules/report/report.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { StockOutModule } from './modules/sales/stock-out/stock-out.module';
     HRModule,
     OrderModule,
     StockOutModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

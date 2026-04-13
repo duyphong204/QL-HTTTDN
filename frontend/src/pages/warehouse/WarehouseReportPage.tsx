@@ -1,6 +1,7 @@
 // frontend/src/pages/warehouse/WarehouseReportPage.tsx
 import { BarChart3, Package, AlertTriangle, TrendingDown, Printer } from 'lucide-react'
 import { useWarehouseReportPage } from '@/hooks/useWarehouseReportPage'
+import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
 
 export default function WarehouseReportPage() {
     const {
@@ -12,10 +13,16 @@ export default function WarehouseReportPage() {
         months,
         statCards,
         lowStockProducts,
+        analyticsReport,
+        isLoadingAnalytics,
         setMonth,
         setYear,
         handlePrint,
     } = useWarehouseReportPage()
+
+    const shownLowStockProducts = analyticsReport?.lowStockProducts?.length
+        ? analyticsReport.lowStockProducts
+        : lowStockProducts
 
     return (
         <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
@@ -68,12 +75,29 @@ export default function WarehouseReportPage() {
                             })}
                         </div>
 
-                        {lowStockProducts.length > 0 && (
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <RoleChartCard
+                                title="Tồn kho theo danh mục"
+                                chart={analyticsReport?.charts?.stockByCategory}
+                                type="bar"
+                            />
+                            <RoleChartCard
+                                title="Nhập/Xuất theo xu hướng thời gian"
+                                chart={analyticsReport?.charts?.movementTrend}
+                                type="line"
+                            />
+                        </div>
+
+                        {isLoadingAnalytics && (
+                            <div className="text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ...</div>
+                        )}
+
+                        {shownLowStockProducts.length > 0 && (
                             <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
                                 <div className="p-4 border-b border-amber-50 flex items-center gap-2">
                                     <AlertTriangle size={18} className="text-amber-500" />
                                     <span className="font-semibold text-gray-800">
-                                        Sản phẩm sắp hết hàng ({lowStockProducts.length})
+                                        Sản phẩm sắp hết hàng ({shownLowStockProducts.length})
                                     </span>
                                 </div>
                                 <table className="w-full text-sm">
@@ -85,7 +109,7 @@ export default function WarehouseReportPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {lowStockProducts.map(p => (
+                                        {shownLowStockProducts.map(p => (
                                             <tr key={p.id}>
                                                 <td className="px-6 py-3 text-gray-800">{p.name}</td>
                                                 <td className="px-6 py-3 text-center">

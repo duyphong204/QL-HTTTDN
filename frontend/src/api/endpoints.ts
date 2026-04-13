@@ -75,4 +75,11 @@ export const endpoints = {
     item: (itemId: string) => `/cart/items/${itemId}`,
     clear: '/cart/clear',
   },
+  reports: {
+    admin: '/reports/admin',
+    hr: '/reports/hr',
+    warehouse: '/reports/warehouse',
+    sales: '/reports/sales',
+    employeeSalary: '/reports/employee/salary',
+  },
 } as const

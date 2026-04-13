@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAdminStore } from '@/stores/admin.store'
+import { reportService } from '@/services/report.service'
+import type { RoleReportResponse } from '@/types/report.type'
 
 const currentYear = new Date().getFullYear()
 
@@ -10,6 +12,8 @@ const formatNumber = (num?: number) => (num || 0).toLocaleString('vi-VN')
 
 export const useAdminReportPage = () => {
   const { report, isLoading, fetchDashboardReport } = useAdminStore()
+  const [analyticsReport, setAnalyticsReport] = useState<RoleReportResponse | null>(null)
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
 
   const [year, setYear] = useState(String(currentYear))
   const [month, setMonth] = useState('')
@@ -20,6 +24,25 @@ export const useAdminReportPage = () => {
       month: month ? Number(month) : undefined,
     })
   }, [year, month, fetchDashboardReport])
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      setIsLoadingAnalytics(true)
+      try {
+        const data = await reportService.getAdminReport({
+          year: Number(year),
+          month: month ? Number(month) : undefined,
+        })
+        setAnalyticsReport(data)
+      } catch {
+        setAnalyticsReport(null)
+      } finally {
+        setIsLoadingAnalytics(false)
+      }
+    }
+
+    void loadAnalytics()
+  }, [year, month])
 
   const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
@@ -79,6 +102,8 @@ export const useAdminReportPage = () => {
     quickStats,
     detailStats,
     lowStockProducts,
+    analyticsReport,
+    isLoadingAnalytics,
     setYear,
     setMonth,
     handlePrint,

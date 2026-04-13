@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useHrStore } from '@/stores/hr.store'
+import { reportService } from '@/services/report.service'
+import type { RoleReportResponse } from '@/types/report.type'
 
 const currentYear = new Date().getFullYear()
 
@@ -8,6 +10,8 @@ const formatCurrency = (n: number) =>
 
 export const useHrStatisticsPage = () => {
   const { statistics, salaries, loadingSalaries, loadingStatistics, fetchStatistics, fetchSalaries } = useHrStore()
+  const [reportData, setReportData] = useState<RoleReportResponse | null>(null)
+  const [loadingReport, setLoadingReport] = useState(false)
 
   const [year, setYear] = useState(String(currentYear))
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
@@ -18,6 +22,25 @@ export const useHrStatisticsPage = () => {
       fetchSalaries({ month: Number(month), year: Number(year) }),
     ])
   }, [month, year, fetchStatistics, fetchSalaries])
+
+  useEffect(() => {
+    const loadReport = async () => {
+      setLoadingReport(true)
+      try {
+        const data = await reportService.getHrReport({
+          month: Number(month),
+          year: Number(year),
+        })
+        setReportData(data)
+      } catch {
+        setReportData(null)
+      } finally {
+        setLoadingReport(false)
+      }
+    }
+
+    void loadReport()
+  }, [month, year])
 
   const totalBonus = useMemo(
     () => salaries.reduce((acc, salary) => acc + (salary.bonus || 0), 0),
@@ -41,6 +64,8 @@ export const useHrStatisticsPage = () => {
     totalBonus,
     totalBudget,
     isLoading,
+    reportData,
+    loadingReport,
     months,
     years,
     setMonth,
