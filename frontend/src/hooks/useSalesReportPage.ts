@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSalesStore } from '@/stores/sales.store'
 import { reportService } from '@/services/report.service'
-import type { RoleReportResponse } from '@/types/report.type'
+import type { RoleReportResponse } from '@/types/report.types'
 
 export type ReportPeriodType = 'month' | 'quarter' | 'year'
 

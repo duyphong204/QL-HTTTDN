@@ -2,7 +2,7 @@ import { useSupplierStore } from "@/stores/supplier.store"
 import { usePaginatedList } from "@/hooks/usePaginatedList"
 import { useEntityModal } from "@/hooks/useEntityModal"
 import { useConfirmAction } from "@/hooks/useConfirmAction"
-import type { Supplier, CreateSupplierDto } from "@/types/warehouse.type"
+import type { Supplier, CreateSupplierDto } from "@/types/supplier.types"
 
 export const useSupplierPage = () => {
   const {

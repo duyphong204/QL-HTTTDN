@@ -9,13 +9,19 @@ import type {
   Employee,
   CreateEmployeeDto,
   UpdateEmployeeDto,
+} from "@/types/employee.types"
+import type {
   LeaveRequest,
+} from "@/types/leave.types"
+import type {
   Salary,
   CreateSalaryDto,
   UpdateSalaryDto,
+} from "@/types/salary.types"
+import type {
   HrStatisticsReport,
-} from "@/types/hr.type"
-import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type"
+} from "@/types/report.types"
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types"
 import { getErrorMessage, mergeFiltersWithPageReset } from "@/stores/store.helpers"
 
 type EmployeeFilters = BaseFilters & {

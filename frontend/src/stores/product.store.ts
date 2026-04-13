@@ -7,10 +7,10 @@ import type {
   ProductResponse,
   CreateProductDto,
   UpdateProductDto,
-  Supplier,
-} from '@/types/warehouse.type'
-import type { Category } from '@/types/category.type'
-import type { BaseFilters, SortOrder } from '@/types/common.type'
+  Category,
+} from '@/types/product.types'
+import type { Supplier } from '@/types/supplier.types'
+import type { BaseFilters, SortOrder } from '@/types/common.types'
 import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from '@/stores/store.helpers'
 
 type ProductFilters = BaseFilters & {

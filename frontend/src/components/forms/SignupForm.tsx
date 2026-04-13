@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form"
 import { useState } from "react"
 import { useAuthStore } from "@/stores/auth.store"
 import { useNavigate } from "react-router-dom"
-import { type RegisterValues } from "@/types/auth.type"
+import { type RegisterValues } from "@/types/auth.types"
 import registerBg from "@/assets/auth-bg.png";
 export function SignupForm({
   className,

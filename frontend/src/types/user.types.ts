@@ -1,4 +1,4 @@
-import type { Role } from "./auth.type"
+import type { Role } from "./auth.types"
 
 export interface Profile {
     id?: string
@@ -48,7 +48,6 @@ export interface UpdateUserDto {
     }
 }
 
-// Nhân viên tự update thông tin cá nhân
 export interface UpdateProfileDto {
     fullName?: string
     phone?: string

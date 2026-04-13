@@ -1,8 +1,8 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/api/client";
 import { endpoints } from "@/api/endpoints";
-import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
-import type { Role } from "@/types/auth.type";
-import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.type";
+import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
+import type { Role } from "@/types/auth.types";
+import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.types";
 
 export interface GetUsersParams extends Partial<BaseFilters> {
   role?: Role;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAdminStore } from '@/stores/admin.store'
 import { reportService } from '@/services/report.service'
-import type { RoleReportResponse } from '@/types/report.type'
+import type { RoleReportResponse } from '@/types/report.types'
 
 const currentYear = new Date().getFullYear()
 

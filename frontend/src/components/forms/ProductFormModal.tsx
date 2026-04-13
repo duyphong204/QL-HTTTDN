@@ -1,6 +1,7 @@
 // frontend/src/components/warehouse/ProductFormModal.tsx
 import { useEffect, useRef, useState } from 'react'
-import type { Category, CreateProductDto, Product, Supplier, UpdateProductDto } from '@/types/warehouse.type'
+import type { Category, CreateProductDto, Product, UpdateProductDto } from '@/types/product.types'
+import type { Supplier } from '@/types/supplier.types'
 import { Upload } from 'lucide-react'
 import { AppModal } from '@/components/common/AppModal'
 

@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/stores/auth.store";
-import type { LoginRequest, RegisterRequest } from "@/types/auth.type";
+import type { LoginRequest, RegisterRequest } from "@/types/auth.types";
 
 export const useAuth = () => {
     const {

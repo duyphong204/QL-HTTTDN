@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { authService } from "@/services/auth.service";
-import type { User } from "@/types/user.type";
-import type { LoginRequest, RegisterRequest } from "@/types/auth.type";
+import type { User } from "@/types/user.types";
+import type { LoginRequest, RegisterRequest } from "@/types/auth.types";
 import { setAccessToken } from "@/api/axios";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/stores/store.helpers";

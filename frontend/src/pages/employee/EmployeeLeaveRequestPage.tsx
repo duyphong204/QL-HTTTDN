@@ -6,7 +6,7 @@ import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import { AppModal } from "@/components/common/AppModal"
 
-import type { LeaveRequest } from "@/types/hr.type"
+import type { LeaveRequest } from "@/types/leave.types"
 
 const TYPE_LABEL: Record<string, string> = {
   ANNUAL: "Nghỉ phép",

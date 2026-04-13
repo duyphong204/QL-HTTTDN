@@ -2,7 +2,7 @@ import { FileText, Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { AppModal } from '@/components/common/AppModal'
-import { StockOutStatus, StockOutType } from '@/types/sales.type'
+import { StockOutStatus, StockOutType } from '@/types/stockOut.types'
 import { useExportSlipPage } from '@/hooks/useExportSlipPage'
 
 const formatCurrency = (n: number) =>

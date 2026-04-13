@@ -1,19 +1,23 @@
-import type { UpdateProfileDto } from "@/types/user.type";
+import type { UpdateProfileDto } from "@/types/user.types";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/client"
 import { endpoints } from "@/api/endpoints"
 import type {
     Employee,
     CreateEmployeeDto,
     UpdateEmployeeDto,
+} from "@/types/employee.types"
+import type {
     LeaveRequest,
     CreateLeaveRequestDto,
     ApproveLeaveRequestDto,
+} from "@/types/leave.types"
+import type {
     Salary,
     CreateSalaryDto,
     UpdateSalaryDto,
-    HrStatisticsReport,
-} from "@/types/hr.type"
-import type { BaseFilters, PaginatedResponse } from "@/types/common.type"
+} from "@/types/salary.types"
+import type { HrStatisticsReport } from "@/types/report.types"
+import type { BaseFilters, PaginatedResponse } from "@/types/common.types"
 
 type EmployeeFilters = BaseFilters & {
     department?: string;

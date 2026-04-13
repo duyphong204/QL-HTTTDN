@@ -2,7 +2,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { API_CONFIG } from "@/constants";
 import { endpoints } from "@/api/endpoints";
-import type { ApiEnvelope, ApiErrorResponse } from "@/types/common.type";
+import type { ApiEnvelope, ApiErrorResponse } from "@/types/common.types";
 
 let accessToken: string | null = null;
 

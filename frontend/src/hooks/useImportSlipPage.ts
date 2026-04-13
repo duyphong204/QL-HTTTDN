@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useClientTable } from '@/hooks/useClientTable'
 import { useStockInStore } from '@/stores/stockIn.store'
-import type { StockIn, StockInDetailInput } from '@/types/warehouse.type'
+import type { StockIn, StockInDetailInput } from '@/types/stockIn.types'
 
 const emptyDetail = (): StockInDetailInput => ({ productId: '', quantity: 1, price: 0 })
 

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { supplierService } from "@/services/warehouse.service";
-import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/warehouse.type";
-import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
+import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/supplier.types";
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
 import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/stores/store.helpers";
 
 type SupplierFilters = BaseFilters & {

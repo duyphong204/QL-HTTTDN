@@ -1,20 +1,16 @@
 import { apiGet, apiPost, apiPatch, apiDelete, toFormData } from '@/api/client';
 import type {
   Product,
-  Supplier,
-  CreateSupplierDto,
-  UpdateSupplierDto,
-  StockIn,
   CreateProductDto,
   UpdateProductDto,
-  CreateStockInDto,
-  UpdateStockInDto,
   ProductQuery,
   ProductResponse,
-  WarehouseReport,
-} from '@/types/warehouse.type';
-import type { Category } from '@/types/category.type';
-import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.type';
+  Category,
+} from '@/types/product.types';
+import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from '@/types/supplier.types';
+import type { StockIn, CreateStockInDto, UpdateStockInDto } from '@/types/stockIn.types';
+import type { WarehouseReport } from '@/types/report.types';
+import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.types';
 
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
   return toFormData(data as Record<string, unknown>);

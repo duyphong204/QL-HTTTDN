@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { categoryService } from "@/services/warehouse.service";
-import type { Category } from "@/types/category.type";
+import type { Category } from "@/types/product.types";
 import { getErrorMessage } from "@/stores/store.helpers";
 
 interface CategoryState {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useEmployeeStore } from "@/stores/employee.store"
 import { useClientTable } from "@/hooks/useClientTable"
 import { useConfirmAction } from "@/hooks/useConfirmAction"
-import type { CreateLeaveRequestDto } from "@/types/hr.type"
+import type { CreateLeaveRequestDto } from "@/types/leave.types"
 
 const TYPE_LABEL: Record<string, string> = {
   ANNUAL: "Nghỉ phép",

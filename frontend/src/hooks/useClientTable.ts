@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PaginationMeta } from "@/types/common.type";
+import type { PaginationMeta } from "@/types/common.types";
 
 interface UseClientTableOptions<T> {
   data: T[];

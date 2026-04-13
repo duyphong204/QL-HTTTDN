@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { userService } from "@/services/user.service";
 import { toast } from "sonner";
-import type { Role } from "@/types/auth.type";
-import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.type";
-import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.type";
+import type { Role } from "@/types/auth.types";
+import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
 import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/stores/store.helpers";
 
 type UserFilters = BaseFilters & {

@@ -1,4 +1,4 @@
-import type { Role } from "@/types/auth.type";
+import type { Role } from "@/types/auth.types";
 import type { LucideIcon } from "lucide-react";
 import {
     Users, Package, LayoutDashboard, Building,

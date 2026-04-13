@@ -7,11 +7,13 @@ import type {
     CartItem,
     AddToCartDto,
     SalesStats,
+} from "@/types/order.types"
+import type {
     StockOut,
     CreateStockOutDto,
     StockOutQuery,
     UpdateStockOutDto,
-} from "@/types/sales.type"
+} from "@/types/stockOut.types"
 
 export const orderService = {
     getOrders: async (): Promise<Order[]> => {

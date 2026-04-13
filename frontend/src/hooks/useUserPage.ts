@@ -3,8 +3,8 @@ import { useUserStore } from '@/stores/user.store'
 import { usePaginatedList } from '@/hooks/usePaginatedList'
 import { useEntityModal } from '@/hooks/useEntityModal'
 import { useConfirmAction } from '@/hooks/useConfirmAction'
-import type { User } from '@/types/user.type'
-import type { Role } from '@/types/auth.type'
+import type { User } from '@/types/user.types'
+import type { Role } from '@/types/auth.types'
 
 type UserFormValues = {
   email: string

@@ -1,5 +1,5 @@
 // constants/role.ts
-import type { Role } from "@/types/auth.type"
+import type { Role } from "@/types/auth.types"
 
 export const ROLE_BADGE: Record<Role, { label: string; color: string }> = {
   ADMIN: { label: "Quản trị viên", color: "bg-red-100 text-red-600" },

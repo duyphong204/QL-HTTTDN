@@ -1,6 +1,6 @@
 import { apiGet } from '@/api/client';
 import { endpoints } from '@/api/endpoints';
-import type { ReportQuery, RoleReportResponse } from '@/types/report.type';
+import type { ReportQuery, RoleReportResponse } from '@/types/report.types';
 
 export const reportService = {
   getAdminReport: async (params?: ReportQuery): Promise<RoleReportResponse> => {

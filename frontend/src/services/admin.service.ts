@@ -1,6 +1,6 @@
 import { apiGet } from '@/api/client'
 import { endpoints } from '@/api/endpoints'
-import type { AdminDashboardReport } from '@/types/admin.type'
+import type { AdminDashboardReport } from '@/types/report.types'
 
 export const adminService = {
   getDashboardReport: async (params?: { year?: number; month?: number }): Promise<AdminDashboardReport> => {

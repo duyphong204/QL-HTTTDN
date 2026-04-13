@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { stockInService, productService, supplierService } from "@/services/warehouse.service";
-import type { StockIn, CreateStockInDto, UpdateStockInDto } from "@/types/warehouse.type";
-import type { Product } from "@/types/warehouse.type";
-import type { Supplier } from "@/types/warehouse.type";
+import type { StockIn, CreateStockInDto, UpdateStockInDto } from "@/types/stockIn.types";
+import type { Product } from "@/types/product.types";
+import type { Supplier } from "@/types/supplier.types";
 import { getErrorMessage } from "@/stores/store.helpers";
 
 interface StockInState {

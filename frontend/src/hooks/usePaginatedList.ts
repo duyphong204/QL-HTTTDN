@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { BaseFilters } from '@/types/common.type';
+import type { BaseFilters } from '@/types/common.types';
 
 type SetFiltersFn<TFilters> = (filters: Partial<TFilters>) => void;
 

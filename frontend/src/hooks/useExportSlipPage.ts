@@ -8,7 +8,7 @@ import {
   type StockOut,
   type StockOutItem,
   type StockOutQuery,
-} from '@/types/sales.type'
+} from '@/types/stockOut.types'
 
 const emptyItem = (): StockOutItem => ({ productId: '', quantity: 1, price: 0 })
 

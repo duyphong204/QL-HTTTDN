@@ -14,7 +14,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { RechartsChartData } from '@/types/report.type';
+import type { RechartsChartData } from '@/types/report.types';
 
 type ChartType = 'line' | 'bar' | 'pie' | 'composed';
 

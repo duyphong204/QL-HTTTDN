@@ -4,11 +4,11 @@ import { toast } from "sonner"
 import { getErrorMessage } from "@/stores/store.helpers"
 
 import type {
-  Salary,
   LeaveRequest,
   CreateLeaveRequestDto,
-} from "@/types/hr.type"
-import type { EmployeeProfile, UpdateMyProfileDto } from "@/types/employee.type"
+} from "@/types/leave.types"
+import type { Salary } from "@/types/salary.types"
+import type { EmployeeProfile, UpdateMyProfileDto } from "@/types/employee.types"
 
 interface EmployeeState {
   myProfile: EmployeeProfile | null

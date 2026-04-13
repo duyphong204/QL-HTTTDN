@@ -1,5 +1,5 @@
 import { Loader2, X, Clock } from "lucide-react"
-import type { Employee } from "@/types/hr.type"
+import type { Employee } from "@/types/employee.types"
 import { AppModal } from "@/components/common/AppModal"
 
 interface Props {

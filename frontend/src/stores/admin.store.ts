@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { toast } from 'sonner'
 import { adminService } from '@/services/admin.service'
-import type { AdminDashboardReport } from '@/types/admin.type'
+import type { AdminDashboardReport } from '@/types/report.types'
 import { getErrorMessage } from '@/stores/store.helpers'
 
 interface AdminState {

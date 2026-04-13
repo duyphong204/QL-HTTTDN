@@ -5,7 +5,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import type { PaginationMeta } from '@/types/common.type';
+import type { PaginationMeta } from '@/types/common.types';
 
 interface PaginationControlsProps {
   meta?: PaginationMeta | null;

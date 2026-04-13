@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { toast } from 'sonner'
 import { orderService } from '@/services/sales.service'
 import { productService } from '@/services/warehouse.service'
-import type { Order, SalesStats } from '@/types/sales.type'
-import type { Product } from '@/types/warehouse.type'
+import type { Order, SalesStats } from '@/types/order.types'
+import type { Product } from '@/types/product.types'
 import { getErrorMessage } from '@/stores/store.helpers'
 
 interface SalesState {

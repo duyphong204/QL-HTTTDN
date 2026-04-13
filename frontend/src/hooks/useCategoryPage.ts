@@ -3,7 +3,7 @@ import { useCategoryStore } from '@/stores/category.store'
 import { useClientTable } from '@/hooks/useClientTable'
 import { useEntityModal } from '@/hooks/useEntityModal'
 import { useConfirmAction } from '@/hooks/useConfirmAction'
-import type { Category } from '@/types/category.type'
+import type { Category } from '@/types/product.types'
 
 export const useCategoryPage = () => {
   const { categories, isLoading, fetchCategories, createCategory, updateCategory, deleteCategory } = useCategoryStore()

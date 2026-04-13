@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import type { User } from "@/types/user.type";
-import type { Role } from "@/types/auth.type";
+import type { User } from "@/types/user.types";
+import type { Role } from "@/types/auth.types";
 import { ALL_ROLE_OPTIONS } from "@/constants/role";
 import { AppModal } from "@/components/common/AppModal";
 

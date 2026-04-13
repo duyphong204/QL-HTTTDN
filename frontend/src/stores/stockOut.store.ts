@@ -7,8 +7,8 @@ import type {
   StockOut,
   StockOutQuery,
   UpdateStockOutDto,
-} from "@/types/sales.type";
-import type { Product } from "@/types/warehouse.type";
+} from "@/types/stockOut.types";
+import type { Product } from "@/types/product.types";
 import { getErrorMessage } from "@/stores/store.helpers";
 
 interface StockOutState {

@@ -48,5 +48,4 @@ export interface PaginatedResponse<T> {
     meta: PaginationMeta
 }
 
-// Backward compatibility aliases.
 export type Pagination = PaginationMeta

@@ -4,7 +4,7 @@ import { UserFormModal } from "@/components/forms/UserFormModal"
 import { ROLE_BADGE } from "@/constants/role"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
-import type { Role } from "@/types/auth.type"
+import type { Role } from "@/types/auth.types"
 
 export default function UserManagement() {
   const {

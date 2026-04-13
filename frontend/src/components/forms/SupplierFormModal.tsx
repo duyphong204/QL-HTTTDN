@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { AppModal } from "@/components/common/AppModal";
 
-import type { Supplier, CreateSupplierDto } from "@/types/warehouse.type";
+import type { Supplier, CreateSupplierDto } from "@/types/supplier.types";
 
 interface Props {
   isOpen: boolean;

@@ -1,5 +1,5 @@
-import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/types/auth.type"
-import type { User } from "@/types/user.type"
+import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "@/types/auth.types"
+import type { User } from "@/types/user.types"
 import { apiGet, apiPost } from "@/api/client"
 import { endpoints } from "@/api/endpoints"
 

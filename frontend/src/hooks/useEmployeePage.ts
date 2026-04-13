@@ -3,7 +3,7 @@ import { ROLE_BADGE } from '@/constants/role'
 import { usePaginatedList } from '@/hooks/usePaginatedList'
 import { useEntityModal } from '@/hooks/useEntityModal'
 import { useConfirmAction } from '@/hooks/useConfirmAction'
-import type { Employee, CreateEmployeeDto, UpdateEmployeeDto } from '@/types/hr.type'
+import type { Employee, CreateEmployeeDto, UpdateEmployeeDto } from '@/types/employee.types'
 
 export const useEmployeePage = () => {
   const {

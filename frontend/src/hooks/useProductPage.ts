@@ -3,7 +3,7 @@ import { useProductStore } from '@/stores/product.store'
 import { usePaginatedList } from '@/hooks/usePaginatedList'
 import { useEntityModal } from '@/hooks/useEntityModal'
 import { useConfirmAction } from '@/hooks/useConfirmAction'
-import type { Product, CreateProductDto, UpdateProductDto } from '@/types/warehouse.type'
+import type { Product, CreateProductDto, UpdateProductDto } from '@/types/product.types'
 
 export const useProductPage = () => {
   const {
