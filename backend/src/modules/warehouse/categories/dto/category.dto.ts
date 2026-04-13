@@ -7,4 +7,4 @@ export class CreateCategoryDto {
   name: string;
 }
 
-export class UpdateCategoryDto extends CreateCategoryDto { }
+export class UpdateCategoryDto extends CreateCategoryDto {}

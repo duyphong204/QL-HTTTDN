@@ -1,9 +1,10 @@
-import { useCallback, useState } from "react"
 import { useSupplierStore } from "@/stores/supplier.store"
 import { usePaginatedList } from "@/hooks/usePaginatedList"
+import { useEntityModal } from "@/hooks/useEntityModal"
+import { useConfirmAction } from "@/hooks/useConfirmAction"
 import type { Supplier, CreateSupplierDto } from "@/types/warehouse.type"
 
-export const useSupplierManagement = () => {
+export const useSupplierPage = () => {
   const {
     suppliers,
     meta,
@@ -16,8 +17,14 @@ export const useSupplierManagement = () => {
     setFilters,
   } = useSupplierStore()
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
+  const {
+    modalOpen,
+    editingEntity: editingSupplier,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  } = useEntityModal<Supplier>()
+  const { confirmAndRun } = useConfirmAction()
 
   const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
     filters,
@@ -26,20 +33,11 @@ export const useSupplierManagement = () => {
     debounceMs: 500,
   })
 
-  const openCreateModal = () => {
-    setEditingSupplier(null)
-    setModalOpen(true)
-  }
-
-  const openEditModal = useCallback((supplier: Supplier) => {
-    setEditingSupplier(supplier)
-    setModalOpen(true)
-  }, [])
-
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`Bạn có chắc muốn xóa nhà cung cấp: ${name}?`)) {
-      await deleteSupplier(id)
-    }
+    await confirmAndRun({
+      message: `Bạn có chắc muốn xóa nhà cung cấp: ${name}?`,
+      action: () => deleteSupplier(id),
+    })
   }
 
   const handleFormSubmit = async (data: CreateSupplierDto) => {
@@ -48,7 +46,7 @@ export const useSupplierManagement = () => {
     } else {
       await createSupplier(data)
     }
-    setModalOpen(false)
+    closeModal()
   }
 
   return {
@@ -59,7 +57,6 @@ export const useSupplierManagement = () => {
 
     // State
     modalOpen,
-    setModalOpen,
     editingSupplier,
 
     // Search & Filters
@@ -72,6 +69,7 @@ export const useSupplierManagement = () => {
     // Handlers
     openCreateModal,
     openEditModal,
+    closeModal,
     handleDelete,
     handleFormSubmit,
   }

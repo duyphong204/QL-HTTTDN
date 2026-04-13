@@ -1,4 +1,4 @@
-import { useLeaveRequestManagement } from "@/hooks/useLeaveRequestManagement"
+import { useLeaveRequest } from "@/hooks/useLeaveRequest"
 import { Plus, Trash2, Loader2 } from "lucide-react"
 import dayjs from "dayjs"
 
@@ -42,7 +42,7 @@ export default function EmployeeLeaveRequestPage() {
     handleChange,
     handleSubmit,
     handleDelete,
-  } = useLeaveRequestManagement()
+  } = useLeaveRequest()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

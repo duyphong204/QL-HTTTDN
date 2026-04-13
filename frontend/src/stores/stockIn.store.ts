@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { stockInService, productService, supplierService } from "@/services/warehouse.service";
-import type { StockIn, CreateStockInDto, UpdateStockInDto, StockInDetailInput } from "@/types/warehouse.type";
-import { StockInStatus } from "@/types/warehouse.type";
+import type { StockIn, CreateStockInDto, UpdateStockInDto } from "@/types/warehouse.type";
 import type { Product } from "@/types/warehouse.type";
 import type { Supplier } from "@/types/warehouse.type";
 import { getErrorMessage } from "@/stores/store.helpers";
@@ -25,8 +24,6 @@ interface StockInState {
     fetchSuppliers: () => Promise<void>;
     fetchReferenceData: () => Promise<void>;
     clearSelectedStockIn: () => void;
-    createTicket: (data: { supplierId: string; details: StockInDetailInput[] }) => Promise<void>;
-    confirmTicket: (id: string) => Promise<void>;
 }
 
 export const useStockInStore = create<StockInState>((set, get) => ({
@@ -55,9 +52,8 @@ export const useStockInStore = create<StockInState>((set, get) => ({
     fetchStockInById: async (id) => {
         set({ isLoadingDetail: true });
         try {
-            // Assuming there's a getStockInById in service
-            const data = await stockInService.getStockIns().then(stockIns => stockIns.find(s => s.id === id));
-            set({ selectedStockIn: data || null });
+            const data = await stockInService.getStockInById(id);
+            set({ selectedStockIn: data });
         } catch (error: unknown) {
             const message = getErrorMessage(error);
             toast.error(message);
@@ -138,14 +134,5 @@ export const useStockInStore = create<StockInState>((set, get) => ({
 
     clearSelectedStockIn: () => {
         set({ selectedStockIn: null });
-    },
-
-    createTicket: async (data) => {
-        await get().createStockIn(data);
-    },
-
-    confirmTicket: async (id) => {
-        // Assuming confirm means updating status to completed
-        await get().updateStockIn(id, { status: StockInStatus.COMPLETED });
     },
 }));

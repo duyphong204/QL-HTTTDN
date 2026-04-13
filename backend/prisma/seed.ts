@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 async function main() {
     // 1. Mã hóa mật khẩu cho Admin
-    const adminPassword = await bcrypt.hash('admin123', 10);
+    const adminPassword = await bcrypt.hash('123456', 10);
     // 2. Tạo hoặc Cập nhật tài khoản Admin
     console.log('--- Đang tạo tài khoản Admin mẫu ---');
     const admin = await prisma.user.upsert({

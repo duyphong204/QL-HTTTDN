@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Package, RefreshCw } from 'lucide-react';
-import { useProductStore } from '@/stores/product.store';
 import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
 import { ProductFormModal } from '@/components/forms/ProductFormModal';
-import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { DataTableToolbar } from '@/components/common/DataTableToolbar';
 import { PaginationControls } from '@/components/common/PaginationControls';
-import type { Product, CreateProductDto, UpdateProductDto } from '@/types/warehouse.type';
+import { useProductPage } from '@/hooks/useProductPage';
 
 export default function ProductManagement() {
   const {
@@ -16,52 +13,18 @@ export default function ProductManagement() {
     filters,
     categories,
     suppliers,
-    fetchProducts,
-    fetchCategories,
-    fetchSuppliers,
-    setFilters,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-  } = useProductStore();
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchProducts,
-    debounceMs: 400,
-  });
-
-  useEffect(() => {
-    void Promise.all([fetchCategories(), fetchSuppliers()]);
-  }, [fetchCategories, fetchSuppliers]);
-
-  const openCreateModal = () => {
-    setEditingProduct(null);
-    setModalOpen(true);
-  };
-
-  const openEditModal = (product: Product) => {
-    setEditingProduct(product);
-    setModalOpen(true);
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc muốn xoá sản phẩm "${name}"?`)) return;
-    await deleteProduct(id);
-  };
-
-  const handleSubmit = async (data: CreateProductDto | UpdateProductDto) => {
-    if (editingProduct) {
-      await updateProduct(editingProduct.id, data as UpdateProductDto);
-    } else {
-      await createProduct(data as CreateProductDto);
-    }
-    setModalOpen(false);
-  };
+    modalOpen,
+    editingProduct,
+    searchTerm,
+    setSearchTerm,
+    updateFilters,
+    goToPage,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    handleDelete,
+    handleFormSubmit,
+  } = useProductPage();
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -220,11 +183,11 @@ export default function ProductManagement() {
 
       <ProductFormModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={closeModal}
         editingProduct={editingProduct}
         categories={categories}
         suppliers={suppliers}
-        onSubmit={handleSubmit}
+        onSubmit={handleFormSubmit}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useUserManagement } from "@/hooks/useUserManagement"
+import { useUserPage } from "@/hooks/useUserPage"
 import { UserPlus, Pencil, Trash2 } from "lucide-react"
 import { UserFormModal } from "@/components/forms/UserFormModal"
 import { ROLE_BADGE } from "@/constants/role"
@@ -12,7 +12,7 @@ export default function UserManagement() {
     meta,
     isLoading,
     modalOpen,
-    setModalOpen,
+    closeModal,
     editingUser,
     searchTerm,
     setSearchTerm,
@@ -23,7 +23,7 @@ export default function UserManagement() {
     openEditModal,
     handleDelete,
     handleFormSubmit,
-  } = useUserManagement()
+  } = useUserPage()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -185,7 +185,7 @@ export default function UserManagement() {
       <UserFormModal
         key={editingUser?.id || "create-user"}
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={closeModal}
         editingUser={editingUser}
         onSubmit={handleFormSubmit}
       />

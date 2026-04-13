@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useEmployeeStore } from "@/stores/employee.store"
 import { useClientTable } from "@/hooks/useClientTable"
+import { useConfirmAction } from "@/hooks/useConfirmAction"
 import type { CreateLeaveRequestDto } from "@/types/hr.type"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -10,7 +11,7 @@ const TYPE_LABEL: Record<string, string> = {
   RESIGNATION: "Đơn nghỉ việc",
 }
 
-export const useLeaveRequestManagement = () => {
+export const useLeaveRequest = () => {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const [form, setForm] = useState<CreateLeaveRequestDto>({
@@ -27,6 +28,7 @@ export const useLeaveRequestManagement = () => {
     createLeaveRequest,
     deleteLeaveRequest,
   } = useEmployeeStore()
+  const { confirmAndRun } = useConfirmAction()
 
   const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
     data: myLeaveRequests,
@@ -57,14 +59,14 @@ export const useLeaveRequestManagement = () => {
   }
 
   const handleDelete = useCallback(async (id: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa đơn này?")) {
-      await deleteLeaveRequest(id)
-    }
-  }, [deleteLeaveRequest])
+    await confirmAndRun({
+      message: "Bạn có chắc muốn xóa đơn này?",
+      action: () => deleteLeaveRequest(id),
+    })
+  }, [confirmAndRun, deleteLeaveRequest])
 
   return {
     // Data
-    myLeaveRequests,
     isLoadingLeave,
     pagedData,
     meta,
@@ -77,7 +79,6 @@ export const useLeaveRequestManagement = () => {
     dialogOpen,
     setDialogOpen,
     form,
-    setForm,
 
     // Handlers
     handleChange,

@@ -1,13 +1,19 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 
 @Injectable()
 export class CategoryService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateCategoryDto) {
-    const existing = await this.prisma.category.findUnique({ where: { name: dto.name } });
+    const existing = await this.prisma.category.findUnique({
+      where: { name: dto.name },
+    });
     if (existing) throw new ConflictException('Tên danh mục này đã tồn tại');
 
     return this.prisma.category.create({ data: dto });
@@ -28,7 +34,7 @@ export class CategoryService {
   async remove(id: string) {
     const category = await this.prisma.category.findUnique({
       where: { id },
-      include: { products: true }
+      include: { products: true },
     });
 
     if (!category) throw new NotFoundException('Không tìm thấy danh mục');

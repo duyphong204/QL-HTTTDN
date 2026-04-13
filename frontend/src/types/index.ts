@@ -46,6 +46,13 @@ export type {
     CancelOrderDto,
     AddToCartDto,
     UpdateCartItemDto,
+    StockOut,
+    StockOutDetail,
+    StockOutItem,
+    StockOutType,
+    StockOutStatus,
+    CreateStockOutDto,
+    StockOutQuery,
 } from "./sales.type"
 
 // HR

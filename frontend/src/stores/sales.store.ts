@@ -17,7 +17,6 @@ interface SalesState {
     fetchStats: (params: { month?: number; year?: number }) => Promise<void>
     fetchStatsByPeriod: (params: { year: number; quarter?: number }) => Promise<void>
     fetchProductOptions: () => Promise<void>
-    createExportSlip: (data: { fullName: string; phone: string; address: string; paymentMethod?: string; items: { productId: string; quantity: number }[] }) => Promise<void>
     updateOrderStatus: (id: string, status: string) => Promise<void>
 }
 
@@ -40,6 +39,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
             set({ isLoading: false })
         }
     },
+
 
     fetchStats: async (params) => {
         set({ isLoadingStats: true })
@@ -82,20 +82,6 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         }
     },
 
-    createExportSlip: async (data) => {
-        try {
-            await orderService.createOrder({
-                ...data,
-                paymentMethod: data.paymentMethod ?? 'COD',
-            })
-            toast.success('Tạo phiếu xuất thành công')
-            await get().fetchOrders()
-        } catch (error: unknown) {
-            const msg = getErrorMessage(error, 'Tạo phiếu xuất thất bại')
-            toast.error(msg)
-            throw error
-        }
-    },
 
     updateOrderStatus: async (id, status) => {
         try {
@@ -107,4 +93,6 @@ export const useSalesStore = create<SalesState>((set, get) => ({
             toast.error(msg)
         }
     },
+
+    // Order-related actions only
 }))

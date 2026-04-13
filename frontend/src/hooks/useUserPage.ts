@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useUserStore } from '@/stores/user.store'
 import { usePaginatedList } from '@/hooks/usePaginatedList'
+import { useEntityModal } from '@/hooks/useEntityModal'
+import { useConfirmAction } from '@/hooks/useConfirmAction'
 import type { User } from '@/types/user.type'
 import type { Role } from '@/types/auth.type'
 
@@ -13,7 +15,7 @@ type UserFormValues = {
   }
 }
 
-export const useUserManagement = () => {
+export const useUserPage = () => {
   const {
     users,
     meta,
@@ -26,8 +28,14 @@ export const useUserManagement = () => {
     filters,
   } = useUserStore()
 
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const {
+    modalOpen,
+    editingEntity: editingUser,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  } = useEntityModal<User>()
+  const { confirmAndRun } = useConfirmAction()
 
   const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
     filters,
@@ -36,27 +44,14 @@ export const useUserManagement = () => {
     debounceMs: 300,
   })
 
-  const openCreateModal = useCallback(() => {
-    setEditingUser(null)
-    setModalOpen(true)
-  }, [])
-
-  const openEditModal = useCallback((user: User) => {
-    setEditingUser(user)
-    setModalOpen(true)
-  }, [])
-
-  const closeModal = useCallback(() => {
-    setModalOpen(false)
-  }, [])
-
   const handleDelete = useCallback(
     async (id: string, email: string) => {
-      if (confirm('Bạn có chắc muốn xóa user: ' + email + '?')) {
-        await deleteUser(id)
-      }
+      await confirmAndRun({
+        message: 'Bạn có chắc muốn xóa user: ' + email + '?',
+        action: () => deleteUser(id),
+      })
     },
-    [deleteUser]
+    [confirmAndRun, deleteUser]
   )
 
   const handleFormSubmit = useCallback(
@@ -75,9 +70,9 @@ export const useUserManagement = () => {
           profile: { fullName: data.profile.fullName },
         })
       }
-      setModalOpen(false)
+      closeModal()
     },
-    [editingUser, updateUser, addUser]
+    [closeModal, editingUser, updateUser, addUser]
   )
 
   return {
@@ -86,7 +81,6 @@ export const useUserManagement = () => {
     isLoading,
     filters,
     modalOpen,
-    setModalOpen,
     editingUser,
     searchTerm,
     setSearchTerm,

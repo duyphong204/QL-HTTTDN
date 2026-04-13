@@ -11,7 +11,7 @@ const formatCurrency = (n: number) =>
     currency: "VND",
   }).format(n || 0)
 
-export const useSalaryManagement = () => {
+export const useSalary = () => {
   const { mySalaries, isLoadingSalary, fetchMySalaries, myProfile } = useEmployeeStore()
   const [filterYear, setFilterYear] = useState(String(currentYear))
   const [filterMonth, setFilterMonth] = useState("ALL")

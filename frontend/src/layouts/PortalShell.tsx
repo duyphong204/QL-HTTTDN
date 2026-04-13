@@ -6,46 +6,23 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { ROUTE_CONFIGS, type PortalId } from "@/routes/routes.config";
 
-const PORTAL_BRAND: Record<PortalId, { label: string; logoClass: string; activeNav: string }> = {
-    admin: {
-        label: "Cổng Quản trị",
-        logoClass: "bg-violet-600",
-        activeNav: "bg-violet-600 text-white shadow-md shadow-violet-200",
-    },
-    hr: {
-        label: "Cổng Nhân sự",
-        logoClass: "bg-emerald-600",
-        activeNav: "bg-emerald-600 text-white shadow-md shadow-emerald-200",
-    },
-    warehouse: {
-        label: "Cổng Quản lý kho",
-        logoClass: "bg-amber-600",
-        activeNav: "bg-amber-600 text-white shadow-md shadow-amber-200",
-    },
-    sales: {
-        label: "Cổng Kinh doanh",
-        logoClass: "bg-sky-600",
-        activeNav: "bg-sky-600 text-white shadow-md shadow-sky-200",
-    },
-    employee: {
-        label: "Cổng Nhân viên",
-        logoClass: "bg-slate-700",
-        activeNav: "bg-slate-700 text-white shadow-md shadow-slate-300",
-    },
+const PORTAL_LABELS: Record<PortalId, string> = {
+    admin: "Cổng Quản trị",
+    hr: "Cổng Nhân sự",
+    warehouse: "Cổng Quản lý kho",
+    sales: "Cổng Kinh doanh",
+    employee: "Cổng Nhân viên",
 };
 
 interface PortalShellProps {
     portal: PortalId;
 }
 
-/**
- * Khung chung: sidebar + outlet. Lọc menu theo cổng + vai trò (tách UI Admin / HR / Kho / Sales / NV).
- */
 const PortalShell = ({ portal }: PortalShellProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
     const { user, logout } = useAuthStore();
-    const brand = PORTAL_BRAND[portal];
+    const portalLabel = PORTAL_LABELS[portal];
 
     const filteredMenuItems = ROUTE_CONFIGS.filter(
         (r) =>
@@ -74,18 +51,18 @@ const PortalShell = ({ portal }: PortalShellProps) => {
                 <div className="h-16 flex items-center justify-center border-b border-gray-200 px-4">
                     {isSidebarOpen ? (
                         <div className="flex items-center gap-2">
-                            <div className={cn("p-1 rounded-md", brand.logoClass)}>
+                            <div className="p-1 rounded-md bg-blue-600">
                                 <Briefcase className="text-white h-5 w-5" />
                             </div>
                             <div>
-                                <h1 className="text-sm font-bold text-gray-800 leading-tight">{brand.label}</h1>
+                                <h1 className="text-sm font-bold text-gray-800 leading-tight">{portalLabel}</h1>
                                 <p className="text-xs text-gray-500">
                                     {user?.profile?.fullName || user?.email || "—"}
                                 </p>
                             </div>
                         </div>
                     ) : (
-                        <div className={cn("p-2 rounded-md hidden lg:block", brand.logoClass)}>
+                        <div className="p-2 rounded-md hidden lg:block bg-blue-600">
                             <Briefcase className="text-white h-6 w-6" />
                         </div>
                     )}
@@ -104,7 +81,7 @@ const PortalShell = ({ portal }: PortalShellProps) => {
                                 className={cn(
                                     "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                                     isActive
-                                        ? brand.activeNav
+                                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
                                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 )}
                                 title={item.title}
@@ -145,7 +122,7 @@ const PortalShell = ({ portal }: PortalShellProps) => {
                     <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                         <Menu className="h-6 w-6" />
                     </Button>
-                    <span className="ml-4 font-bold text-gray-800">{brand.label}</span>
+                    <span className="ml-4 font-bold text-gray-800">{portalLabel}</span>
                 </div>
 
                 <div className="p-2 sm:p-4 w-full max-w-full overflow-hidden">

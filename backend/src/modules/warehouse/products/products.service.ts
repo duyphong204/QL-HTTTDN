@@ -17,7 +17,7 @@ export class ProductService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
-  ) { }
+  ) {}
 
   async findAll(query: QueryProductDto) {
     const {
@@ -74,7 +74,8 @@ export class ProductService {
       where: { id, deletedAt: null },
       include: { category: true, supplier: true },
     });
-    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm hoặc đã bị xóa');
+    if (!product)
+      throw new NotFoundException('Không tìm thấy sản phẩm hoặc đã bị xóa');
     return product;
   }
 
@@ -140,9 +141,7 @@ export class ProductService {
       this.prisma.product.findMany({
         where: {
           deletedAt: null,
-          OR: [
-            { stockQuantity: { lte: 10 } },
-          ]
+          OR: [{ stockQuantity: { lte: 10 } }],
         },
         select: { id: true, name: true, stockQuantity: true, minStock: true },
         orderBy: { stockQuantity: 'asc' },

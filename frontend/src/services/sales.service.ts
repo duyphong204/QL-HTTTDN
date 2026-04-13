@@ -1,6 +1,17 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/api/client"
 import { endpoints } from "@/api/endpoints"
-import type { Order, CreateOrderDto, Cart, CartItem, AddToCartDto, SalesStats } from "@/types/sales.type"
+import type {
+    Order,
+    CreateOrderDto,
+    Cart,
+    CartItem,
+    AddToCartDto,
+    SalesStats,
+    StockOut,
+    CreateStockOutDto,
+    StockOutQuery,
+    UpdateStockOutDto,
+} from "@/types/sales.type"
 
 export const orderService = {
     getOrders: async (): Promise<Order[]> => {
@@ -57,3 +68,25 @@ export const cartService = {
         await apiPost(endpoints.cart.clear);
     },
 };
+
+export const stockOutService = {
+    getStockOuts: async (params?: StockOutQuery): Promise<StockOut[]> => {
+        return apiGet<StockOut[]>(endpoints.stockOuts.root, params)
+    },
+
+    getStockOutById: async (id: string): Promise<StockOut> => {
+        return apiGet<StockOut>(endpoints.stockOuts.byId(id))
+    },
+
+    createStockOut: async (data: CreateStockOutDto): Promise<StockOut> => {
+        return apiPost<StockOut>(endpoints.stockOuts.root, data)
+    },
+
+    updateStockOut: async (id: string, data: UpdateStockOutDto): Promise<StockOut> => {
+        return apiPatch<StockOut>(endpoints.stockOuts.byId(id), data)
+    },
+
+    deleteStockOut: async (id: string): Promise<void> => {
+        await apiDelete(endpoints.stockOuts.byId(id))
+    },
+}

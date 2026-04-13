@@ -8,9 +8,10 @@ import {
   Request,
   ParseUUIDPipe,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { StockInService } from './stock-in.service';
-import { CreateStockInDto } from './dto/stock-in.dto';
+import { CreateStockInDto, UpdateStockInDto } from './dto/stock-in.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -19,7 +20,7 @@ import { Role } from 'src/common/enums/role.enum';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('stock-ins')
 export class StockInController {
-  constructor(private readonly stockInService: StockInService) { }
+  constructor(private readonly stockInService: StockInService) {}
 
   @Get()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
@@ -39,9 +40,18 @@ export class StockInController {
     return this.stockInService.createStockIn(dto, req.user.id);
   }
 
-  @Patch(':id/confirm')
-  @Roles(Role.ADMIN)
-  confirm(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.stockInService.confirmStockIn(id, req.user.id);
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateStockInDto,
+  ) {
+    return this.stockInService.updateStockIn(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.stockInService.removeStockIn(id);
   }
 }

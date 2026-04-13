@@ -1,54 +1,28 @@
-import { useEffect } from "react"
-import dayjs from "dayjs"
 import { Check, X, RefreshCw, FileText } from "lucide-react"
 
-import { useHrStore } from "@/stores/hr.store"
-import { useClientTable } from "@/hooks/useClientTable"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
-
-const TYPE_LABEL: Record<string, string> = {
-  SICK: "Nghỉ Ốm",
-  ANNUAL: "Nghỉ Phép",
-  MATERNITY: "Thai Sản",
-  RESIGNATION: "Xin Nghỉ Việc",
-}
-
-const STATUS_CONFIG = {
-  APPROVED: { label: "Đã duyệt", className: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-  REJECTED: { label: "Từ chối", className: "bg-rose-50 text-rose-700 border-rose-100" },
-  PENDING: { label: "Chờ duyệt", className: "bg-amber-50 text-amber-700 border-amber-100" },
-}
+import {
+  LEAVE_STATUS_CONFIG,
+  LEAVE_TYPE_LABEL,
+  useLeaveRequestPage,
+} from "@/hooks/useLeaveRequestPage"
 
 export default function LeaveRequestManagement() {
   const {
-    leaveRequests,
     loadingLeaveRequests,
-    fetchLeaveRequests,
-    approveLeaveRequest,
-  } = useHrStore()
-
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: leaveRequests,
-    pageSize: 10,
-    searchFn: (req, keyword) => {
-      const name = req.employeeName?.toLowerCase() ?? ""
-      const reason = req.reason?.toLowerCase() ?? ""
-      const type = (TYPE_LABEL[req.type] ?? req.type).toLowerCase()
-      return name.includes(keyword) || reason.includes(keyword) || type.includes(keyword)
-    },
-  })
-
-  useEffect(() => {
-    fetchLeaveRequests()
-  }, [fetchLeaveRequests])
-
-  const handleUpdateStatus = async (id: string, status: "APPROVED" | "REJECTED") => {
-    const isApproved = status === "APPROVED"
-    const message = isApproved ? "Duyệt đơn này?" : "Từ chối đơn này?"
-    if (!window.confirm(message)) return
-    await approveLeaveRequest(id, status)
-  }
+    searchTerm,
+    page,
+    pagedData,
+    meta,
+    setSearchTerm,
+    setPage,
+    handleRefresh,
+    handleUpdateStatus,
+    getEmployeeInitial,
+    formatCreatedDate,
+    formatLeaveRange,
+  } = useLeaveRequestPage()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -66,7 +40,7 @@ export default function LeaveRequestManagement() {
           </div>
 
           <button
-            onClick={fetchLeaveRequests}
+            onClick={handleRefresh}
             disabled={loadingLeaveRequests}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
           >
@@ -119,12 +93,12 @@ export default function LeaveRequestManagement() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs border border-blue-100">
-                            {req.employeeName?.charAt(0) || "U"}
+                            {getEmployeeInitial(req.employeeName)}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-800">{req.employeeName}</div>
                             <div className="text-xs text-gray-400">
-                              {dayjs(req.createdAt).format("DD/MM/YYYY")}
+                              {formatCreatedDate(req.createdAt)}
                             </div>
                           </div>
                         </div>
@@ -132,13 +106,13 @@ export default function LeaveRequestManagement() {
 
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-50 text-gray-700 px-2.5 py-1 text-xs font-medium">
-                          {TYPE_LABEL[req.type] || req.type}
+                          {LEAVE_TYPE_LABEL[req.type] || req.type}
                         </span>
                       </td>
 
                       <td className="px-6 py-4">
                         <div className="text-gray-700 text-sm font-medium">
-                          {dayjs(req.startDate).format("DD/MM")} — {dayjs(req.endDate).format("DD/MM/YYYY")}
+                          {formatLeaveRange(req.startDate, req.endDate)}
                         </div>
                       </td>
 
@@ -149,8 +123,8 @@ export default function LeaveRequestManagement() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold ${STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG]?.className}`}>
-                          {STATUS_CONFIG[req.status as keyof typeof STATUS_CONFIG]?.label || req.status}
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full border text-xs font-semibold ${LEAVE_STATUS_CONFIG[req.status as keyof typeof LEAVE_STATUS_CONFIG]?.className}`}>
+                          {LEAVE_STATUS_CONFIG[req.status as keyof typeof LEAVE_STATUS_CONFIG]?.label || req.status}
                         </span>
                       </td>
 

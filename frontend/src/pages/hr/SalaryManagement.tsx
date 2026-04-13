@@ -1,77 +1,30 @@
-import { useEffect, useMemo, useState } from "react"
 import { DollarSign, Users, CheckCircle2, Calculator, Printer } from "lucide-react"
-import { useHrStore } from "@/stores/hr.store"
-import { useClientTable } from "@/hooks/useClientTable"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
-
-const STATUS_BADGE = {
-  PAID: {
-    label: "Đã thanh toán",
-    color: "bg-green-100 text-green-600",
-  },
-  PENDING: {
-    label: "Chưa thanh toán",
-    color: "bg-yellow-100 text-yellow-600",
-  },
-} as const
-
-const currentYear = new Date().getFullYear()
-const YEARS = [currentYear, currentYear - 1, currentYear - 2]
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN").format(amount || 0) + " đ"
+import { SALARY_STATUS_BADGE, useSalaryPage } from "@/hooks/useSalaryPage"
 
 export default function SalaryManagement() {
-  const { salaries, loadingSalaries, fetchSalaries, calculateAllSalaries } = useHrStore()
-  const [month, setMonth] = useState(String(new Date().getMonth() + 1))
-  const [year, setYear] = useState(String(currentYear))
-  const [calculating, setCalculating] = useState(false)
-
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: salaries,
-    pageSize: 10,
-    searchFn: (s, keyword) => {
-      const name = s.employee?.user?.profile?.fullName?.toLowerCase() ?? ""
-      return name.includes(keyword)
-    },
-  })
-
-  useEffect(() => {
-    fetchSalaries({ month: Number(month), year: Number(year) })
-  }, [month, year, fetchSalaries])
-
-  const summary = useMemo(() => {
-    let total = 0
-    let paid = 0
-
-    salaries.forEach((s) => {
-      total += s.amount || 0
-      if (s.status === "PAID") paid += 1
-    })
-
-    return {
-      total: (total / 1000000).toFixed(1) + "M",
-      count: salaries.length,
-      paid,
-    }
-  }, [salaries])
-
-  const handleCalculateAll = async () => {
-    setCalculating(true)
-    try {
-      await calculateAllSalaries({ month: Number(month), year: Number(year) })
-    } finally {
-      setCalculating(false)
-    }
-  }
-
-  const handlePrint = () => {
-    document.body.classList.add("print-salary-management")
-    window.print()
-    document.body.classList.remove("print-salary-management")
-  }
+  const {
+    salaries,
+    loadingSalaries,
+    month,
+    year,
+    calculating,
+    searchTerm,
+    page,
+    pagedData,
+    meta,
+    summary,
+    years,
+    months,
+    setMonth,
+    setYear,
+    setSearchTerm,
+    setPage,
+    handleCalculateAll,
+    handlePrint,
+    formatCurrency,
+  } = useSalaryPage()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -111,7 +64,7 @@ export default function SalaryManagement() {
               onChange={(e) => setMonth(e.target.value)}
               className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
-              {MONTHS.map((m) => (
+              {months.map((m) => (
                 <option key={m} value={String(m)}>Tháng {m}</option>
               ))}
             </select>
@@ -121,7 +74,7 @@ export default function SalaryManagement() {
               onChange={(e) => setYear(e.target.value)}
               className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
-              {YEARS.map((y) => (
+              {years.map((y) => (
                 <option key={y} value={String(y)}>{y}</option>
               ))}
             </select>
@@ -197,10 +150,10 @@ export default function SalaryManagement() {
                       <td className="px-6 py-4 text-center">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            STATUS_BADGE[s.status as keyof typeof STATUS_BADGE]?.color
+                            SALARY_STATUS_BADGE[s.status as keyof typeof SALARY_STATUS_BADGE]?.color
                           }`}
                         >
-                          {STATUS_BADGE[s.status as keyof typeof STATUS_BADGE]?.label}
+                          {SALARY_STATUS_BADGE[s.status as keyof typeof SALARY_STATUS_BADGE]?.label}
                         </span>
                       </td>
                     </tr>

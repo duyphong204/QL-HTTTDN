@@ -1,97 +1,34 @@
-import { useState } from "react"
-import { useHrStore } from "@/stores/hr.store"
-
 import { UserPlus, Pencil, Trash2, Eye } from "lucide-react"
 
 import { EmployeeFormModal } from "@/components/forms/EmployeeFormModal"
 import { EmployeeDetailModal } from "@/components/modals/EmployeeDetailModal"
 
-import type { Employee } from "@/types/hr.type"
-import type { CreateEmployeeDto, UpdateEmployeeDto } from "@/types/hr.type"
-import { ROLE_BADGE } from "@/constants/role"
-import { usePaginatedList } from "@/hooks/usePaginatedList"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
+import { useEmployeePage } from "@/hooks/useEmployeePage"
 
 export default function EmployeeManagement() {
   const {
-    employees,
+    employeeList,
     meta,
     loadingEmployees,
     selectedEmployee,
     loadingEmployeeDetail,
-    fetchEmployees,
-    fetchEmployeeById,
     clearSelectedEmployee,
-    deleteEmployee,
-    createEmployee,
-    updateEmployee,
     filters,
-    setFilters,
-  } = useHrStore()
-
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
-  const employeeList = Array.isArray(employees) ? employees : []
-
-  const getPositionBadge = (position?: string) => {
-    if (!position) {
-      return {
-        label: "—",
-        color: "bg-gray-100 text-gray-600",
-      }
-    }
-
-    if (position in ROLE_BADGE) {
-      const config = ROLE_BADGE[position as keyof typeof ROLE_BADGE]
-      return {
-        label: config.label,
-        color: config.color,
-      }
-    }
-
-    return {
-      label: position,
-      color: "bg-indigo-100 text-indigo-700",
-    }
-  }
-
-  const { searchTerm, setSearchTerm, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchEmployees,
-    debounceMs: 400,
-  })
-
-  const openCreateModal = () => {
-    setEditingEmployee(null)
-    setModalOpen(true)
-  }
-
-  const openEditModal = (employee: Employee) => {
-    setEditingEmployee(employee)
-    setModalOpen(true)
-  }
-
-  const handleViewDetail = async (id: string) => {
-    await fetchEmployeeById(id)
-  }
-
-  const handleDelete = async (id: string, name?: string) => {
-    if (confirm(`Bạn có chắc muốn xoá nhân viên ${name}?`)) {
-      await deleteEmployee(id)
-    }
-  }
-
-  const handleSubmit = async (data: CreateEmployeeDto | UpdateEmployeeDto) => {
-    if (editingEmployee) {
-      await updateEmployee(editingEmployee.id, data as UpdateEmployeeDto)
-    } else {
-      await createEmployee(data as CreateEmployeeDto)
-    }
-
-    setModalOpen(false)
-  }
+    modalOpen,
+    editingEmployee,
+    searchTerm,
+    setSearchTerm,
+    goToPage,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+    getPositionBadge,
+    handleViewDetail,
+    handleDelete,
+    handleFormSubmit,
+  } = useEmployeePage()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -231,9 +168,9 @@ export default function EmployeeManagement() {
       <EmployeeFormModal
         key={editingEmployee?.id || "create-employee"}
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={closeModal}
         editingEmployee={editingEmployee}
-        onSubmit={handleSubmit}
+        onSubmit={handleFormSubmit}
       />
 
       <EmployeeDetailModal

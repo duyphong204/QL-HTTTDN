@@ -1,4 +1,4 @@
-import { useSalaryManagement } from "@/hooks/useSalaryManagement"
+import { useSalary } from "@/hooks/useSalary"
 import { Printer } from "lucide-react"
 
 import {
@@ -25,7 +25,7 @@ export default function MySalaryPage() {
     YEARS,
     MONTHS,
     formatCurrency,
-  } = useSalaryManagement()
+  } = useSalary()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">

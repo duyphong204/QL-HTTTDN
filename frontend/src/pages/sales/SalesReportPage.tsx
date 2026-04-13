@@ -1,33 +1,25 @@
-// frontend/src/pages/sales/SalesReportPage.tsx
-import { useEffect, useState } from 'react'
-import { useSalesStore } from '@/stores/sales.store'
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Printer } from 'lucide-react'
-
-const formatCurrency = (n: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
-
-const currentYear = new Date().getFullYear()
-const YEARS = [currentYear, currentYear - 1, currentYear - 2]
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
+import { useSalesReportPage } from '@/hooks/useSalesReportPage'
 
 type PeriodType = 'month' | 'quarter' | 'year'
 
 export default function SalesReportPage() {
-    const { stats, isLoadingStats, fetchStats, fetchStatsByPeriod } = useSalesStore()
-    const [periodType, setPeriodType] = useState<PeriodType>('month')
-    const [month, setMonth] = useState(String(new Date().getMonth() + 1))
-    const [quarter, setQuarter] = useState('1')
-    const [year, setYear] = useState(String(currentYear))
-
-    useEffect(() => {
-        if (periodType === 'month') {
-            fetchStats({ month: Number(month), year: Number(year) })
-        } else if (periodType === 'quarter') {
-            fetchStatsByPeriod({ year: Number(year), quarter: Number(quarter) })
-        } else {
-            fetchStatsByPeriod({ year: Number(year) })
-        }
-    }, [periodType, month, quarter, year, fetchStats, fetchStatsByPeriod])
+    const {
+        stats,
+        isLoadingStats,
+        periodType,
+        month,
+        quarter,
+        year,
+        years,
+        months,
+        statCards,
+        setPeriodType,
+        setMonth,
+        setQuarter,
+        setYear,
+        handlePrint,
+    } = useSalesReportPage()
 
     return (
         <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
@@ -40,7 +32,7 @@ export default function SalesReportPage() {
                         </h1>
                         <p className="text-sm text-gray-500 mt-1 print:hidden">Doanh thu và lợi nhuận theo kỳ</p>
                     </div>
-                    <button onClick={() => window.print()}
+                    <button onClick={handlePrint}
                         className="print:hidden inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">
                         <Printer size={16} /> In báo cáo
                     </button>
@@ -60,7 +52,7 @@ export default function SalesReportPage() {
                     {periodType === 'month' && (
                         <select value={month} onChange={e => setMonth(e.target.value)}
                             className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                            {MONTHS.map(m => <option key={m} value={m}>Tháng {m}</option>)}
+                            {months.map(m => <option key={m} value={m}>Tháng {m}</option>)}
                         </select>
                     )}
 
@@ -76,7 +68,7 @@ export default function SalesReportPage() {
 
                     <select value={year} onChange={e => setYear(e.target.value)}
                         className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                        {YEARS.map(y => <option key={y} value={y}>Năm {y}</option>)}
+                        {years.map(y => <option key={y} value={y}>Năm {y}</option>)}
                     </select>
                 </div>
 
@@ -84,18 +76,23 @@ export default function SalesReportPage() {
                     <div className="text-center py-20 text-gray-400">Đang tải thống kê...</div>
                 ) : stats && (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {[
-                            { label: 'Tổng đơn hàng', value: stats.totalOrders, icon: ShoppingCart },
-                            { label: 'Sản phẩm xuất', value: stats.totalItemsSold, icon: BarChart3 },
-                            { label: 'Doanh thu', value: formatCurrency(stats.totalRevenue), icon: TrendingUp },
-                            { label: 'Lợi nhuận', value: formatCurrency(stats.totalProfit), icon: DollarSign },
-                        ].map(card => (
+                        {statCards.map(card => {
+                            const Icon = card.icon === 'orders'
+                                ? ShoppingCart
+                                : card.icon === 'items'
+                                    ? BarChart3
+                                    : card.icon === 'revenue'
+                                        ? TrendingUp
+                                        : DollarSign
+
+                            return (
                             <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                <card.icon size={20} className="text-blue-500 mb-3" />
+                                <Icon size={20} className="text-blue-500 mb-3" />
                                 <div className="text-2xl font-bold text-gray-900">{card.value}</div>
                                 <div className="text-sm text-gray-500 mt-1">{card.label}</div>
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </div>

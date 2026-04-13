@@ -8,6 +8,7 @@ import { UsersModule } from './modules/users/users.module';
 import { HRModule } from './modules/hr/hr.module';
 import { LoggingMiddleware } from './middlware/logging/logging.middleware';
 import { OrderModule } from './modules/sales/orders/order.module';
+import { StockOutModule } from './modules/sales/stock-out/stock-out.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrderModule } from './modules/sales/orders/order.module';
     UsersModule,
     HRModule,
     OrderModule,
+    StockOutModule,
   ],
   controllers: [AppController],
   providers: [AppService],

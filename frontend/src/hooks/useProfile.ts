@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useEmployeeStore } from "@/stores/employee.store"
 
-export const useProfileManagement = () => {
+export const useProfile = () => {
   const { myProfile, fetchMyProfile, updateMyProfile, isLoadingProfile } = useEmployeeStore()
 
   const [isEditing, setIsEditing] = useState(false)

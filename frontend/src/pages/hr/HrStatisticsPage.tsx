@@ -1,36 +1,24 @@
-import { useState, useEffect, useMemo } from "react"
-import { useHrStore } from "@/stores/hr.store"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react"
-
-const currentYear = new Date().getFullYear()
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const formatCurrency = (n: number) =>
-    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n || 0)
+import { useHrStatisticsPage } from "@/hooks/useHrStatisticsPage"
 
 export default function HrStatisticsPage() {
-    const { statistics, salaries, loadingSalaries, loadingStatistics, fetchStatistics, fetchSalaries } = useHrStore()
-    const [year, setYear] = useState(String(currentYear))
-    const [month, setMonth] = useState(String(new Date().getMonth() + 1))
-
-    useEffect(() => {
-        void Promise.all([
-            fetchStatistics({ month: Number(month), year: Number(year) }),
-            fetchSalaries({ month: Number(month), year: Number(year) }),
-        ])
-    }, [month, year, fetchStatistics, fetchSalaries])
-
-    const { totalBonus } = useMemo(() => {
-        return salaries.reduce((acc, s) => ({
-            totalPay: acc.totalPay + (s.amount || 0),
-            totalBonus: acc.totalBonus + (s.bonus || 0)
-        }), { totalPay: 0, totalBonus: 0 })
-    }, [salaries])
-
-    const isLoading = loadingSalaries || loadingStatistics
+    const {
+        statistics,
+        salaries,
+        month,
+        year,
+        totalBonus,
+        totalBudget,
+        isLoading,
+        months,
+        years,
+        setMonth,
+        setYear,
+        formatCurrency,
+    } = useHrStatisticsPage()
 
     return (
         <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans antialiased text-slate-900">
@@ -53,7 +41,7 @@ export default function HrStatisticsPage() {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
-                            {MONTHS.map(m => <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>)}
+                            {months.map(m => <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <Select value={year} onValueChange={setYear}>
@@ -61,7 +49,7 @@ export default function HrStatisticsPage() {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
-                            {[currentYear, currentYear - 1].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                            {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
@@ -77,7 +65,7 @@ export default function HrStatisticsPage() {
                         <CardContent className="p-8 relative">
                             <p className="text-blue-100 font-medium mb-1">Tổng chi ngân sách</p>
                             <h2 className="text-3xl font-bold text-white mb-6">
-                                {isLoading ? "..." : formatCurrency((statistics?.totalSalaryPaid || 0) + (statistics?.totalBonus || 0))}
+                                {isLoading ? "..." : formatCurrency(totalBudget)}
                             </h2>
                             <div className="flex items-center gap-2 text-sm text-blue-100 bg-blue-500/30 w-fit px-3 py-1 rounded-full border border-white/10">
                                 <ArrowUpRight className="h-4 w-4" />

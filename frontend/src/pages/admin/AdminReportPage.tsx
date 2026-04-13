@@ -1,41 +1,27 @@
-import { useEffect, useMemo, useState } from 'react'
 import { 
   BarChart3, Building2, Users, ShoppingCart, 
   Printer, AlertTriangle, Loader2, TrendingUp, 
   UserCheck, Package 
 } from 'lucide-react'
-import { useAdminStore } from '@/stores/admin.store'
-
-// --- CONSTANTS & HELPERS ---
-const currentYear = new Date().getFullYear()
-const YEARS = [currentYear, currentYear - 1, currentYear - 2]
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const formatCurrency = (amount?: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
-
-const formatNumber = (num?: number) => 
-  (num || 0).toLocaleString('vi-VN')
+import { useAdminReportPage } from '@/hooks/useAdminReportPage'
 
 // --- MAIN PAGE COMPONENT ---
 export default function AdminReportPage() {
-  const { report, isLoading, fetchDashboardReport } = useAdminStore()
-  const [year, setYear] = useState(String(currentYear))
-  const [month, setMonth] = useState('')
-
-  useEffect(() => {
-    void fetchDashboardReport({
-      year: Number(year),
-      month: month ? Number(month) : undefined,
-    })
-  }, [year, month, fetchDashboardReport])
-
-  const periodLabel = useMemo(() => {
-    if (!report?.period) return '-'
-    return report.period.month
-      ? `Tháng ${report.period.month}/${report.period.year}`
-      : `Năm ${report.period.year}`
-  }, [report])
+  const {
+    report,
+    isLoading,
+    year,
+    month,
+    years,
+    months,
+    periodLabel,
+    quickStats,
+    detailStats,
+    lowStockProducts,
+    setYear,
+    setMonth,
+    handlePrint,
+  } = useAdminReportPage()
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:bg-white print:p-0">
@@ -61,7 +47,7 @@ export default function AdminReportPage() {
                 className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="">Cả năm</option>
-                {MONTHS.map((m) => (
+                {months.map((m) => (
                   <option key={m} value={m}>Tháng {m}</option>
                 ))}
               </select>
@@ -71,14 +57,14 @@ export default function AdminReportPage() {
                 onChange={(e) => setYear(e.target.value)}
                 className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
-                {YEARS.map((y) => (
+                {years.map((y) => (
                   <option key={y} value={y}>Năm {y}</option>
                 ))}
               </select>
             </div>
 
             <button
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <Printer size={16} /> In báo cáo
@@ -102,26 +88,26 @@ export default function AdminReportPage() {
             {/* QUICK STATS */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
-                title="Tổng đơn hàng"
-                value={formatNumber(report.sales?.totalOrders)}
+                title={quickStats[0].title}
+                value={quickStats[0].value}
                 icon={<ShoppingCart className="text-blue-600" size={20} />}
                 bgColor="bg-blue-50"
               />
               <StatCard
-                title="Doanh thu"
-                value={formatCurrency(report.sales?.totalRevenue)}
+                title={quickStats[1].title}
+                value={quickStats[1].value}
                 icon={<BarChart3 className="text-emerald-600" size={20} />}
                 bgColor="bg-emerald-50"
               />
               <StatCard
-                title="Tổng giá trị nhập"
-                value={formatCurrency(report.warehouse?.totalImportValue)}
+                title={quickStats[2].title}
+                value={quickStats[2].value}
                 icon={<Building2 className="text-indigo-600" size={20} />}
                 bgColor="bg-indigo-50"
               />
               <StatCard
-                title="Tổng quỹ lương"
-                value={formatCurrency((report.hr?.totalSalaryPaid ?? 0) + (report.hr?.totalBonus ?? 0))}
+                title={quickStats[3].title}
+                value={quickStats[3].value}
                 icon={<Users className="text-amber-600" size={20} />}
                 bgColor="bg-amber-50"
               />
@@ -132,33 +118,22 @@ export default function AdminReportPage() {
               <DetailCard 
                 title="Kinh doanh" 
                 icon={<TrendingUp size={18} className="text-emerald-600" />}
-                items={[
-                  { label: 'Sản phẩm đã xuất', value: formatNumber(report.sales?.totalItemsSold) },
-                  { label: 'Lợi nhuận', value: formatCurrency(report.sales?.totalProfit), highlight: true }
-                ]}
+                items={detailStats.sales}
               />
               <DetailCard 
                 title="Nhân sự" 
                 icon={<UserCheck size={18} className="text-blue-600" />}
-                items={[
-                  { label: 'Nhân sự đang làm', value: formatNumber(report.hr?.totalEmployees) },
-                  { label: 'Nhân sự đã nghỉ', value: formatNumber(report.hr?.totalResigned) },
-                  { label: 'Bảng lương đã tính', value: formatNumber(report.hr?.headcount) }
-                ]}
+                items={detailStats.hr}
               />
               <DetailCard 
                 title="Kho" 
                 icon={<Package size={18} className="text-indigo-600" />}
-                items={[
-                  { label: 'Số phiếu nhập', value: formatNumber(report.warehouse?.totalStockIns) },
-                  { label: 'Tổng tồn kho', value: formatNumber(report.warehouse?.totalStockQuantity) },
-                  { label: 'Loại sản phẩm', value: formatNumber(report.warehouse?.totalProductTypes) }
-                ]}
+                items={detailStats.warehouse}
               />
             </div>
 
             {/* WARNING TABLE */}
-            <LowStockTable products={report.warehouse?.lowStockProducts} />
+            <LowStockTable products={lowStockProducts} />
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-100 bg-white py-20 text-center text-slate-500">

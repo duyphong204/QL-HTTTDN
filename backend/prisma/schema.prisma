@@ -114,30 +114,25 @@ model Product {
   supplierId     String
   minStock       Int             @default(10)
   imageUrl       String?
-  deletedAt        DateTime?
+  deletedAt      DateTime?
   cartItems      CartItem[]
   orderDetails   OrderDetail[]
   category       Category        @relation(fields: [categoryId], references: [id])
   supplier       Supplier        @relation(fields: [supplierId], references: [id])
   stockInDetails StockInDetail[]
+  stockOutDetails StockOutDetail[]
 }
 
 model StockIn {
-  id          String          @id @default(uuid())
-  supplierId  String
-  date        DateTime        @default(now())
-  totalAmount Float
-  status      StockInStatus   @default(PENDING)
-  createdById String?
+  id           String          @id @default(uuid())
+  supplierId   String
+  date         DateTime        @default(now())
+  totalAmount  Float
+  createdById  String?
   approvedById String?
-  supplier    Supplier        @relation(fields: [supplierId], references: [id])
-  details     StockInDetail[]
-}
-
-enum StockInStatus {
-  PENDING    
-  COMPLETED  
-  CANCELLED  
+  status       StockInStatus   @default(PENDING)
+  supplier     Supplier        @relation(fields: [supplierId], references: [id])
+  details      StockInDetail[]
 }
 
 model StockInDetail {
@@ -181,6 +176,30 @@ model Order {
   paymentStatus String        @default("UNPAID")
   user          User?         @relation(fields: [userId], references: [id])
   details       OrderDetail[]
+  stockOuts     StockOut[]
+}
+
+model StockOut {
+  id           String           @id @default(uuid())
+  orderId      String?
+  type         StockOutType
+  createdById  String
+  approvedById String?
+  totalAmount  Float
+  status       StockOutStatus   @default(PENDING)
+  createdAt    DateTime         @default(now())
+  order        Order?           @relation(fields: [orderId], references: [id])
+  details      StockOutDetail[]
+}
+
+model StockOutDetail {
+  id         String   @id @default(uuid())
+  stockOutId String
+  productId  String
+  quantity   Int
+  price      Float
+  stockOut   StockOut @relation(fields: [stockOutId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
 }
 
 model OrderDetail {
@@ -201,6 +220,24 @@ model SystemLog {
   details   String?
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id])
+}
+
+enum StockInStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum StockOutStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum StockOutType {
+  SALE
+  INTERNAL
+  TRANSFER
 }
 
 enum Role {

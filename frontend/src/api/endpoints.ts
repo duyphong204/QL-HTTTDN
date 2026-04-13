@@ -53,6 +53,10 @@ export const endpoints = {
     root: '/stock-ins',
     byId: (id: string) => `/stock-ins/${id}`,
   },
+  stockOuts: {
+    root: '/stock-outs',
+    byId: (id: string) => `/stock-outs/${id}`,
+  },
   warehouse: {
     report: '/warehouse/report',
   },

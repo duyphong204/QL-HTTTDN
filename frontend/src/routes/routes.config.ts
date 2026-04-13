@@ -42,7 +42,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     },
     {
         path: "/admin/products",
-        title: "Sản phẩm (toàn hệ thống)",
+        title: "Sản phẩm",
         icon: Package,
         roles: ["ADMIN"],
         portals: ["admin"],
@@ -50,7 +50,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     },
     {
         path: "/admin/suppliers",
-        title: "Nhà cung cấp (toàn hệ thống)",
+        title: "Nhà cung cấp",
         icon: Building,
         roles: ["ADMIN"],
         portals: ["admin"],
@@ -108,7 +108,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         path: "/warehouse/suppliers",
         title: "Nhà cung cấp",
         icon: Building,
-        roles: ["WAREHOUSE_MANAGER"],
+        roles: ["WAREHOUSE_MANAGER",],
         portals: ["warehouse"],
         inSidebar: true,
     },
@@ -148,8 +148,8 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         path: "/employee/leave-request",
         title: "Xin nghỉ phép",
         icon: FileText,
-        roles: ["EMPLOYEE", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-        portals: ["employee", "hr", "warehouse", "sales"],
+        roles: ["EMPLOYEE", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
+        portals: ["employee", "warehouse", "sales"],
         inSidebar: true,
     },
     {

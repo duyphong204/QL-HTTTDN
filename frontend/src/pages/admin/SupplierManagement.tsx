@@ -1,4 +1,4 @@
-import { useSupplierManagement } from "@/hooks/useSupplierManagement"
+import { useSupplierPage } from "@/hooks/useSupplierPage"
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
 import { SupplierFormModal } from "@/components/forms/SupplierFormModal"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
@@ -10,7 +10,7 @@ export default function SupplierManagement() {
     meta,
     isLoading,
     modalOpen,
-    setModalOpen,
+    closeModal,
     editingSupplier,
     searchTerm,
     setSearchTerm,
@@ -21,7 +21,7 @@ export default function SupplierManagement() {
     openEditModal,
     handleDelete,
     handleFormSubmit,
-  } = useSupplierManagement()
+  } = useSupplierPage()
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -131,7 +131,7 @@ export default function SupplierManagement() {
 
       <SupplierFormModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={closeModal}
         editingSupplier={editingSupplier}
         onSubmit={handleFormSubmit}
       />

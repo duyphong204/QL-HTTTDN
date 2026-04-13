@@ -1,64 +1,30 @@
-import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Tag, Layers, RefreshCw } from "lucide-react";
-import { useCategoryStore } from "@/stores/category.store";
 import { AppModal } from "@/components/common/AppModal";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { PaginationControls } from "@/components/common/PaginationControls";
-import { useClientTable } from "@/hooks/useClientTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Category } from "@/types/category.type";
+import { useCategoryPage } from "@/hooks/useCategoryPage";
 
 export default function CategoryManagement() {
     const {
-        categories,
         isLoading,
-        fetchCategories,
-        createCategory,
-        updateCategory,
-        deleteCategory
-    } = useCategoryStore();
-
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-    const [name, setName] = useState("");
-
-    useEffect(() => {
-        fetchCategories();
-    }, [fetchCategories]);
-
-    const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-        data: categories,
-        pageSize: 10,
-        searchFn: (item, query) => item.name.toLowerCase().includes(query.toLowerCase()),
-    });
-
-    const openModal = (category?: Category) => {
-        setEditingCategory(category || null);
-        setName(category?.name || "");
-        setModalOpen(true);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name.trim()) return;
-
-        try {
-            if (editingCategory) {
-                await updateCategory(editingCategory.id, name);
-            } else {
-                await createCategory(name);
-            }
-            setModalOpen(false);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleDelete = async (id: string, catName: string) => {
-        if (!confirm(`Bạn có chắc muốn xoá danh mục "${catName}"?`)) return;
-        await deleteCategory(id);
-    };
+        modalOpen,
+        editingCategory,
+        name,
+        searchTerm,
+        page,
+        pagedData,
+        meta,
+        setSearchTerm,
+        setPage,
+        openCreateModal,
+        openEditModal,
+        closeModal,
+        handleNameChange,
+        handleFormSubmit,
+        handleDelete,
+    } = useCategoryPage();
 
     return (
         <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -76,7 +42,7 @@ export default function CategoryManagement() {
                         </div>
                     </div>
                     <Button
-                        onClick={() => openModal()}
+                        onClick={openCreateModal}
                         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm h-11"
                     >
                         <Plus size={18} /> Thêm danh mục
@@ -133,7 +99,7 @@ export default function CategoryManagement() {
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                                                     <button
-                                                        onClick={() => openModal(cat)}
+                                                        onClick={() => openEditModal(cat)}
                                                         className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                                                         title="Sửa"
                                                     >
@@ -167,16 +133,16 @@ export default function CategoryManagement() {
             {/* Form Modal */}
             <AppModal
                 isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
+                onClose={closeModal}
                 title={editingCategory ? "Cập nhật danh mục" : "Thêm mới danh mục"}
                 subtitle="Vui lòng nhập tên danh mục duy nhất để phân loại sản phẩm"
             >
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleFormSubmit} className="space-y-5">
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-gray-700">Tên danh mục *</label>
                         <Input
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => handleNameChange(e.target.value)}
                             placeholder="VD: Gia dụng, Điện tử..."
                             className="h-11 focus:ring-blue-500/20"
                             autoFocus
@@ -184,7 +150,7 @@ export default function CategoryManagement() {
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+                        <Button type="button" variant="ghost" onClick={closeModal}>
                             Hủy
                         </Button>
                         <Button

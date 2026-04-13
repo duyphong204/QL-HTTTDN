@@ -8,6 +8,7 @@ import type {
   CreateProductDto,
   UpdateProductDto,
   CreateStockInDto,
+  UpdateStockInDto,
   ProductQuery,
   ProductResponse,
   WarehouseReport,
@@ -91,11 +92,15 @@ export const stockInService = {
     return apiGet<StockIn[]>('/stock-ins', params);
   },
 
+  getStockInById: async (id: string): Promise<StockIn> => {
+    return apiGet<StockIn>(`/stock-ins/${id}`);
+  },
+
   createStockIn: async (data: CreateStockInDto): Promise<StockIn> => {
     return apiPost<StockIn>('/stock-ins', data);
   },
 
-  updateStockIn: async (id: string, data: Partial<CreateStockInDto>): Promise<StockIn> => {
+  updateStockIn: async (id: string, data: UpdateStockInDto): Promise<StockIn> => {
     return apiPatch<StockIn>(`/stock-ins/${id}`, data);
   },
 

@@ -1,4 +1,4 @@
-import { useProfileManagement } from "@/hooks/useProfileManagement"
+import { useProfile } from "@/hooks/useProfile"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,7 +17,7 @@ export default function ProfilePage() {
     handleChange,
     handleSave,
     handleCancel,
-  } = useProfileManagement()
+  } = useProfile()
 
   if (isLoadingProfile) {
     return (

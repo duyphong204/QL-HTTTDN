@@ -7,7 +7,7 @@ export class CloudinaryService {
   private extractPublicIdFromUrl(imageUrl: string): string | null {
     try {
       const parts = imageUrl.split('/');
-      const uploadIndex = parts.findIndex(part => part === 'upload');
+      const uploadIndex = parts.findIndex((part) => part === 'upload');
       if (uploadIndex === -1) return null;
 
       const remainingParts = parts.slice(uploadIndex + 1);
@@ -16,7 +16,7 @@ export class CloudinaryService {
       }
 
       const publicIdWithExtension = remainingParts.join('/');
-      return publicIdWithExtension.replace(/\.[^/.]+$/, "");
+      return publicIdWithExtension.replace(/\.[^/.]+$/, '');
     } catch {
       return null;
     }
