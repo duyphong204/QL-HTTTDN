@@ -1,34 +1,25 @@
-
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { API_CONFIG } from "@/constants";
 import { endpoints } from "@/api/endpoints";
-import type { ApiEnvelope, ApiErrorResponse } from "@/types/common.types";
-
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null): void => {
     accessToken = token;
 };
 
-export const getAccessToken = (): string | null => {
-    return accessToken;
-};
 export const axiosInstance = axios.create({
-    baseURL: API_CONFIG.BASE_URL,
-    timeout: API_CONFIG.TIMEOUT,
+    baseURL: BASE_URL,
+    timeout: 10000,
     withCredentials: true,
-    headers: {
-        "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
 });
 
+// REQUEST INTERCEPTOR
 axiosInstance.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-    if (config.data instanceof FormData && config.headers) {
-      // Let browser attach multipart boundary automatically.
-      delete config.headers["Content-Type"];
-    }
-
+    (config) => {
+        if (config.data instanceof FormData && config.headers) {
+            delete config.headers["Content-Type"];
+        }
         if (accessToken && config.headers) {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
@@ -37,6 +28,7 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+// RESPONSE INTERCEPTOR
 interface FailedQueueItem {
     resolve: (value: string | null) => void;
     reject: (error: unknown) => void;
@@ -47,101 +39,74 @@ let failedQueue: FailedQueueItem[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
     failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
+        error ? prom.reject(error) : prom.resolve(token);
     });
-    failedQueue = [];   
+    failedQueue = [];
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => {
-    const payload = response.data as ApiEnvelope<unknown> | unknown;
+    (response) => {
+        const payload = response.data as any;
+        // Chỉ unwrap nếu dữ liệu đúng cấu trúc Envelope và chưa bị unwrap trước đó
+        if (payload && payload.success && 'data' in payload) {
+            return {
+                ...response,
+                data: payload.meta ? { data: payload.data, meta: payload.meta } : payload.data
+            };
+        }
+        return response;
+    },
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
-      const envelope = payload as ApiEnvelope<unknown>;
-
-      // Keep pagination meta for list endpoints while still unwrapping normal payloads.
-      response.data = typeof envelope.meta !== 'undefined'
-        ? { data: envelope.data, meta: envelope.meta }
-        : envelope.data;
-    }
-
-    return response;
-  },
-  async (error: AxiosError) => {
-
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url?.includes(endpoints.auth.refresh) &&
-      !originalRequest.url?.includes(endpoints.auth.login)
-    ) {
-
-      if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            // Tránh lặp vô hạn tại các trang login/refresh
+            if (originalRequest.url?.includes(endpoints.auth.refresh) || originalRequest.url?.includes(endpoints.auth.login)) {
+                return Promise.reject(error);
             }
-            return axiosInstance(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
 
-      originalRequest._retry = true;
-      isRefreshing = true;
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                .then((token) => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return axiosInstance(originalRequest);
+                })
+                .catch((err) => Promise.reject(err));
+            }
 
-      try {
-        const refreshResponse = await axios.post(
-          `${API_CONFIG.BASE_URL}${endpoints.auth.refresh}`,
-          {},
-          { withCredentials: true }
-        );
+            originalRequest._retry = true;
+            isRefreshing = true;
 
-        const refreshPayload = refreshResponse.data as
-          | ApiEnvelope<{ accessToken: string }>
-          | { accessToken?: string };
+            try {
+                // Sửa lỗi baseURL ở đây
+                const refreshResponse = await axios.post(
+                    `${BASE_URL}${endpoints.auth.refresh}`,
+                    {},
+                    { withCredentials: true }
+                );
 
-        const newToken = 'data' in refreshPayload
-          ? refreshPayload.data.accessToken
-          : refreshPayload.accessToken;
+                const data = refreshResponse.data;
+                const newToken = data?.data?.accessToken || data?.accessToken;
 
-        if (!newToken) {
-          throw new Error('Không thể làm mới token');
+                if (!newToken) throw new Error("No token received");
+
+                setAccessToken(newToken);
+                processQueue(null, newToken);
+                
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return axiosInstance(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+                setAccessToken(null);
+                // window.location.href = "/login"; // Cân nhắc dùng navigate của router thay vì reload trang
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
         }
-        setAccessToken(newToken);
 
-        processQueue(null, newToken);
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        }
-
-        return axiosInstance(originalRequest);
-
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        setAccessToken(null);
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+        return Promise.reject(error);
     }
-
-    const apiError = error.response?.data as ApiErrorResponse;
-    if (apiError?.message) {
-      // Log lỗi API (optional, for debugging)
-      console.error('API Error:', apiError);
-    }
-
-    return Promise.reject(error);
-  }
 );
