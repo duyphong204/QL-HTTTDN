@@ -1,5 +1,6 @@
 import { DollarSign, Users, CheckCircle2, Calculator, Printer } from "lucide-react"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { TableLoadingRow } from "@/components/common/Loading"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import { SALARY_STATUS_BADGE, useSalaryPage } from "@/hooks/useSalaryPage"
 
@@ -126,7 +127,7 @@ export default function SalaryManagement() {
 
               <tbody className="divide-y divide-gray-50">
                 {loadingSalaries ? (
-                  <EmptyRow text="Đang tải dữ liệu..." />
+                  <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
                 ) : pagedData.length === 0 ? (
                   <EmptyRow text="Không có dữ liệu bảng lương." />
                 ) : (

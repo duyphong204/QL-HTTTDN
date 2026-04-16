@@ -1,6 +1,7 @@
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Printer } from 'lucide-react'
 import { useSalesReportPage } from '@/hooks/useSalesReportPage'
 import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
+import { InlineLoading, PageLoading } from '@/components/common/Loading'
 
 type PeriodType = 'month' | 'quarter' | 'year'
 
@@ -76,7 +77,7 @@ export default function SalesReportPage() {
                 </div>
 
                 {isLoadingStats ? (
-                    <div className="text-center py-20 text-gray-400">Đang tải thống kê...</div>
+                    <PageLoading text="Đang tải thống kê..." />
                 ) : stats && (
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -119,7 +120,7 @@ export default function SalesReportPage() {
                         </div>
 
                         {isLoadingReport && (
-                            <div className="text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ...</div>
+                            <InlineLoading text="Đang tải dữ liệu biểu đồ..." />
                         )}
                     </div>
                 )}

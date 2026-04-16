@@ -71,36 +71,39 @@ export class UpdateUserDto {
 }
 
 export class QueryUsersDto {
+  @Type(() => String)
   @IsOptional()
   @IsString()
   search?: string;
 
   @IsOptional()
-  @IsEnum(Role)
+  @IsEnum(Role, { message: 'Vai trò không hợp lệ' })
   role?: Role;
 
-  @IsOptional()
   @Type(() => Number)
+  @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(1, { message: 'Trang phải >= 1' })
   page?: number = 1;
 
-  @IsOptional()
   @Type(() => Number)
+  @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(1, { message: 'Giới hạn phải >= 1' })
   limit?: number = 10;
 
   @IsOptional()
-  @IsIn(['createdAt', 'email', 'role'])
+  @IsIn(['createdAt', 'email', 'role'], {
+    message: 'Trường sắp xếp không hợp lệ',
+  })
   sortBy?: 'createdAt' | 'email' | 'role' = 'createdAt';
 
   @IsOptional()
-  @IsIn(['asc', 'desc'])
+  @IsIn(['asc', 'desc'], { message: 'Hướng sắp xếp phải là asc hoặc desc' })
   sortOrder?: 'asc' | 'desc' = 'desc';
 
-  @IsOptional()
   @Type(() => Boolean)
+  @IsOptional()
   isActive?: boolean;
 }
 export class ChangeRoleDto {

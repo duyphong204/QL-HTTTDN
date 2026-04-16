@@ -1,6 +1,7 @@
-import { Plus, Pencil, Trash2, Tag, Layers, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Layers } from "lucide-react";
 import { AppModal } from "@/components/common/AppModal";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { TableLoadingRow } from "@/components/common/Loading";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,11 +70,7 @@ export default function CategoryManagement() {
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {isLoading ? (
-                                    <tr>
-                                        <td colSpan={3} className="px-6 py-10 text-center text-gray-400">
-                                            <RefreshCw size={24} className="animate-spin mx-auto text-blue-500" />
-                                        </td>
-                                    </tr>
+                                    <TableLoadingRow colSpan={3} text="Đang tải dữ liệu..." />
                                 ) : pagedData.length === 0 ? (
                                     <tr>
                                         <td colSpan={3} className="px-6 py-10 text-center text-gray-400">

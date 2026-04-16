@@ -1,6 +1,7 @@
 import { useSalary } from "@/hooks/useSalary"
 import { Printer } from "lucide-react"
 import { RoleChartCard } from "@/components/common/reports/RoleChartCard"
+import { InlineLoading, TableLoadingRow } from "@/components/common/Loading"
 
 import {
   Select,
@@ -120,7 +121,7 @@ export default function MySalaryPage() {
               type="bar"
             />
             {isLoadingSalaryReport && (
-              <div className="pt-2 text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ lương...</div>
+              <InlineLoading text="Đang tải dữ liệu biểu đồ lương..." className="pt-2" />
             )}
           </div>
 
@@ -140,11 +141,7 @@ export default function MySalaryPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {isLoadingSalary ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-10 text-center text-gray-400">
-                      Đang tải bảng lương...
-                    </td>
-                  </tr>
+                  <TableLoadingRow colSpan={8} text="Đang tải bảng lương..." />
                 ) : mySalaries.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-10 text-center text-gray-400">

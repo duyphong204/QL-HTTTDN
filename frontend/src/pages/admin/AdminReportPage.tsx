@@ -1,10 +1,11 @@
 import { 
   BarChart3, Building2, Users, ShoppingCart, 
-  Printer, AlertTriangle, Loader2, TrendingUp, 
+  Printer, AlertTriangle, TrendingUp, 
   UserCheck, Package 
 } from 'lucide-react'
 import { useAdminReportPage } from '@/hooks/useAdminReportPage'
 import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
+import { InlineLoading, PageLoading } from '@/components/common/Loading'
 
 // --- MAIN PAGE COMPONENT ---
 export default function AdminReportPage() {
@@ -77,10 +78,7 @@ export default function AdminReportPage() {
 
         {/* CONTENT SECTION */}
         {isLoading ? (
-          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white">
-            <Loader2 className="mb-4 h-8 w-8 animate-spin text-blue-500" />
-            <p className="text-sm text-slate-500">Đang tải dữ liệu báo cáo...</p>
-          </div>
+          <PageLoading text="Đang tải dữ liệu báo cáo..." className="min-h-100" />
         ) : report ? (
           <div className="space-y-6">
             <div className="inline-flex items-center rounded-full bg-blue-50 px-4 py-1.5 text-sm text-blue-700">
@@ -156,7 +154,7 @@ export default function AdminReportPage() {
             </div>
 
             {isLoadingAnalytics && (
-              <div className="text-center text-sm text-slate-400">Đang tải dữ liệu biểu đồ...</div>
+              <InlineLoading text="Đang tải dữ liệu biểu đồ..." />
             )}
 
             {/* WARNING TABLE */}

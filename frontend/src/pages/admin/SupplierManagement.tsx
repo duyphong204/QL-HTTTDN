@@ -1,7 +1,8 @@
 import { useSupplierPage } from "@/hooks/useSupplierPage"
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2 } from "lucide-react"
 import { SupplierFormModal } from "@/components/forms/SupplierFormModal"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { OverlayLoading } from "@/components/common/Loading"
 import { PaginationControls } from "@/components/common/PaginationControls"
 
 export default function SupplierManagement() {
@@ -64,9 +65,7 @@ export default function SupplierManagement() {
 
           <div className="relative">
             {isLoading && (
-              <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600" size={32} />
-              </div>
+              <OverlayLoading text="Đang tải dữ liệu..." />
             )}
 
             <div className="overflow-x-auto">

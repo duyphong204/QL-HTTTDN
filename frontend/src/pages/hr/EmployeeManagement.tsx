@@ -5,6 +5,7 @@ import { EmployeeDetailModal } from "@/components/modals/EmployeeDetailModal"
 
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
+import { TableLoadingRow } from "@/components/common/Loading"
 import { useEmployeePage } from "@/hooks/useEmployeePage"
 
 export default function EmployeeManagement() {
@@ -76,11 +77,7 @@ export default function EmployeeManagement() {
 
               <tbody className="divide-y divide-gray-50">
                 {loadingEmployees ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
-                      Đang tải dữ liệu...
-                    </td>
-                  </tr>
+                  <TableLoadingRow colSpan={7} text="Đang tải dữ liệu..." />
                 ) : employeeList.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400">

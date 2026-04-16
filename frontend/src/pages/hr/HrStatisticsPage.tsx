@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react"
 import { useHrStatisticsPage } from "@/hooks/useHrStatisticsPage"
 import { RoleChartCard } from "@/components/common/reports/RoleChartCard"
+import { InlineLoading } from "@/components/common/Loading"
 
 export default function HrStatisticsPage() {
     const {
@@ -40,7 +41,7 @@ export default function HrStatisticsPage() {
                         <Calendar className="h-4 w-4 text-slate-500" />
                     </div>
                     <Select value={month} onValueChange={setMonth}>
-                        <SelectTrigger className="w-[120px] border-none focus:ring-0 font-medium">
+                        <SelectTrigger className="w-30 border-none focus:ring-0 font-medium">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -48,7 +49,7 @@ export default function HrStatisticsPage() {
                         </SelectContent>
                     </Select>
                     <Select value={year} onValueChange={setYear}>
-                        <SelectTrigger className="w-[90px] border-none focus:ring-0 font-medium">
+                        <SelectTrigger className="w-22.5 border-none focus:ring-0 font-medium">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
@@ -168,7 +169,7 @@ export default function HrStatisticsPage() {
                 </div>
 
                 {loadingReport && (
-                    <div className="col-span-12 text-center text-sm text-slate-400">Đang tải dữ liệu biểu đồ HR...</div>
+                    <InlineLoading text="Đang tải dữ liệu biểu đồ HR..." className="col-span-12" />
                 )}
             </div>
         </div>

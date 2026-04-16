@@ -1,9 +1,10 @@
 import { useUserPage } from "@/hooks/useUserPage"
 import { UserPlus, Pencil, Trash2 } from "lucide-react"
 import { UserFormModal } from "@/components/forms/UserFormModal"
-import { ROLE_BADGE } from "@/constants/role"
+import { ROLE_BADGE } from "@/utils/role"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
+import { TableLoadingRow } from "@/components/common/Loading"
 import type { Role } from "@/types/auth.types"
 
 export default function UserManagement() {
@@ -113,11 +114,7 @@ export default function UserManagement() {
 
               <tbody className="divide-y divide-gray-50">
                 {isLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
-                      Đang tải dữ liệu...
-                    </td>
-                  </tr>
+                  <TableLoadingRow colSpan={5} text="Đang tải dữ liệu..." />
                 ) : users.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-10 text-center text-gray-400">

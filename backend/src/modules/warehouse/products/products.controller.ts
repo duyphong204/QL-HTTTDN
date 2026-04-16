@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductService } from './products.service';
+import type { UploadedImageFile } from 'src/common/cloudinary/cloudinary.service';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -34,24 +35,12 @@ export class ProductController {
     return this.productsService.findAll(query);
   }
 
-  @Get('report/stats')
-  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  getWarehouseReport(
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    return this.productsService.getWarehouseReport(
-      month ? Number(month) : undefined,
-      year ? Number(year) : undefined,
-    );
-  }
-
   @Post()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
   @UseInterceptors(FileInterceptor('image'))
   create(
     @Body() dto: CreateProductDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile() file?: UploadedImageFile,
   ) {
     return this.productsService.create(dto, file);
   }
@@ -62,7 +51,7 @@ export class ProductController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile() file?: UploadedImageFile,
   ) {
     return this.productsService.update(id, dto, file);
   }

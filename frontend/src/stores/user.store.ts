@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import { userService } from "@/services/user.service";
-import { toast } from "sonner";
 import type { Role } from "@/types/auth.types";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
-import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/stores/store.helpers";
+import { mergeFiltersWithPageReset } from "@/stores/store.helpers";
 
 type UserFilters = BaseFilters & {
     role?: Role;
@@ -23,13 +21,13 @@ type UserState = {
     filters: UserFilters;
 
     setFilters: (filters: Partial<UserFilters>) => void;
-    fetchUsers: () => Promise<void>;
-    addUser: (data: CreateUserDto) => Promise<void>;
-    updateUser: (id: string, data: UpdateUserDto) => Promise<void>;
-    deleteUser: (id: string) => Promise<void>;
+    setUsers: (users: User[]) => void;
+    setMeta: (meta: PaginationMeta | null) => void;
+    setLoading: (isLoading: boolean) => void;
+    setError: (error: string | null) => void;
 };
 
-export const useUserStore = create<UserState>((set, get) => ({
+export const useUserStore = create<UserState>((set) => ({
     users: [],
     meta: null,
     isLoading: false,
@@ -48,72 +46,9 @@ export const useUserStore = create<UserState>((set, get) => ({
         }));
     },
 
-    fetchUsers: async () => {
-        set({ ...loadingState("isLoading", true), error: null });
-        try {
-            const { filters } = get();
-            const response = await userService.getUsers(filters);
-            set({
-                users: response.data,
-                meta: response.meta,
-            });
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-        } finally {
-            set(loadingState("isLoading", false));
-        }
-    },
-
-    addUser: async (data) => {
-        try {
-            const newUser = await userService.createUser(data);
-            set((state) => ({
-                users: [newUser, ...state.users],
-            }));
-
-            toast.success("Thêm người dùng thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-            throw err;
-        }
-    },
-
-    updateUser: async (id, data) => {
-        try {
-            const updated = await userService.updateUser(id, data);
-            set((state) => ({
-                users: state.users.map((u) =>
-                    u.id === id ? updated : u
-                ),
-            }));
-
-            toast.success("Cập nhật người dùng thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-            throw err;
-        }
-    },
-
-    deleteUser: async (id) => {
-        try {
-            await userService.deleteUser(id);
-            set((state) => ({
-                users: state.users.filter((u) => u.id !== id),
-            }));
-
-            toast.success("Xóa người dùng thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-            throw err;
-        }
-    },
+    setUsers: (users) => set({ users }),
+    setMeta: (meta) => set({ meta }),
+    setLoading: (isLoading) => set({ isLoading }),
+    setError: (error) => set({ error }),
 
 }));

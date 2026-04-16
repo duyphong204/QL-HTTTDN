@@ -2,6 +2,7 @@ import { useProfile } from "@/hooks/useProfile"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageLoading } from "@/components/common/Loading"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -20,11 +21,7 @@ export default function ProfilePage() {
   } = useProfile()
 
   if (isLoadingProfile) {
-    return (
-      <div className="flex h-100 items-center justify-center text-slate-500 font-medium">
-        <div className="animate-pulse">Đang tải hồ sơ nhân viên...</div>
-      </div>
-    )
+    return <PageLoading text="Đang tải hồ sơ nhân viên..." />
   }
 
   const profile = myProfile?.user.profile

@@ -1,24 +1,38 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { useEmployeeStore } from "@/stores/employee.store"
+import { salaryService } from "@/services/hr.service"
 import { reportService } from "@/services/report.service"
+import { getErrorMessage } from "@/stores/store.helpers"
+import { getCurrentYear, getRecentYears, MONTH_OPTIONS } from "@/utils/date"
+import { formatCurrencyVnd } from "@/utils/format"
 import type { RoleReportResponse } from "@/types/report.types"
 
-const currentYear = new Date().getFullYear()
-const YEARS = [currentYear, currentYear - 1, currentYear - 2]
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(n || 0)
+const currentYear = getCurrentYear()
+const YEARS = getRecentYears(3, currentYear)
+const MONTHS = MONTH_OPTIONS
 
 export const useSalary = () => {
-  const { mySalaries, isLoadingSalary, fetchMySalaries, myProfile } = useEmployeeStore()
+  const { mySalaries, isLoadingSalary, myProfile, setMySalaries, setLoadingSalary } = useEmployeeStore()
   const [filterYear, setFilterYear] = useState(String(currentYear))
   const [filterMonth, setFilterMonth] = useState("ALL")
   const [salaryReport, setSalaryReport] = useState<RoleReportResponse | null>(null)
   const [isLoadingSalaryReport, setIsLoadingSalaryReport] = useState(false)
+
+  const fetchMySalaries = useCallback(
+    async (params?: { month?: number; year?: number }) => {
+      setLoadingSalary(true)
+      try {
+        const data = await salaryService.getMySalaries(params)
+        setMySalaries(data)
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, "Không thể tải bảng lương!"))
+      } finally {
+        setLoadingSalary(false)
+      }
+    },
+    [setLoadingSalary, setMySalaries],
+  )
 
   useEffect(() => {
     const params: { year?: number; month?: number } = {
@@ -29,7 +43,7 @@ export const useSalary = () => {
       params.month = Number(filterMonth)
     }
 
-    fetchMySalaries(params)
+    void fetchMySalaries(params)
   }, [filterYear, filterMonth, fetchMySalaries])
 
   useEffect(() => {
@@ -118,6 +132,6 @@ export const useSalary = () => {
     // Constants
     YEARS,
     MONTHS,
-    formatCurrency,
+    formatCurrency: formatCurrencyVnd,
   }
 }

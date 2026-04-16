@@ -1,8 +1,11 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import dayjs from 'dayjs'
-import { useHrStore } from '@/stores/hr.store'
+import { toast } from 'sonner'
+import { useLeaveRequestStore } from '@/stores/leaveRequest.store'
 import { useClientTable } from '@/hooks/useClientTable'
 import { useConfirmAction } from '@/hooks/useConfirmAction'
+import { leaveRequestService } from '@/services/hr.service'
+import { getErrorMessage } from '@/stores/store.helpers'
 
 export const LEAVE_TYPE_LABEL: Record<string, string> = {
   SICK: 'Nghỉ Ốm',
@@ -18,8 +21,40 @@ export const LEAVE_STATUS_CONFIG = {
 }
 
 export const useLeaveRequestPage = () => {
-  const { leaveRequests, loadingLeaveRequests, fetchLeaveRequests, approveLeaveRequest } = useHrStore()
+  const {
+    leaveRequests,
+    isLoading: loadingLeaveRequests,
+    setLeaveRequests,
+    setLoading: setLoadingLeaveRequests,
+  } = useLeaveRequestStore()
   const { confirmAndRun } = useConfirmAction()
+
+  const fetchLeaveRequests = useCallback(async () => {
+    setLoadingLeaveRequests(true)
+    try {
+      const data = await leaveRequestService.getLeaveRequests()
+      setLeaveRequests(data)
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Không thể tải đơn nghỉ phép'))
+    } finally {
+      setLoadingLeaveRequests(false)
+    }
+  }, [setLeaveRequests, setLoadingLeaveRequests])
+
+  const approveLeaveRequest = useCallback(
+    async (id: string, status: 'APPROVED' | 'REJECTED') => {
+      try {
+        await leaveRequestService.approveLeaveRequest(id, { status })
+        setLeaveRequests(
+          leaveRequests.map((item) => (item.id === id ? { ...item, status } : item)),
+        )
+        toast.success(status === 'APPROVED' ? 'Đã duyệt đơn nghỉ' : 'Đã từ chối đơn nghỉ')
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Duyệt đơn thất bại'))
+      }
+    },
+    [leaveRequests, setLeaveRequests],
+  )
 
   const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
     data: leaveRequests,

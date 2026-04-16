@@ -2,6 +2,7 @@
 import { BarChart3, Package, AlertTriangle, TrendingDown, Printer } from 'lucide-react'
 import { useWarehouseReportPage } from '@/hooks/useWarehouseReportPage'
 import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
+import { InlineLoading, PageLoading } from '@/components/common/Loading'
 
 export default function WarehouseReportPage() {
     const {
@@ -54,7 +55,7 @@ export default function WarehouseReportPage() {
                 </div>
 
                 {isLoadingReport ? (
-                    <div className="text-center py-20 text-gray-400">Đang tải báo cáo...</div>
+                    <PageLoading text="Đang tải báo cáo..." />
                 ) : report && (
                     <>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,7 +90,7 @@ export default function WarehouseReportPage() {
                         </div>
 
                         {isLoadingAnalytics && (
-                            <div className="text-center text-sm text-gray-400">Đang tải dữ liệu biểu đồ...</div>
+                            <InlineLoading text="Đang tải dữ liệu biểu đồ..." />
                         )}
 
                         {shownLowStockProducts.length > 0 && (

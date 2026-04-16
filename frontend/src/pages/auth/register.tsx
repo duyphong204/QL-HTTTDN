@@ -1,9 +1,9 @@
 import { SignupForm } from "@/components/forms/SignupForm"
-import { useAuthStore } from "@/stores/auth.store"
+import { useAuth } from "@/hooks/useAuth"
 import { Navigate } from "react-router-dom"
 
 export default function SignupPage() {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const { isAuthenticated } = useAuth();
 
     if (isAuthenticated) return <Navigate to="/" replace />;
 

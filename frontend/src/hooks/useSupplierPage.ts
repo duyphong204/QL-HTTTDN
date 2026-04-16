@@ -1,8 +1,12 @@
+import { useCallback } from "react"
+import { toast } from "sonner"
 import { useSupplierStore } from "@/stores/supplier.store"
 import { usePaginatedList } from "@/hooks/usePaginatedList"
 import { useEntityModal } from "@/hooks/useEntityModal"
 import { useConfirmAction } from "@/hooks/useConfirmAction"
-import type { Supplier, CreateSupplierDto } from "@/types/supplier.types"
+import { supplierService } from "@/services/warehouse.service"
+import { getErrorMessage } from "@/stores/store.helpers"
+import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/supplier.types"
 
 export const useSupplierPage = () => {
   const {
@@ -10,10 +14,10 @@ export const useSupplierPage = () => {
     meta,
     isLoading,
     filters,
-    fetchSuppliers,
-    createSupplier,
-    updateSupplier,
-    deleteSupplier,
+    setSuppliers,
+    setMeta,
+    setLoading,
+    setError,
     setFilters,
   } = useSupplierStore()
 
@@ -25,6 +29,69 @@ export const useSupplierPage = () => {
     closeModal,
   } = useEntityModal<Supplier>()
   const { confirmAndRun } = useConfirmAction()
+
+  const fetchSuppliers = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const response = await supplierService.getSuppliers(filters)
+      setSuppliers(response.data)
+      setMeta(response.meta)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      setError(message)
+      toast.error(message)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, setError, setLoading, setMeta, setSuppliers])
+
+  const createSupplier = useCallback(
+    async (data: CreateSupplierDto) => {
+      try {
+        const newSupplier = await supplierService.createSupplier(data)
+        setSuppliers([newSupplier, ...suppliers])
+        toast.success("Thêm nhà cung cấp thành công")
+      } catch (err: unknown) {
+        const message = getErrorMessage(err)
+        setError(message)
+        toast.error(message)
+        throw err
+      }
+    },
+    [setError, setSuppliers, suppliers],
+  )
+
+  const updateSupplier = useCallback(
+    async (id: string, data: UpdateSupplierDto) => {
+      try {
+        const updated = await supplierService.updateSupplier(id, data)
+        setSuppliers(suppliers.map((s) => (s.id === id ? updated : s)))
+        toast.success("Cập nhật nhà cung cấp thành công")
+      } catch (err: unknown) {
+        const message = getErrorMessage(err)
+        setError(message)
+        toast.error(message)
+        throw err
+      }
+    },
+    [setError, setSuppliers, suppliers],
+  )
+
+  const deleteSupplier = useCallback(
+    async (id: string) => {
+      try {
+        await supplierService.deleteSupplier(id)
+        setSuppliers(suppliers.filter((s) => s.id !== id))
+        toast.success("Xóa nhà cung cấp thành công")
+      } catch (err: unknown) {
+        const message = getErrorMessage(err)
+        setError(message)
+        toast.error(message)
+      }
+    },
+    [setError, setSuppliers, suppliers],
+  )
 
   const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
     filters,

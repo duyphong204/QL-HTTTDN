@@ -1,11 +1,11 @@
 import { Plus, Trash2, Eye, Pencil } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
+import { TableLoadingRow } from '@/components/common/Loading'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { AppModal } from '@/components/common/AppModal'
 import { useImportSlipPage } from '@/hooks/useImportSlipPage'
 import { cn } from '@/lib/utils'
-
-const formatCurrency = (n: number) => `${n.toLocaleString('vi-VN')}đ`
+import { formatNumberWithDong } from '@/utils/format'
 
 const statusLabel: Record<string, string> = {
   PENDING: 'Chờ xử lý',
@@ -81,7 +81,7 @@ export default function ImportSlipManagement() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {isLoading && table.pagedData.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Đang tải dữ liệu...</td></tr>
+                  <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
                 ) : table.pagedData.map((slip) => (
                   <tr key={slip.id} className="hover:bg-gray-50/70 transition-colors group">
                     <td className="px-6 py-4 font-mono text-blue-600 font-medium">#{slip.id.slice(0, 8).toUpperCase()}</td>
@@ -92,7 +92,7 @@ export default function ImportSlipManagement() {
                         {statusLabel[slip.status] ?? slip.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(slip.totalAmount)}</td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatNumberWithDong(slip.totalAmount)}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
@@ -196,7 +196,7 @@ export default function ImportSlipManagement() {
 
           <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl">
             <span className="text-sm font-medium text-blue-900">Tổng giá trị:</span>
-            <span className="text-xl font-bold text-blue-600">{formatCurrency(totalAmount)}</span>
+            <span className="text-xl font-bold text-blue-600">{formatNumberWithDong(totalAmount)}</span>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -250,15 +250,15 @@ export default function ImportSlipManagement() {
                     <tr key={detail.id}>
                       <td className="px-4 py-3 font-medium text-gray-700">{detail.product?.name}</td>
                       <td className="px-4 py-3 text-center text-gray-600">{detail.quantity}</td>
-                      <td className="px-4 py-3 text-right text-gray-600">{detail.price.toLocaleString('vi-VN')}</td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-900">{(detail.quantity * detail.price).toLocaleString('vi-VN')}đ</td>
+                      <td className="px-4 py-3 text-right text-gray-600">{formatNumberWithDong(detail.price)}</td>
+                      <td className="px-4 py-3 text-right font-bold text-gray-900">{formatNumberWithDong(detail.quantity * detail.price)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-blue-50/30">
                   <tr>
                     <td colSpan={3} className="px-4 py-4 font-bold text-gray-700">Tổng cộng</td>
-                    <td className="px-4 py-4 text-right font-black text-blue-600 text-lg">{selectedStockIn.totalAmount.toLocaleString('vi-VN')}đ</td>
+                    <td className="px-4 py-4 text-right font-black text-blue-600 text-lg">{formatNumberWithDong(selectedStockIn.totalAmount)}</td>
                   </tr>
                 </tfoot>
               </table>

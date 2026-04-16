@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AppModal } from "@/components/common/AppModal";
 import type { CreateEmployeeDto, UpdateEmployeeDto, Employee } from "@/types/employee.types";
-import { EMPLOYEE_ROLE_OPTIONS, ROLE_DEPARTMENT_MAP } from "@/constants/role";
+import { EMPLOYEE_ROLE_OPTIONS, ROLE_DEPARTMENT_MAP } from "@/utils/role";
 import type { Role } from "@/types/auth.types";
 
 const ROLE_POSITION_MAP: Record<string, string> = {

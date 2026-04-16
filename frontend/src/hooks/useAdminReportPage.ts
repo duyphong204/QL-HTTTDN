@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useAdminStore } from '@/stores/admin.store'
+import { adminService } from '@/services/admin.service'
 import { reportService } from '@/services/report.service'
+import { getErrorMessage } from '@/stores/store.helpers'
+import { getCurrentYear, getRecentYears, MONTH_OPTIONS } from '@/utils/date'
+import { formatCurrencyVnd, formatNumberVi } from '@/utils/format'
 import type { RoleReportResponse } from '@/types/report.types'
 
-const currentYear = new Date().getFullYear()
-
-const formatCurrency = (amount?: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
-
-const formatNumber = (num?: number) => (num || 0).toLocaleString('vi-VN')
+const currentYear = getCurrentYear()
 
 export const useAdminReportPage = () => {
-  const { report, isLoading, fetchDashboardReport } = useAdminStore()
+  const { report, isLoading, setReport, setLoading, setError } = useAdminStore()
   const [analyticsReport, setAnalyticsReport] = useState<RoleReportResponse | null>(null)
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
 
@@ -19,11 +19,26 @@ export const useAdminReportPage = () => {
   const [month, setMonth] = useState('')
 
   useEffect(() => {
-    void fetchDashboardReport({
-      year: Number(year),
-      month: month ? Number(month) : undefined,
-    })
-  }, [year, month, fetchDashboardReport])
+    const loadDashboardReport = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await adminService.getDashboardReport({
+          year: Number(year),
+          month: month ? Number(month) : undefined,
+        })
+        setReport(data)
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Không thể tải báo cáo tổng hợp')
+        setError(message)
+        toast.error(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadDashboardReport()
+  }, [month, setError, setLoading, setReport, year])
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -44,8 +59,8 @@ export const useAdminReportPage = () => {
     void loadAnalytics()
   }, [year, month])
 
-  const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
-  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
+  const years = useMemo(() => getRecentYears(3, currentYear), [])
+  const months = useMemo(() => MONTH_OPTIONS, [])
 
   const periodLabel = useMemo(() => {
     if (!report?.period) return '-'
@@ -56,12 +71,12 @@ export const useAdminReportPage = () => {
 
   const quickStats = useMemo(
     () => [
-      { title: 'Tổng đơn hàng', value: formatNumber(report?.sales?.totalOrders) },
-      { title: 'Doanh thu', value: formatCurrency(report?.sales?.totalRevenue) },
-      { title: 'Tổng giá trị nhập', value: formatCurrency(report?.warehouse?.totalImportValue) },
+      { title: 'Tổng đơn hàng', value: formatNumberVi(report?.sales?.totalOrders ?? 0) },
+      { title: 'Doanh thu', value: formatCurrencyVnd(report?.sales?.totalRevenue ?? 0) },
+      { title: 'Tổng giá trị nhập', value: formatCurrencyVnd(report?.warehouse?.totalImportValue ?? 0) },
       {
         title: 'Tổng quỹ lương',
-        value: formatCurrency((report?.hr?.totalSalaryPaid ?? 0) + (report?.hr?.totalBonus ?? 0)),
+        value: formatCurrencyVnd((report?.hr?.totalSalaryPaid ?? 0) + (report?.hr?.totalBonus ?? 0)),
       },
     ],
     [report]
@@ -70,18 +85,18 @@ export const useAdminReportPage = () => {
   const detailStats = useMemo(
     () => ({
       sales: [
-        { label: 'Sản phẩm đã xuất', value: formatNumber(report?.sales?.totalItemsSold) },
-        { label: 'Lợi nhuận', value: formatCurrency(report?.sales?.totalProfit), highlight: true },
+        { label: 'Sản phẩm đã xuất', value: formatNumberVi(report?.sales?.totalItemsSold ?? 0) },
+        { label: 'Lợi nhuận', value: formatCurrencyVnd(report?.sales?.totalProfit ?? 0), highlight: true },
       ],
       hr: [
-        { label: 'Nhân sự đang làm', value: formatNumber(report?.hr?.totalEmployees) },
-        { label: 'Nhân sự đã nghỉ', value: formatNumber(report?.hr?.totalResigned) },
-        { label: 'Bảng lương đã tính', value: formatNumber(report?.hr?.headcount) },
+        { label: 'Nhân sự đang làm', value: formatNumberVi(report?.hr?.totalEmployees ?? 0) },
+        { label: 'Nhân sự đã nghỉ', value: formatNumberVi(report?.hr?.totalResigned ?? 0) },
+        { label: 'Bảng lương đã tính', value: formatNumberVi(report?.hr?.headcount ?? 0) },
       ],
       warehouse: [
-        { label: 'Số phiếu nhập', value: formatNumber(report?.warehouse?.totalStockIns) },
-        { label: 'Tổng tồn kho', value: formatNumber(report?.warehouse?.totalStockQuantity) },
-        { label: 'Loại sản phẩm', value: formatNumber(report?.warehouse?.totalProductTypes) },
+        { label: 'Số phiếu nhập', value: formatNumberVi(report?.warehouse?.totalStockIns ?? 0) },
+        { label: 'Tổng tồn kho', value: formatNumberVi(report?.warehouse?.totalStockQuantity ?? 0) },
+        { label: 'Loại sản phẩm', value: formatNumberVi(report?.warehouse?.totalProductTypes ?? 0) },
       ],
     }),
     [report]

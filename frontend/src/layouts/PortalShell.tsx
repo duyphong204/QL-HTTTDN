@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { LogOut, Menu, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/stores/auth.store";
+import { useAuth } from "@/hooks/useAuth";
 import { ROUTE_CONFIGS, type PortalId } from "@/routes/routes.config";
 
 const PORTAL_LABELS: Record<PortalId, string> = {
@@ -21,7 +21,7 @@ interface PortalShellProps {
 const PortalShell = ({ portal }: PortalShellProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
-    const { user, logout } = useAuthStore();
+    const { user, handleLogout } = useAuth();
     const portalLabel = PORTAL_LABELS[portal];
 
     const filteredMenuItems = ROUTE_CONFIGS.filter(
@@ -100,7 +100,7 @@ const PortalShell = ({ portal }: PortalShellProps) => {
                     <div className="pt-4 mt-auto border-t border-gray-100">
                         <button
                             type="button"
-                            onClick={() => logout()}
+                            onClick={() => handleLogout()}
                             className={cn(
                                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left group hover:bg-red-50 text-gray-600 hover:text-red-600"
                             )}

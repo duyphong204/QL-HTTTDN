@@ -6,7 +6,7 @@ export interface LeaveRequest extends BaseEntity {
     employeeName?: string
     startDate: string
     endDate: string
-    type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"
+    type: "SICK" | "ANNUAL"| "RESIGNATION"
     reason: string
     status: "PENDING" | "APPROVED" | "REJECTED"
     approvedById?: string
@@ -16,7 +16,7 @@ export interface LeaveRequest extends BaseEntity {
 export interface CreateLeaveRequestDto {
     startDate: string
     endDate: string
-    type: "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION"
+    type: "SICK" | "ANNUAL" | "RESIGNATION"
     reason: string
 }
 
@@ -26,7 +26,7 @@ export interface ApproveLeaveRequestDto {
 
 export interface QueryLeaveRequestDto {
     status?: 'PENDING' | 'APPROVED' | 'REJECTED'
-    type?: 'SICK' | 'ANNUAL' | 'MATERNITY' | 'RESIGNATION'
+    type?: 'SICK' | 'ANNUAL'| 'RESIGNATION'
     employeeId?: string
     year?: string
 }

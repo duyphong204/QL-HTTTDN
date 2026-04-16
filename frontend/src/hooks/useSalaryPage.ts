@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useHrStore } from '@/stores/hr.store'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { useHrSalaryStore } from '@/stores/hrSalary.store'
 import { useClientTable } from '@/hooks/useClientTable'
+import { salaryService } from '@/services/hr.service'
+import { getErrorMessage } from '@/stores/store.helpers'
+import { getCurrentYear, getRecentYears, MONTH_OPTIONS } from '@/utils/date'
+import { formatNumberWithDong } from '@/utils/format'
 
 export const SALARY_STATUS_BADGE = {
   PAID: {
@@ -13,13 +18,13 @@ export const SALARY_STATUS_BADGE = {
   },
 } as const
 
-const currentYear = new Date().getFullYear()
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('vi-VN').format(amount || 0) + ' đ'
+const currentYear = getCurrentYear()
 
 export const useSalaryPage = () => {
-  const { salaries, loadingSalaries, fetchSalaries, calculateAllSalaries } = useHrStore()
+  const salaries = useHrSalaryStore((state) => state.salaries)
+  const loadingSalaries = useHrSalaryStore((state) => state.isLoading)
+  const setSalaries = useHrSalaryStore((state) => state.setSalaries)
+  const setLoadingSalaries = useHrSalaryStore((state) => state.setLoading)
 
   const [month, setMonth] = useState(String(new Date().getMonth() + 1))
   const [year, setYear] = useState(String(currentYear))
@@ -33,6 +38,35 @@ export const useSalaryPage = () => {
       return name.includes(keyword)
     },
   })
+
+  const fetchSalaries = useCallback(
+    async (params?: { month?: number; year?: number }) => {
+      setLoadingSalaries(true)
+      try {
+        const data = await salaryService.getSalaries(params)
+        setSalaries(data)
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Không thể tải bảng lương'))
+      } finally {
+        setLoadingSalaries(false)
+      }
+    },
+    [setLoadingSalaries, setSalaries],
+  )
+
+  const calculateAllSalaries = useCallback(
+    async (params: { month: number; year: number }) => {
+      try {
+        await salaryService.calculateAllSalaries(params)
+        toast.success('Đã tính lương tháng cho toàn bộ nhân sự active')
+        await fetchSalaries(params)
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Không thể tính lương hàng loạt'))
+        throw error
+      }
+    },
+    [fetchSalaries],
+  )
 
   useEffect(() => {
     void fetchSalaries({ month: Number(month), year: Number(year) })
@@ -54,8 +88,8 @@ export const useSalaryPage = () => {
     }
   }, [salaries])
 
-  const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
-  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
+  const years = useMemo(() => getRecentYears(3, currentYear), [])
+  const months = useMemo(() => MONTH_OPTIONS, [])
 
   const handleCalculateAll = async () => {
     setCalculating(true)
@@ -91,6 +125,6 @@ export const useSalaryPage = () => {
     setPage,
     handleCalculateAll,
     handlePrint,
-    formatCurrency,
+    formatCurrency: (amount: number) => formatNumberWithDong(amount, true),
   }
 }

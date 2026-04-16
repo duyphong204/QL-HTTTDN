@@ -1,29 +1,38 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { toast } from 'sonner'
 import { useClientTable } from '@/hooks/useClientTable'
+import { useConfirmAction } from '@/hooks/useConfirmAction'
 import { useStockOutStore } from '@/stores/stockOut.store'
+import { useWarehouseReferenceStore } from '@/stores/warehouseReference.store'
+import { stockOutService } from '@/services/sales.service'
+import { productService } from '@/services/warehouse.service'
+import { getErrorMessage } from '@/stores/store.helpers'
 import {
   StockOutStatus,
   StockOutType,
+  type CreateStockOutDto,
   type StockOut,
   type StockOutItem,
   type StockOutQuery,
+  type UpdateStockOutDto,
 } from '@/types/stockOut.types'
 
 const emptyItem = (): StockOutItem => ({ productId: '', quantity: 1, price: 0 })
 
 export const useExportSlipPage = () => {
   const stockOuts = useStockOutStore((state) => state.stockOuts)
-  const productOptions = useStockOutStore((state) => state.productOptions)
+  const productOptions = useWarehouseReferenceStore((state) => state.products)
   const isLoading = useStockOutStore((state) => state.isLoading)
-  const isLoadingProducts = useStockOutStore((state) => state.isLoadingProducts)
+  const isLoadingProducts = useWarehouseReferenceStore((state) => state.isLoadingProducts)
   const isSubmitting = useStockOutStore((state) => state.isSubmitting)
-  const fetchStockOuts = useStockOutStore((state) => state.fetchStockOuts)
-  const fetchProducts = useStockOutStore((state) => state.fetchProducts)
-  const createStockOut = useStockOutStore((state) => state.createStockOut)
-  const updateStockOut = useStockOutStore((state) => state.updateStockOut)
-  const deleteStockOut = useStockOutStore((state) => state.deleteStockOut)
-  const getStockOutById = useStockOutStore((state) => state.getStockOutById)
+  const setStockOuts = useStockOutStore((state) => state.setStockOuts)
+  const setProductOptions = useWarehouseReferenceStore((state) => state.setProducts)
+  const setLoading = useStockOutStore((state) => state.setLoading)
+  const setLoadingProducts = useWarehouseReferenceStore((state) => state.setLoadingProducts)
+  const setSubmitting = useStockOutStore((state) => state.setSubmitting)
+  const setError = useStockOutStore((state) => state.setError)
+  const { confirmAndRun } = useConfirmAction()
 
   const [formOpen, setFormOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -52,6 +61,114 @@ export const useExportSlipPage = () => {
       return code.includes(keyword) || status.includes(keyword) || stockOutType.includes(keyword)
     },
   })
+
+  const fetchProducts = useCallback(async () => {
+    setLoadingProducts(true)
+    setError(null)
+    try {
+      const response = await productService.getProducts({
+        page: 1,
+        limit: 200,
+        sortBy: 'name',
+        sortOrder: 'asc',
+      })
+      setProductOptions(response.data)
+    } catch (error: unknown) {
+      const message = getErrorMessage(error)
+      setError(message)
+      toast.error(message)
+    } finally {
+      setLoadingProducts(false)
+    }
+  }, [setError, setLoadingProducts, setProductOptions])
+
+  const fetchStockOuts = useCallback(
+    async (params: StockOutQuery) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await stockOutService.getStockOuts(params)
+        setStockOuts(data)
+      } catch (error: unknown) {
+        const message = getErrorMessage(error)
+        setError(message)
+        toast.error(message)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [setError, setLoading, setStockOuts],
+  )
+
+  const createStockOut = useCallback(
+    async (payload: CreateStockOutDto) => {
+      setSubmitting(true)
+      setError(null)
+      try {
+        const newStockOut = await stockOutService.createStockOut(payload)
+        setStockOuts([newStockOut, ...stockOuts])
+        toast.success('Tạo phiếu xuất thành công')
+      } catch (error: unknown) {
+        const message = getErrorMessage(error)
+        setError(message)
+        toast.error(message)
+        throw error
+      } finally {
+        setSubmitting(false)
+      }
+    },
+    [setError, setStockOuts, setSubmitting, stockOuts],
+  )
+
+  const updateStockOut = useCallback(
+    async (id: string, payload: UpdateStockOutDto) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const updated = await stockOutService.updateStockOut(id, payload)
+        setStockOuts(stockOuts.map((stockOut) => (stockOut.id === id ? updated : stockOut)))
+        toast.success('Cập nhật phiếu xuất thành công')
+      } catch (error: unknown) {
+        const message = getErrorMessage(error)
+        setError(message)
+        toast.error(message)
+        throw error
+      } finally {
+        setLoading(false)
+      }
+    },
+    [setError, setLoading, setStockOuts, stockOuts],
+  )
+
+  const deleteStockOut = useCallback(
+    async (id: string) => {
+      setLoading(true)
+      setError(null)
+      try {
+        await stockOutService.deleteStockOut(id)
+        setStockOuts(stockOuts.filter((stockOut) => stockOut.id !== id))
+        toast.success('Xóa phiếu xuất thành công')
+      } catch (error: unknown) {
+        const message = getErrorMessage(error)
+        setError(message)
+        toast.error(message)
+        throw error
+      } finally {
+        setLoading(false)
+      }
+    },
+    [setError, setLoading, setStockOuts, stockOuts],
+  )
+
+  const getStockOutById = useCallback(async (id: string) => {
+    try {
+      return await stockOutService.getStockOutById(id)
+    } catch (error: unknown) {
+      const message = getErrorMessage(error)
+      toast.error(message)
+      throw error
+    }
+  }, [])
 
   useEffect(() => {
     void fetchProducts()
@@ -156,8 +273,10 @@ export const useExportSlipPage = () => {
   }
 
   const removeStockOut = async (id: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa phiếu xuất này?')) return
-    await deleteStockOut(id)
+    await confirmAndRun({
+      message: 'Bạn có chắc muốn xóa phiếu xuất này?',
+      action: () => deleteStockOut(id),
+    })
   }
 
   return {

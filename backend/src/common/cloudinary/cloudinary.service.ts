@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
 
+export interface UploadedImageFile {
+  buffer: Buffer;
+}
+
 @Injectable()
 export class CloudinaryService {
   private extractPublicIdFromUrl(imageUrl: string): string | null {
@@ -22,7 +26,7 @@ export class CloudinaryService {
     }
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<string> {
+  async uploadImage(file: UploadedImageFile): Promise<string> {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(
         {

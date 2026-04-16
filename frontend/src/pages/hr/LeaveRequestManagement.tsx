@@ -1,6 +1,7 @@
 import { Check, X, RefreshCw, FileText } from "lucide-react"
 
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
+import { Loading, TableLoadingRow } from "@/components/common/Loading"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import {
   LEAVE_STATUS_CONFIG,
@@ -44,8 +45,12 @@ export default function LeaveRequestManagement() {
             disabled={loadingLeaveRequests}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-60"
           >
-            <RefreshCw className={`h-4 w-4 ${loadingLeaveRequests ? 'animate-spin' : ''}`} />
-            Làm mới dữ liệu
+            {loadingLeaveRequests ? (
+              <Loading size="sm" className="text-slate-500" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            {loadingLeaveRequests ? "Đang tải..." : "Làm mới dữ liệu"}
           </button>
         </div>
 
@@ -72,11 +77,7 @@ export default function LeaveRequestManagement() {
 
               <tbody className="divide-y divide-gray-50">
                 {loadingLeaveRequests ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={6} className="px-6 py-6"><div className="h-4 bg-gray-100 rounded w-3/4"></div></td>
-                    </tr>
-                  ))
+                  <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
                 ) : pagedData.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-20 text-center">
@@ -116,7 +117,7 @@ export default function LeaveRequestManagement() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 max-w-[200px]">
+                      <td className="px-6 py-4 max-w-50">
                         <p className="text-gray-500 text-sm truncate italic" title={req.reason}>
                           "{req.reason}"
                         </p>

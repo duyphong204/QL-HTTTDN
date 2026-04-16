@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
+import {
+  CloudinaryService,
+  type UploadedImageFile,
+} from 'src/common/cloudinary/cloudinary.service';
 import { Prisma } from '@prisma/client';
 import {
   CreateProductDto,
@@ -29,9 +32,11 @@ export class ProductService {
       sortBy = 'name',
       sortOrder = 'asc',
     } = query;
-    const skip = calculatePaginationSkip(page, limit);
 
-    // 1. Bộ lọc động + Soft Delete (Chỉ lấy sản phẩm chưa bị xóa)
+    const safePage = Number(page) > 0 ? Number(page) : 1;
+    const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+    const skip = calculatePaginationSkip(safePage, safeLimit);
+
     const where: Prisma.ProductWhereInput = {
       deletedAt: null,
       ...(search && {
@@ -44,19 +49,22 @@ export class ProductService {
       ...(supplierId && { supplierId }),
     };
 
-    // 2. Mapping Sort Order
-    const sortMapping = {
-      price: { price: sortOrder },
-      stockQuantity: { stockQuantity: sortOrder },
+    const sortMapping: Record<
+      'name' | 'price' | 'costPrice' | 'stockQuantity',
+      Prisma.ProductOrderByWithRelationInput
+    > = {
       name: { name: sortOrder },
+      price: { price: sortOrder },
+      costPrice: { costPrice: sortOrder },
+      stockQuantity: { stockQuantity: sortOrder },
     };
-    const orderBy = sortMapping[sortBy] || { name: 'asc' };
+    const orderBy = sortMapping[sortBy] ?? { name: 'asc' };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
         skip,
-        take: Number(limit),
+        take: safeLimit,
         include: {
           category: { select: { id: true, name: true } },
           supplier: { select: { id: true, name: true } },
@@ -66,7 +74,7 @@ export class ProductService {
       this.prisma.product.count({ where }),
     ]);
 
-    return buildPaginatedResponse(data, total, page, limit);
+    return buildPaginatedResponse(data, total, safePage, safeLimit);
   }
 
   async findOne(id: string) {
@@ -79,7 +87,7 @@ export class ProductService {
     return product;
   }
 
-  async create(dto: CreateProductDto, file?: Express.Multer.File) {
+  async create(dto: CreateProductDto, file?: UploadedImageFile) {
     let imageUrl: string | undefined;
     if (file) {
       imageUrl = await this.cloudinary.uploadImage(file);
@@ -90,7 +98,7 @@ export class ProductService {
     });
   }
 
-  async update(id: string, dto: UpdateProductDto, file?: Express.Multer.File) {
+  async update(id: string, dto: UpdateProductDto, file?: UploadedImageFile) {
     const existing = await this.findOne(id);
     let imageUrl = existing.imageUrl;
 
@@ -114,48 +122,5 @@ export class ProductService {
       where: { id },
       data: { deletedAt: new Date() },
     });
-  }
-
-  async getWarehouseReport(month?: number, year?: number) {
-    const targetYear = year || new Date().getFullYear();
-
-    const startDate = month
-      ? new Date(targetYear, month - 1, 1)
-      : new Date(targetYear, 0, 1);
-    const endDate = month
-      ? new Date(targetYear, month, 0, 23, 59, 59)
-      : new Date(targetYear, 11, 31, 23, 59, 59);
-
-    const [stockInStats, productStats, lowStockProducts] = await Promise.all([
-      // Thống kê nhập kho
-      this.prisma.stockIn.aggregate({
-        where: { date: { gte: startDate, lte: endDate } },
-        _sum: { totalAmount: true },
-        _count: { id: true },
-      }),
-      this.prisma.product.aggregate({
-        where: { deletedAt: null },
-        _sum: { stockQuantity: true },
-        _count: { id: true },
-      }),
-      this.prisma.product.findMany({
-        where: {
-          deletedAt: null,
-          OR: [{ stockQuantity: { lte: 10 } }],
-        },
-        select: { id: true, name: true, stockQuantity: true, minStock: true },
-        orderBy: { stockQuantity: 'asc' },
-        take: 10,
-      }),
-    ]);
-
-    return {
-      period: { month, year: targetYear },
-      totalStockIns: stockInStats._count.id,
-      totalImportValue: stockInStats._sum.totalAmount || 0,
-      totalProductTypes: productStats._count.id,
-      totalStockQuantity: productStats._sum.stockQuantity || 0,
-      lowStockProducts,
-    };
   }
 }

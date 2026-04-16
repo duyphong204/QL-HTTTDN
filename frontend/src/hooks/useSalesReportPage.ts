@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { useSalesStore } from '@/stores/sales.store'
+import { orderService } from '@/services/sales.service'
 import { reportService } from '@/services/report.service'
+import { getErrorMessage } from '@/stores/store.helpers'
+import { getCurrentYear, getRecentYears, MONTH_OPTIONS } from '@/utils/date'
+import { formatCurrencyVnd } from '@/utils/format'
 import type { RoleReportResponse } from '@/types/report.types'
 
 export type ReportPeriodType = 'month' | 'quarter' | 'year'
 
-const currentYear = new Date().getFullYear()
-
-const formatCurrency = (n: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
+const currentYear = getCurrentYear()
 
 export const useSalesReportPage = () => {
-  const { stats, isLoadingStats, fetchStats, fetchStatsByPeriod } = useSalesStore()
+  const { stats, isLoadingStats, setStats, setLoadingStats } = useSalesStore()
   const [reportData, setReportData] = useState<RoleReportResponse | null>(null)
   const [isLoadingReport, setIsLoadingReport] = useState(false)
 
@@ -21,18 +23,28 @@ export const useSalesReportPage = () => {
   const [year, setYear] = useState(String(currentYear))
 
   useEffect(() => {
-    if (periodType === 'month') {
-      void fetchStats({ month: Number(month), year: Number(year) })
-      return
+    const loadStats = async () => {
+      setLoadingStats(true)
+      try {
+        const data =
+          periodType === 'month'
+            ? await orderService.getSalesStats({ month: Number(month), year: Number(year) })
+            : await orderService.getSalesStatsByPeriod({
+                year: Number(year),
+                quarter: periodType === 'quarter' ? Number(quarter) : undefined,
+              })
+        setStats(data)
+      } catch (error: unknown) {
+        const msg = getErrorMessage(error, 'Không thể tải thống kê')
+        toast.error(msg)
+        setStats(null)
+      } finally {
+        setLoadingStats(false)
+      }
     }
 
-    if (periodType === 'quarter') {
-      void fetchStatsByPeriod({ year: Number(year), quarter: Number(quarter) })
-      return
-    }
-
-    void fetchStatsByPeriod({ year: Number(year) })
-  }, [periodType, month, quarter, year, fetchStats, fetchStatsByPeriod])
+    void loadStats()
+  }, [month, periodType, quarter, setLoadingStats, setStats, year])
 
   useEffect(() => {
     const loadReport = async () => {
@@ -55,15 +67,15 @@ export const useSalesReportPage = () => {
     void loadReport()
   }, [periodType, month, quarter, year])
 
-  const years = useMemo(() => [currentYear, currentYear - 1, currentYear - 2], [])
-  const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
+  const years = useMemo(() => getRecentYears(3, currentYear), [])
+  const months = useMemo(() => MONTH_OPTIONS, [])
 
   const statCards = useMemo(
     () => [
       { label: 'Tổng đơn hàng', value: stats?.totalOrders ?? 0, icon: 'orders' as const },
       { label: 'Sản phẩm xuất', value: stats?.totalItemsSold ?? 0, icon: 'items' as const },
-      { label: 'Doanh thu', value: formatCurrency(stats?.totalRevenue ?? 0), icon: 'revenue' as const },
-      { label: 'Lợi nhuận', value: formatCurrency(stats?.totalProfit ?? 0), icon: 'profit' as const },
+      { label: 'Doanh thu', value: formatCurrencyVnd(stats?.totalRevenue ?? 0), icon: 'revenue' as const },
+      { label: 'Lợi nhuận', value: formatCurrencyVnd(stats?.totalProfit ?? 0), icon: 'profit' as const },
     ],
     [stats]
   )

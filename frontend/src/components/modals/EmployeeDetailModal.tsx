@@ -1,6 +1,7 @@
-import { Loader2, X, Clock } from "lucide-react"
+import { X, Clock } from "lucide-react"
 import type { Employee } from "@/types/employee.types"
 import { AppModal } from "@/components/common/AppModal"
+import { PageLoading } from "@/components/common/Loading"
 
 interface Props {
   employee: Employee | null
@@ -36,9 +37,7 @@ export function EmployeeDetailModal({ employee, isLoading = false, onClose }: Pr
         </button>
 
         {isLoading ? (
-          <div className="h-52 flex items-center justify-center text-gray-500">
-            <Loader2 className="animate-spin mr-2" size={20} /> Đang tải dữ liệu...
-          </div>
+          <PageLoading text="Đang tải dữ liệu..." className="min-h-52" />
         ) : (
           <div className="space-y-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">

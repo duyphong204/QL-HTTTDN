@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { toast } from "sonner"
 import { useEmployeeStore } from "@/stores/employee.store"
+import { employeeService } from "@/services/hr.service"
+import { getErrorMessage } from "@/stores/store.helpers"
 
 export const useProfile = () => {
-  const { myProfile, fetchMyProfile, updateMyProfile, isLoadingProfile } = useEmployeeStore()
+  const { myProfile, isLoadingProfile, setMyProfile, setLoadingProfile } = useEmployeeStore()
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -13,8 +16,43 @@ export const useProfile = () => {
     dateOfBirth: "",
   })
 
+  const fetchMyProfile = useCallback(async () => {
+    setLoadingProfile(true)
+    try {
+      const data = await employeeService.getMyProfile()
+      setMyProfile(data)
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Không thể tải thông tin hồ sơ!"))
+    } finally {
+      setLoadingProfile(false)
+    }
+  }, [setLoadingProfile, setMyProfile])
+
+  const updateMyProfile = useCallback(
+    async (data: {
+      fullName?: string
+      phone?: string
+      address?: string
+      avatar?: string
+      dateOfBirth?: string
+    }) => {
+      setLoadingProfile(true)
+      try {
+        await employeeService.updateMyProfile(data)
+        toast.success("Cập nhật hồ sơ thành công!")
+        await fetchMyProfile()
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, "Lỗi khi cập nhật hồ sơ!"))
+        throw error
+      } finally {
+        setLoadingProfile(false)
+      }
+    },
+    [fetchMyProfile, setLoadingProfile],
+  )
+
   useEffect(() => {
-    fetchMyProfile()
+    void fetchMyProfile()
   }, [fetchMyProfile])
 
   const handleEdit = () => {

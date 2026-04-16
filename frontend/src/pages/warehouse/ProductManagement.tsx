@@ -1,9 +1,10 @@
-import { Plus, Pencil, Trash2, Package, RefreshCw } from 'lucide-react';
-import { getCloudinaryThumbnailUrl } from '@/lib/cloudinary';
+import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { getCloudinaryThumbnailUrl } from '@/utils/cloudinary';
 import { ProductFormModal } from '@/components/forms/ProductFormModal';
 import { DataTableToolbar } from '@/components/common/DataTableToolbar';
 import { PaginationControls } from '@/components/common/PaginationControls';
-import { useProductPage } from '@/hooks/useProductPage';
+import { TableLoadingRow } from '@/components/common/Loading';
+import { useProduct } from '@/hooks/useProduct';
 
 export default function ProductManagement() {
   const {
@@ -24,7 +25,7 @@ export default function ProductManagement() {
     closeModal,
     handleDelete,
     handleFormSubmit,
-  } = useProductPage();
+  } = useProduct();
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -72,10 +73,9 @@ export default function ProductManagement() {
 
             <select
               value={filters.sortBy ?? 'name'}
-              onChange={(e) => updateFilters({ sortBy: e.target.value as 'name' | 'price' | 'costPrice' | 'stockQuantity' })}
+              onChange={(e) => updateFilters({ sortBy: e.target.value as 'price' | 'costPrice' | 'stockQuantity' })}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
-              <option value="name">Sắp xếp: Tên</option>
               <option value="price">Sắp xếp: Giá bán</option>
               <option value="costPrice">Sắp xếp: Giá nhập</option>
               <option value="stockQuantity">Sắp xếp: Tồn kho</option>
@@ -106,11 +106,7 @@ export default function ProductManagement() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
-                      <RefreshCw size={24} className="animate-spin mx-auto text-blue-500" />
-                    </td>
-                  </tr>
+                  <TableLoadingRow colSpan={7} text="Đang tải dữ liệu..." />
                 ) : products.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400">Không có sản phẩm nào.</td>

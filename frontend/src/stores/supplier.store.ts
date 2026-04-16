@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import { toast } from "sonner";
-import { supplierService } from "@/services/warehouse.service";
-import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from "@/types/supplier.types";
+import type { Supplier } from "@/types/supplier.types";
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
-import { getErrorMessage, loadingState, mergeFiltersWithPageReset } from "@/stores/store.helpers";
+import { mergeFiltersWithPageReset } from "@/stores/store.helpers";
 
 type SupplierFilters = BaseFilters & {
     sortBy?: string;
@@ -20,13 +18,13 @@ interface SupplierState {
     error: string | null;
 
     setFilters: (filters: Partial<SupplierFilters>) => void;
-    fetchSuppliers: () => Promise<void>;
-    createSupplier: (data: CreateSupplierDto) => Promise<void>;
-    updateSupplier: (id: string, data: UpdateSupplierDto) => Promise<void>;
-    deleteSupplier: (id: string) => Promise<void>;
+    setSuppliers: (suppliers: Supplier[]) => void;
+    setMeta: (meta: PaginationMeta | null) => void;
+    setLoading: (isLoading: boolean) => void;
+    setError: (error: string | null) => void;
 }
 
-export const useSupplierStore = create<SupplierState>((set, get) => ({
+export const useSupplierStore = create<SupplierState>((set) => ({
     suppliers: [],
     meta: null,
     isLoading: false,
@@ -45,67 +43,8 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         }));
     },
 
-    fetchSuppliers: async () => {
-        set({ ...loadingState("isLoading", true), error: null });
-        try {
-            const { filters } = get();
-            const response = await supplierService.getSuppliers(filters);
-            set({
-                suppliers: response.data,
-                meta: response.meta,
-            });
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-        } finally {
-            set(loadingState("isLoading", false));
-        }
-    },
-
-    createSupplier: async (data) => {
-        try {
-            const newSupplier = await supplierService.createSupplier(data);
-            set((state) => ({
-                suppliers: [newSupplier, ...state.suppliers],
-            }));
-            toast.success("Thêm nhà cung cấp thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-            throw err;
-        }
-    },
-
-    updateSupplier: async (id, data) => {
-        try {
-            const updated = await supplierService.updateSupplier(id, data);
-            set((state) => ({
-                suppliers: state.suppliers.map((s) =>
-                    s.id === id ? updated : s
-                ),
-            }));
-            toast.success("Cập nhật nhà cung cấp thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-            throw err;
-        }
-    },
-
-    deleteSupplier: async (id) => {
-        try {
-            await supplierService.deleteSupplier(id);
-            set((state) => ({
-                suppliers: state.suppliers.filter((s) => s.id !== id),
-            }));
-            toast.success("Xóa nhà cung cấp thành công");
-        } catch (err: unknown) {
-            const message = getErrorMessage(err);
-            set({ error: message });
-            toast.error(message);
-        }
-    },
+    setSuppliers: (suppliers) => set({ suppliers }),
+    setMeta: (meta) => set({ meta }),
+    setLoading: (isLoading) => set({ isLoading }),
+    setError: (error) => set({ error }),
 }));

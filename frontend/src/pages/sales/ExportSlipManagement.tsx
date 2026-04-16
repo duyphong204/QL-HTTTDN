@@ -2,11 +2,10 @@ import { FileText, Plus, Pencil, Trash2, Eye } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { AppModal } from '@/components/common/AppModal'
+import { InlineLoading, TableLoadingRow } from '@/components/common/Loading'
 import { StockOutStatus, StockOutType } from '@/types/stockOut.types'
 import { useExportSlipPage } from '@/hooks/useExportSlipPage'
-
-const formatCurrency = (n: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
+import { formatCurrencyVnd } from '@/utils/format'
 
 const statusBadgeClass: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-700',
@@ -114,7 +113,7 @@ export default function ExportSlipManagement() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {isLoading ? (
-                  <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Đang tải...</td></tr>
+                  <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
                 ) : table.pagedData.length === 0 ? (
                   <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Chưa có phiếu xuất nào.</td></tr>
                 ) : table.pagedData.map((stockOut) => (
@@ -122,7 +121,7 @@ export default function ExportSlipManagement() {
                     <td className="px-6 py-4 font-mono text-gray-900">{stockOut.id.slice(0, 8).toUpperCase()}</td>
                     <td className="px-6 py-4 font-medium text-gray-800">{typeLabel[stockOut.type] ?? stockOut.type}</td>
                     <td className="px-6 py-4 text-gray-500">{new Date(stockOut.createdAt).toLocaleDateString('vi-VN')}</td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrency(stockOut.totalAmount)}</td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrencyVnd(stockOut.totalAmount)}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeClass[stockOut.status] ?? 'bg-slate-100 text-slate-700'}`}>
                         {stockOut.status}
@@ -252,10 +251,10 @@ export default function ExportSlipManagement() {
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <span className="text-sm font-medium text-gray-700">Tổng giá trị xuất:</span>
-            <span className="text-xl font-bold text-blue-600">{formatCurrency(totalAmount)}</span>
+            <span className="text-xl font-bold text-blue-600">{formatCurrencyVnd(totalAmount)}</span>
           </div>
 
-          {isLoadingProducts && <p className="text-xs text-gray-500">Đang tải danh sách sản phẩm...</p>}
+          {isLoadingProducts && <InlineLoading text="Đang tải danh sách sản phẩm..." className="justify-start text-xs text-gray-500" />}
 
           <div className="flex justify-end gap-3">
             <button
@@ -310,8 +309,8 @@ export default function ExportSlipManagement() {
                     <tr key={detail.id} className="border-t">
                       <td className="px-4 py-2">{detail.product?.name ?? detail.productId}</td>
                       <td className="px-4 py-2 text-center">{detail.quantity}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(detail.price)}</td>
-                      <td className="px-4 py-2 text-right font-semibold">{formatCurrency(detail.price * detail.quantity)}</td>
+                      <td className="px-4 py-2 text-right">{formatCurrencyVnd(detail.price)}</td>
+                      <td className="px-4 py-2 text-right font-semibold">{formatCurrencyVnd(detail.price * detail.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -319,7 +318,7 @@ export default function ExportSlipManagement() {
             </div>
 
             <div className="text-right font-bold text-blue-700">
-              Tổng cộng: {formatCurrency(selectedStockOut.totalAmount)}
+              Tổng cộng: {formatCurrencyVnd(selectedStockOut.totalAmount)}
             </div>
           </div>
         )}

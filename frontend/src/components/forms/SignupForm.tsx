@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
 import { useState } from "react"
-import { useAuthStore } from "@/stores/auth.store"
+import { useAuth } from "@/hooks/useAuth"
 import { useNavigate } from "react-router-dom"
 import { type RegisterValues } from "@/types/auth.types"
 import registerBg from "@/assets/auth-bg.png";
@@ -26,10 +26,10 @@ export function SignupForm({
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>()
-  const registerAction = useAuthStore(state => state.register)
+  const { handleRegister } = useAuth()
   const onSubmit = async (data: RegisterValues) => {
     try {
-      await registerAction(data);
+      await handleRegister(data);
       navigate("/login")
     } catch (error) {
       console.log(error)

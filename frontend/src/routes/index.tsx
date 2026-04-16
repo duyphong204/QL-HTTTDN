@@ -9,7 +9,7 @@ import ProductManagement from '@/pages/warehouse/ProductManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes } from 'react-router-dom';
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuth } from '@/hooks/useAuth';
 import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -29,11 +29,11 @@ import CategoryManagement from '@/pages/warehouse/CategoryManagement';
 
 
 export const AppRouter = () => {
-  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const { handleCheckAuth } = useAuth();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    void handleCheckAuth();
+  }, [handleCheckAuth]);
 
   return (
     <>
