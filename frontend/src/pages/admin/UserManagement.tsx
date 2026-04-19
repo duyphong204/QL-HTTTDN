@@ -5,7 +5,6 @@ import { ROLE_BADGE } from "@/utils/role"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import { TableLoadingRow } from "@/components/common/Loading"
-import type { Role } from "@/types/auth.types"
 
 export default function UserManagement() {
   const {
@@ -51,23 +50,6 @@ export default function UserManagement() {
             searchPlaceholder="Tìm theo email hoặc họ tên..."
           >
             <select
-              value={filters.role || ""}
-              onChange={(e) =>
-                updateFilters({
-                  role: (e.target.value || undefined) as Role | undefined,
-                })
-              }
-              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="">Tất cả vai trò</option>
-              {Object.entries(ROLE_BADGE).map(([role, config]) => (
-                <option key={role} value={role}>
-                  {config.label}
-                </option>
-              ))}
-            </select>
-
-            <select
               value={typeof filters.isActive === "boolean" ? String(filters.isActive) : ""}
               onChange={(e) => {
                 const value = e.target.value;
@@ -80,23 +62,6 @@ export default function UserManagement() {
               <option value="">Tất cả trạng thái</option>
               <option value="true">Đang hoạt động</option>
               <option value="false">Ngưng hoạt động</option>
-            </select>
-
-            <select
-              value={`${filters.sortBy}:${filters.sortOrder}`}
-              onChange={(e) => {
-                const [sortBy, sortOrder] = e.target.value.split(":") as [
-                  "createdAt" | "email" | "role",
-                  "asc" | "desc",
-                ];
-                updateFilters({ sortBy, sortOrder });
-              }}
-              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="createdAt:desc">Mới nhất</option>
-              <option value="createdAt:asc">Cũ nhất</option>
-              <option value="email:asc">Email A-Z</option>
-              <option value="email:desc">Email Z-A</option>
             </select>
           </DataTableToolbar>
 

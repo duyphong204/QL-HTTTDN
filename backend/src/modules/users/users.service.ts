@@ -6,77 +6,47 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma, Role } from '@prisma/client';
-import { CreateUserDto, QueryUsersDto, UpdateUserDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  QueryUsersDto,
+  UpdateUserDto,
+  UserResponseDto,
+} from './dto/user.dto';
 import {
   calculatePaginationSkip,
   buildPaginatedResponse,
 } from 'src/common/utils/pagination.helper';
 
-const USER_SAFE_SELECT = Prisma.validator<Prisma.UserSelect>()({
-  id: true,
-  email: true,
-  role: true,
-  isActive: true,
-  deletedAt: true,
-  createdAt: true,
-  updatedAt: true,
-  profile: {
-    select: {
-      id: true,
-      userId: true,
-      fullName: true,
-      phone: true,
-      address: true,
-      avatar: true,
-      dateOfBirth: true,
-    },
-  },
-  employee: {
-    select: {
-      id: true,
-      code: true,
-      position: true,
-    },
-  },
-});
-
 @Injectable()
 export class UsersService {
+  private readonly defaultInclude = { profile: true } as const;
+
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Helper: Kiểm tra xem Role có thuộc nhóm nhân viên/quản lý không
+   * Helper: Tìm user hoặc ném lỗi nếu không thấy
    */
-  private isEmployeeRole(role: Role): boolean {
-    return role !== Role.CUSTOMER;
-  }
-
-  /**
-   * Helper: Tạo mã nhân viên ngẫu nhiên/duy nhất
-   */
-  private generateEmployeeCode(): string {
-    return `NV${Math.floor(1000 + Math.random() * 9000)}${Date.now().toString().slice(-4)}`;
-  }
-
   private async findUserOrThrow(id: string, includeDeleted = false) {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
         ...(includeDeleted ? {} : { deletedAt: null }),
       },
-      select: USER_SAFE_SELECT,
+      include: this.defaultInclude,
     });
 
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại hoặc đã bị xóa');
     }
-    return user;
+    return new UserResponseDto(user);
   }
 
+  /**
+   * Lấy danh sách người dùng (có phân trang và tìm kiếm)
+   */
   async findAll(query: QueryUsersDto) {
     const {
       search,
-      role,
       page = 1,
       limit = 10,
       sortBy = 'createdAt',
@@ -87,7 +57,7 @@ export class UsersService {
 
     const where: Prisma.UserWhereInput = {
       deletedAt: null,
-      role: role || undefined,
+      role: Role.CUSTOMER,
       isActive: typeof isActive === 'boolean' ? isActive : undefined,
       ...(search && {
         OR: [
@@ -103,24 +73,44 @@ export class UsersService {
         skip,
         take: Number(limit),
         orderBy: { [sortBy as string]: sortOrder },
-        select: USER_SAFE_SELECT,
+        include: this.defaultInclude,
       }),
       this.prisma.user.count({ where }),
     ]);
 
-    return buildPaginatedResponse(data, total, page, limit);
+    return buildPaginatedResponse(
+      data.map((user) => new UserResponseDto(user)),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  async findByEmailWithCredentials(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        profile: true,
+      },
+    });
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email },
+      include: this.defaultInclude,
     });
+
+    return user ? new UserResponseDto(user) : null;
   }
 
   async findOne(id: string) {
     return this.findUserOrThrow(id);
   }
 
+  /**
+   * Tạo người dùng mới
+   */
   async create(dto: CreateUserDto) {
     const existedUser = await this.findByEmail(dto.email);
     if (existedUser && !existedUser.deletedAt) {
@@ -128,35 +118,29 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const isEmployee = this.isEmployeeRole(dto.role);
 
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
-        role: dto.role,
+        role: dto.role || Role.CUSTOMER,
         profile: {
           create: { ...dto.profile },
         },
-        // Tự động tạo bản ghi Employee nếu không phải CUSTOMER
-        ...(isEmployee && {
-          employee: {
-            create: {
-              code: this.generateEmployeeCode(),
-              position: dto.role.toString(),
-              baseSalary: 0,
-              joinDate: new Date(),
-            },
-          },
-        }),
       },
-      select: USER_SAFE_SELECT,
+      include: this.defaultInclude,
     });
+
+    return new UserResponseDto(user);
   }
 
+  /**
+   * Cập nhật thông tin người dùng
+   */
   async update(id: string, dto: UpdateUserDto) {
     const currentUser = await this.findUserOrThrow(id);
 
+    // Kiểm tra trùng email nếu có thay đổi email
     if (dto.email && dto.email !== currentUser.email) {
       const duplicated = await this.prisma.user.findFirst({
         where: { email: dto.email, deletedAt: null, NOT: { id } },
@@ -164,88 +148,71 @@ export class UsersService {
       if (duplicated) throw new ConflictException('Email đã tồn tại');
     }
 
-    // Xử lý logic Employee khi thay đổi Role
-    const updateData: Prisma.UserUpdateInput = {
-      email: dto.email,
-      role: dto.role,
-      profile: dto.profile ? { update: { ...dto.profile } } : undefined,
-    };
-
-    // Nếu nâng cấp từ CUSTOMER lên các Role quản lý/nhân viên
-    if (dto.role && currentUser.role === Role.CUSTOMER && this.isEmployeeRole(dto.role)) {
-      updateData.employee = {
-        upsert: {
-          create: {
-            code: this.generateEmployeeCode(),
-            position: dto.role.toString(),
-            baseSalary: 0,
-            joinDate: new Date(),
-          },
-          update: {}, // Nếu đã có rồi thì không làm gì
-        },
-      };
-    }
-
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
-      data: updateData,
-      select: USER_SAFE_SELECT,
+      data: {
+        email: dto.email,
+        role: dto.role,
+        profile: dto.profile ? { update: { ...dto.profile } } : undefined,
+      },
+      include: this.defaultInclude,
     });
+
+    return new UserResponseDto(user);
   }
 
+  /**
+   * Xóa mềm người dùng
+   */
   async remove(id: string) {
     await this.findUserOrThrow(id);
 
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
       data: {
         isActive: false,
         deletedAt: new Date(),
       },
-      select: USER_SAFE_SELECT,
+      include: this.defaultInclude,
     });
+
+    return new UserResponseDto(user);
   }
 
+  /**
+   * Khôi phục người dùng đã xóa
+   */
   async restore(id: string) {
-    const user = await this.findUserOrThrow(id, true);
+    const existingUser = await this.findUserOrThrow(id, true);
 
-    if (user.deletedAt === null) {
+    if (existingUser.deletedAt === null) {
       throw new ConflictException('Người dùng này không bị xóa');
     }
 
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
       data: {
         isActive: true,
         deletedAt: null,
       },
-      select: USER_SAFE_SELECT,
+      include: this.defaultInclude,
     });
+
+    return new UserResponseDto(user);
   }
 
+  /**
+   * Cập nhật riêng Role
+   */
   async updateRole(id: string, role: Role) {
-    const currentUser = await this.findUserOrThrow(id);
+    await this.findUserOrThrow(id);
 
-    const isUpgrading = currentUser.role === Role.CUSTOMER && this.isEmployeeRole(role);
-
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id },
-      data: {
-        role,
-        ...(isUpgrading && {
-          employee: {
-            upsert: {
-              create: {
-                code: this.generateEmployeeCode(),
-                position: role.toString(),
-                baseSalary: 0,
-              },
-              update: {},
-            },
-          },
-        }),
-      },
-      select: USER_SAFE_SELECT,
+      data: { role },
+      include: this.defaultInclude,
     });
+
+    return new UserResponseDto(user);
   }
 }

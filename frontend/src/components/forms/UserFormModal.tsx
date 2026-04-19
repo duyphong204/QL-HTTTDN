@@ -72,20 +72,25 @@ export function UserFormModal({
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? "Chỉnh sửa User" : "Thêm User mới"}
-      subtitle="Nhập thông tin tài khoản người dùng"
+      subtitle={isEditMode ? "Cập nhật thông tin cá nhân" : "Nhập thông tin tài khoản người dùng"}
       maxWidthClassName="max-w-lg"
     >
       <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4">
+        {/* Email - Khóa khi Edit */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
           <input
             type="email"
-            className="w-full h-11 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg"
+            disabled={isEditMode}
+            className={`w-full h-11 px-3 text-sm border rounded-lg ${
+              isEditMode ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200" : "bg-gray-50 border-gray-200"
+            }`}
             {...register("email")}
           />
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>
 
+        {/* Mật khẩu - Chỉ hiện khi thêm mới */}
         {!isEditMode && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu</label>
@@ -98,11 +103,13 @@ export function UserFormModal({
           </div>
         )}
 
+        {/* Họ tên - LUÔN CHO CHỈNH SỬA */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Họ tên</label>
           <input
             type="text"
-            className="w-full h-11 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg"
+            placeholder="Nhập họ và tên..."
+            className="w-full h-11 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
             {...register("profile.fullName")}
           />
           {errors.profile?.fullName && (
@@ -110,21 +117,29 @@ export function UserFormModal({
           )}
         </div>
 
+        {/* Vai trò - Khóa khi Edit */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Vai trò</label>
-          <select className="w-full h-11 px-3 text-sm bg-gray-50 border border-gray-200 rounded-lg" {...register("role")}>
+          <select 
+            disabled={isEditMode}
+            className={`w-full h-11 px-3 text-sm border rounded-lg ${
+              isEditMode ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200" : "bg-gray-50 border-gray-200"
+            }`}
+            {...register("role")}
+          >
             {ALL_ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
+          {isEditMode && <p className="mt-1 text-[11px] text-gray-400">* Không thể thay đổi vai trò khi đang cập nhật</p>}
         </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full h-11 mt-6 bg-[#0a0f1c] hover:bg-black text-white text-sm font-semibold rounded-lg"
+          className="w-full h-11 mt-6 bg-[#0a0f1c] hover:bg-black text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
         >
           {isSubmitting ? "Đang xử lý..." : isEditMode ? "Cập nhật" : "Thêm User"}
         </button>

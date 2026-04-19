@@ -78,7 +78,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, res: Response) {
-    const user = await this.usersService.findByEmail(dto.email);
+    const user = await this.usersService.findByEmailWithCredentials(dto.email);
 
     if (!user || !user.isActive || user.deletedAt) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');

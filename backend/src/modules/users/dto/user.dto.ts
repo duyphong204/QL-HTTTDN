@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -68,6 +68,39 @@ export class UpdateUserDto {
   @ValidateNested()
   @Type(() => UpdateProfileDto)
   profile?: UpdateProfileDto;
+}
+
+export class UserProfileResponseDto {
+  id!: string;
+  userId!: string;
+  fullName!: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  dateOfBirth?: Date | null;
+}
+
+export class UserResponseDto {
+  id!: string;
+  email!: string;
+  role!: Role;
+  isActive!: boolean;
+  deletedAt!: Date | null;
+  createdAt!: Date;
+  updatedAt!: Date;
+
+  @Type(() => UserProfileResponseDto)
+  profile?: UserProfileResponseDto | null;
+
+  @Exclude()
+  password?: string;
+
+  @Exclude()
+  refreshTokenHash?: string | null;
+
+  constructor(partial: Partial<UserResponseDto> | Record<string, unknown>) {
+    Object.assign(this, partial);
+  }
 }
 
 export class QueryUsersDto {

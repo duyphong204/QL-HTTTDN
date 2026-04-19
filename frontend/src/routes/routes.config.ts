@@ -60,8 +60,8 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         path: "/hr/employees",
         title: "Quản lý Nhân sự",
         icon: Users,
-        roles: ["HR_MANAGER"],
-        portals: ["hr"],
+        roles: ["HR_MANAGER","ADMIN"],
+        portals: ["hr","admin"],
         inSidebar: true,
     },
     {

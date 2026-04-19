@@ -1,6 +1,11 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ClassSerializerInterceptor,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -31,10 +36,15 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new TransformInterceptor());
+  // ClassSerializerInterceptor must run before TransformInterceptor so
+  // UserEntity @Exclude() fields are hidden before the response wrapper runs.
+  app.useGlobalInterceptors(
+    new TransformInterceptor(),
+    new ClassSerializerInterceptor(app.get(Reflector)),
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   logger.log(`🚀 Server is running on: http://localhost:${port}`);
 }
-bootstrap();
+void bootstrap();
