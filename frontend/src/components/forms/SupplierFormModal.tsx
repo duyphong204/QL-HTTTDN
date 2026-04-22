@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { AppModal } from "@/components/common/AppModal";
 
@@ -26,6 +26,17 @@ export function SupplierFormModal({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (editingSupplier) {
+      setForm({
+        name: editingSupplier.name || "",
+        email: editingSupplier.email || "",
+        phone: editingSupplier.phone || "",
+        address: editingSupplier.address || "",
+      });
+    }
+  }, [editingSupplier]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

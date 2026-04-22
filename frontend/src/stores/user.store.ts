@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Role } from "@/types/auth.types";
-import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
+import type { User  } from "@/types/user.types";
 import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
 import { mergeFiltersWithPageReset } from "@/stores/store.helpers";
 

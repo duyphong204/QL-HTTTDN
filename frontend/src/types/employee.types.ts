@@ -17,7 +17,8 @@ export interface Employee extends BaseEntity {
 export interface CreateEmployeeDto {
     email: string
     password: string
-    fullName: string
+    fullName: string    
+    role?: Role
     department?: string
     position?: string
     baseSalary: number

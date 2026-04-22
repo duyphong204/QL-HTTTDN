@@ -27,3 +27,21 @@ export const ALL_ROLE_OPTIONS = Object.entries(ROLE_BADGE).map(([value, info]) =
   value: value as Role,
   label: info.label,
 }));
+
+export const ROLE_POSITION_MAP: Record<Role, string> = {
+  ADMIN: "Quản trị hệ thống",
+  HR_MANAGER: "phòng Nhân sự",
+  WAREHOUSE_MANAGER: "phòng Kho vận",
+  SALES_MANAGER: "phòng Kinh doanh",
+  EMPLOYEE: "Nhân viên",
+  CUSTOMER: "Khách hàng",
+};
+
+export const ROLE_SALARY_MAP: Record<Role, number> = {
+  ADMIN: 0,
+  HR_MANAGER: 15000000,
+  WAREHOUSE_MANAGER: 14000000,
+  SALES_MANAGER: 16000000,
+  EMPLOYEE: 10000000,
+  CUSTOMER: 0,
+};

@@ -85,6 +85,9 @@ export class CreateEmployeeDto {
 
   @IsString({ message: 'Họ tên phải là chuỗi' })
   fullName!: string;
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  @IsOptional()
+  role?: Role;
 
   @IsString({ message: 'Phòng ban phải là chuỗi' })
   @IsOptional()

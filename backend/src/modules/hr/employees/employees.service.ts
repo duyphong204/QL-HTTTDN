@@ -82,7 +82,7 @@ export class EmployeesService {
         },
         jobHistories: {
           orderBy: { startDate: 'desc' },
-          take: 5, // lấy vài cái gần nhất
+          take: 5, 
         },
       },
     });
@@ -124,7 +124,7 @@ export class EmployeesService {
       }
       throw new BadRequestException('Email đã tồn tại trong hệ thống');
     }
-
+``
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     return this.prisma.$transaction(async (tx) => {
@@ -132,7 +132,7 @@ export class EmployeesService {
         data: {
           email: dto.email,
           password: hashedPassword,
-          role: Role.EMPLOYEE,
+          role: dto.role || Role.EMPLOYEE,
         },
       });
 

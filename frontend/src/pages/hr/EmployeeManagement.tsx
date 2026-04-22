@@ -1,7 +1,7 @@
 import { UserPlus, Pencil, Trash2, Eye } from "lucide-react"
 
 import { EmployeeFormModal } from "@/components/forms/EmployeeFormModal"
-import { EmployeeDetailModal } from "@/components/modals/EmployeeDetailModal"
+import { EmployeeDetailModal } from "@/components/forms/EmployeeDetailModal"
 
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { PaginationControls } from "@/components/common/PaginationControls"

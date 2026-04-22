@@ -71,24 +71,6 @@ export default function ProductManagement() {
               ))}
             </select>
 
-            <select
-              value={filters.sortBy ?? 'name'}
-              onChange={(e) => updateFilters({ sortBy: e.target.value as 'price' | 'costPrice' | 'stockQuantity' })}
-              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="price">Sắp xếp: Giá bán</option>
-              <option value="costPrice">Sắp xếp: Giá nhập</option>
-              <option value="stockQuantity">Sắp xếp: Tồn kho</option>
-            </select>
-
-            <select
-              value={filters.sortOrder ?? 'asc'}
-              onChange={(e) => updateFilters({ sortOrder: e.target.value as 'asc' | 'desc' })}
-              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="asc">Tăng dần</option>
-              <option value="desc">Giảm dần</option>
-            </select>
           </DataTableToolbar>
 
           <div className="overflow-x-auto">
