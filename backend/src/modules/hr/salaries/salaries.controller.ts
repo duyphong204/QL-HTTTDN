@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -9,20 +10,19 @@ import {
   Request,
   UseGuards,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
-import {
-  CalculateAllSalaryDto,
-  CreateSalaryDto,
-  QuerySalaryDto,
-  UpdateSalaryDto,
-} from './dto/salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { CalculateSalaryDto } from './dto/calculate-salary.dto';
+import { QuerySalaryDto } from './dto/query-salary.dto';
+import { AddSalaryDetailDto } from './dto/salary-detail.dto';
+import { SalaryStatus } from '@prisma/client';
+
 @ApiTags('HR - Salaries')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,70 +31,63 @@ import { ValidationPipe } from '@nestjs/common';
 export class SalariesController {
   constructor(private readonly salariesService: SalariesService) {}
 
-  @Post()
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  create(@Body() dto: CreateSalaryDto) {
-    return this.salariesService.calculateSalary(dto);
-  }
-
   @Post('calculate')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  calculate(@Body() dto: CreateSalaryDto) {
+  calculate(@Body() dto: CalculateSalaryDto) {
     return this.salariesService.calculateSalary(dto);
   }
 
   @Post('calculate-all')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  calculateAll(@Body() dto: CalculateAllSalaryDto) {
-    return this.salariesService.calculateAllForMonth(dto.month, dto.year);
+  calculateAll(@Body() dto: CalculateSalaryDto) {
+    return this.salariesService.calculateAllSalaries(dto.month, dto.year);
   }
 
   @Get('me')
-  getMySalaries(
-    @Request() req: any,
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    const monthNumber = month ? Number(month) : undefined;
-    const yearNumber = year ? Number(year) : undefined;
-    return this.salariesService.getMySalaries(
-      req.user.id,
-      monthNumber,
-      yearNumber,
-    );
+  @Roles(
+    Role.EMPLOYEE,
+    Role.HR_MANAGER,
+    Role.WAREHOUSE_MANAGER,
+    Role.SALES_MANAGER,
+  )
+  getMySalary(@Request() req, @Query() query: QuerySalaryDto) {
+    return this.salariesService.findAll(query, req.user.id);
   }
-  @Get('my')
-  getMySalariesAlias(
-    @Request() req: any,
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    const monthNumber = month ? Number(month) : undefined;
-    const yearNumber = year ? Number(year) : undefined;
-    return this.salariesService.getMySalaries(
-      req.user.id,
-      monthNumber,
-      yearNumber,
-    );
-  }
+
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll(@Query() query: QuerySalaryDto) {
+  getSalaries(@Query() query: QuerySalaryDto) {
     return this.salariesService.findAll(query);
   }
+
+  @Get('stats')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  getStats(@Query() query: QuerySalaryDto) {
+    return this.salariesService.getStats(query.month, query.year);
+  }
+
+  @Patch(':id/status')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  updateStatus(@Param('id') id: string, @Body('status') status: SalaryStatus) {
+    return this.salariesService.updateStatus(id, status);
+  }
+
   @Get(':id')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findOne(@Param('id') id: string) {
-    return this.salariesService.findOne(id);
+  @Roles(Role.ADMIN, Role.HR_MANAGER, Role.EMPLOYEE)
+  getById(@Param('id') id: string, @Request() req) {
+    const userId = req.user.role === Role.EMPLOYEE ? req.user.id : undefined;
+    return this.salariesService.findOne(id, userId);
   }
-  @Patch(':id')
+
+  @Post(':id/details')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  update(@Param('id') id: string, @Body() dto: UpdateSalaryDto) {
-    return this.salariesService.update(id, dto);
+  addDetail(@Param('id') id: string, @Body() dto: AddSalaryDetailDto) {
+    return this.salariesService.addDetail(id, dto);
   }
-  @Patch(':id/pay')
+
+  @Delete(':id/details/:detailId')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  pay(@Param('id') id: string) {
-    return this.salariesService.markAsPaid(id);
+  removeDetail(@Param('id') id: string, @Param('detailId') detailId: string) {
+    return this.salariesService.removeDetail(id, detailId);
   }
 }

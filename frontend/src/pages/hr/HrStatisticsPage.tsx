@@ -125,8 +125,8 @@ export default function HrStatisticsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-5 text-right">
-                                                <p className="font-bold text-slate-900">{formatCurrency(s.amount)}</p>
-                                                <p className="text-[10px] text-emerald-500 font-medium">Thưởng: +{formatCurrency(s.bonus)}</p>
+                                                <p className="font-bold text-slate-900">{formatCurrency(s.netSalary || 0)}</p>
+                                                <p className="text-[10px] text-emerald-500 font-medium">Thưởng: +{formatCurrency(s.totalBonus || 0)}</p>
                                             </td>
                                             <td className="px-6 py-5 text-center">
                                                 <Badge className={`rounded-lg px-3 py-1 border-none shadow-none font-semibold ${

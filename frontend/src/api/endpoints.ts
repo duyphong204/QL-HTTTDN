@@ -33,9 +33,11 @@ export const endpoints = {
     root: '/salaries',
     byId: (id: string) => `/salaries/${id}`,
     me: '/salaries/me',
-    report: '/salaries/report',
+    stats: '/salaries/stats',
     calculateAll: '/salaries/calculate-all',
     calculate: '/salaries/calculate',
+    status: (id: string) => `/salaries/${id}/status`,
+    details: (id: string) => `/salaries/${id}/details`,
   },
   categories: {
     root: '/categories',

@@ -1,29 +1,64 @@
-import { useUserPage } from "@/hooks/useUserPage"
-import { UserPlus, Pencil, Trash2 } from "lucide-react"
-import { UserFormModal } from "@/components/forms/UserFormModal"
-import { ROLE_BADGE } from "@/utils/role"
-import { DataTableToolbar } from "@/components/common/DataTableToolbar"
-import { PaginationControls } from "@/components/common/PaginationControls"
-import { TableLoadingRow } from "@/components/common/Loading"
+import { useEffect } from "react";
+import { UserPlus, Pencil, Trash2 } from "lucide-react";
+import { UserFormModal } from "@/components/forms/UserFormModal";
+import { ROLE_BADGE } from "@/utils/role";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { TableLoadingRow } from "@/components/common/Loading";
+
+import { useUserStore, type UserFormValues } from "@/stores/user.store";
+import { useEntityModal } from "@/hooks/useEntityModal";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
+import type { User } from "@/types/user.types";
 
 export default function UserManagement() {
+  // 1. Store State & Actions
   const {
     users,
     meta,
     isLoading,
-    modalOpen,
-    closeModal,
-    editingUser,
-    searchTerm,
-    setSearchTerm,
     filters,
-    updateFilters,
-    goToPage,
-    openCreateModal,
-    openEditModal,
-    handleDelete,
-    handleFormSubmit,
-  } = useUserPage()
+    setFilters,
+    fetchUsers,
+    addUser,
+    updateUser,
+    deleteUser,
+  } = useUserStore();
+
+  // 2. UI Hooks
+  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<User>();
+  const { confirmAndRun } = useConfirmAction();
+
+  // 3. Search & Pagination Logic
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchUsers,
+    debounceMs: 300,
+  });
+
+  // Khởi tạo dữ liệu
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // 4. Handlers
+  const handleFormSubmit = async (data: UserFormValues) => {
+    if (editingEntity) {
+      await updateUser(editingEntity.id, data);
+    } else {
+      await addUser(data);
+    }
+    closeModal();
+  };
+
+  const handleDelete = async (id: string, email?: string) => {
+    await confirmAndRun({
+      message: `Bạn có chắc muốn xóa user ${email ?? ""}?`,
+      action: () => deleteUser(id),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -69,7 +104,6 @@ export default function UserManagement() {
             <table className="w-full whitespace-nowrap text-left text-sm">
               <thead className="border-b border-gray-100 bg-white font-semibold text-gray-700">
                 <tr>
-                  <th className="px-6 py-4">Username</th>
                   <th className="px-6 py-4">Họ tên</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Vai trò</th>
@@ -89,14 +123,8 @@ export default function UserManagement() {
                 ) : (
                   users.map((user) => (
                     <tr key={user.id} className="group transition-colors hover:bg-gray-50/70">
-                      <td className="px-6 py-4 font-semibold text-gray-900">
-                        {user.email ? user.email.split("@")[0] : "—"}
-                      </td>
-
                       <td className="px-6 py-4 text-gray-600">{user.profile?.fullName || "—"}</td>
-
                       <td className="px-6 py-4 text-gray-600">{user.email || "—"}</td>
-
                       <td className="px-6 py-4">
                         <span
                           className={
@@ -107,7 +135,6 @@ export default function UserManagement() {
                           {ROLE_BADGE[user.role].label}
                         </span>
                       </td>
-
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-1 opacity-80 transition-opacity group-hover:opacity-100">
                           <button
@@ -117,7 +144,6 @@ export default function UserManagement() {
                           >
                             <Pencil size={18} />
                           </button>
-
                           <button
                             onClick={() => handleDelete(user.id, user.email)}
                             className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
@@ -145,10 +171,10 @@ export default function UserManagement() {
       </div>
 
       <UserFormModal
-        key={editingUser?.id || "create-user"}
+        key={editingEntity?.id || "create-user"}
         isOpen={modalOpen}
         onClose={closeModal}
-        editingUser={editingUser}
+        editingUser={editingEntity}
         onSubmit={handleFormSubmit}
       />
     </div>

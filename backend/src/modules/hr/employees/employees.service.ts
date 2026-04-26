@@ -82,7 +82,7 @@ export class EmployeesService {
         },
         jobHistories: {
           orderBy: { startDate: 'desc' },
-          take: 5, 
+          take: 5,
         },
       },
     });
@@ -124,7 +124,6 @@ export class EmployeesService {
       }
       throw new BadRequestException('Email đã tồn tại trong hệ thống');
     }
-``
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     return this.prisma.$transaction(async (tx) => {
@@ -418,7 +417,7 @@ export class EmployeesService {
         this.prisma.employee.count({ where: { resignDate: { not: null } } }),
         this.prisma.salary.aggregate({
           where: { month: currentMonth, year: currentYear },
-          _sum: { amount: true, bonus: true, deduction: true },
+          _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
         }),
         this.prisma.salary.count({
           where: { month: currentMonth, year: currentYear },
@@ -431,9 +430,9 @@ export class EmployeesService {
       headcount,
       salaryMonth: currentMonth,
       salaryYear: currentYear,
-      totalSalaryPaid: salaryAggregate._sum.amount || 0,
-      totalBonus: salaryAggregate._sum.bonus || 0,
-      totalDeduction: salaryAggregate._sum.deduction || 0,
+      totalSalaryPaid: salaryAggregate._sum.netSalary || 0,
+      totalBonus: salaryAggregate._sum.totalBonus || 0,
+      totalDeduction: salaryAggregate._sum.totalDeduction || 0,
     };
   }
 }

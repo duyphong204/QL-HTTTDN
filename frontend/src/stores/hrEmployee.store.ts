@@ -1,7 +1,10 @@
 import { create } from 'zustand'
-import type { Employee } from '@/types/employee.types'
-import type { BaseFilters, PaginationMeta, SortOrder } from '@/types/common.types'
+import { toast } from 'sonner'
+import { employeeService } from '@/services/hr.service'
+import { getErrorMessage } from '@/stores/store.helpers'
 import { mergeFiltersWithPageReset } from '@/stores/store.helpers'
+import type { Employee, CreateEmployeeDto, UpdateEmployeeDto } from '@/types/employee.types'
+import type { BaseFilters, PaginationMeta, SortOrder } from '@/types/common.types'
 
 type EmployeeFilters = BaseFilters & {
   department?: string
@@ -16,42 +19,95 @@ interface HrEmployeeState {
   selectedEmployee: Employee | null
   loadingEmployees: boolean
   loadingEmployeeDetail: boolean
+  
+  // Actions
   setFilters: (filters: Partial<EmployeeFilters>) => void
-  setEmployees: (employees: Employee[]) => void
-  setMeta: (meta: PaginationMeta | null) => void
-  setSelectedEmployee: (employee: Employee | null) => void
+  fetchEmployees: () => Promise<void>
+  fetchEmployeeById: (id: string) => Promise<void>
+  createEmployee: (data: CreateEmployeeDto) => Promise<void>
+  updateEmployee: (id: string, data: UpdateEmployeeDto) => Promise<void>
+  deleteEmployee: (id: string) => Promise<void>
   clearSelectedEmployee: () => void
-  setLoadingEmployees: (loading: boolean) => void
-  setLoadingEmployeeDetail: (loading: boolean) => void
 }
 
-export const useHrEmployeeStore = create<HrEmployeeState>((set) => ({
+export const useHrEmployeeStore = create<HrEmployeeState>((set, get) => ({
   employees: [],
   meta: null,
   filters: {
-    page: 1,
-    limit: 10,
-    search: '',
-    sortBy: 'code',
-    sortOrder: 'asc' as SortOrder,
-    department: '',
-    position: '',
-    isActive: true,
+    page: 1, limit: 10, search: '', sortBy: 'code', sortOrder: 'asc' as SortOrder,
+    department: '', position: '', isActive: true,
   },
   selectedEmployee: null,
   loadingEmployees: false,
   loadingEmployeeDetail: false,
+
   setFilters: (newFilters) => {
     set((state) => ({
       filters: mergeFiltersWithPageReset(state.filters, newFilters),
     }))
+    get().fetchEmployees() // Fetch lại khi filter thay đổi
   },
-  setEmployees: (employees) => set({ employees }),
-  setMeta: (meta) => set({ meta }),
-  setSelectedEmployee: (selectedEmployee) => set({ selectedEmployee }),
-  clearSelectedEmployee: () => set({ selectedEmployee: null }),
-  setLoadingEmployees: (loadingEmployees) => set({ loadingEmployees }),
-  setLoadingEmployeeDetail: (loadingEmployeeDetail) => set({ loadingEmployeeDetail }),
-}))
 
-export type { EmployeeFilters }
+  fetchEmployees: async () => {
+    set({ loadingEmployees: true })
+    try {
+      const { filters } = get()
+      const response = await employeeService.getEmployees({
+        ...filters,
+        department: filters.department || undefined,
+        position: filters.position || undefined,
+      })
+      set({ employees: response.data, meta: response.meta })
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể tải danh sách nhân viên'))
+    } finally {
+      set({ loadingEmployees: false })
+    }
+  },
+
+  fetchEmployeeById: async (id: string) => {
+    set({ loadingEmployeeDetail: true })
+    try {
+      const employee = await employeeService.getEmployeeById(id)
+      set({ selectedEmployee: employee })
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Không thể tải chi tiết nhân viên'))
+    } finally {
+      set({ loadingEmployeeDetail: false })
+    }
+  },
+
+  createEmployee: async (data) => {
+    try {
+      await employeeService.createEmployee(data)
+      toast.success('Thêm nhân sự thành công')
+      await get().fetchEmployees()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Thêm nhân sự thất bại'))
+      throw error
+    }
+  },
+
+  updateEmployee: async (id, data) => {
+    try {
+      await employeeService.updateEmployee(id, data)
+      toast.success('Cập nhật nhân sự thành công')
+      await get().fetchEmployees()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Cập nhật nhân sự thất bại'))
+      throw error
+    }
+  },
+
+  deleteEmployee: async (id) => {
+    try {
+      await employeeService.deleteEmployee(id)
+      toast.success('Đã xóa nhân sự')
+      await get().fetchEmployees()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Xóa nhân sự thất bại'))
+    }
+  },
+
+  clearSelectedEmployee: () => set({ selectedEmployee: null }),
+}))

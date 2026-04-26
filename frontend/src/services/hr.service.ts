@@ -13,8 +13,8 @@ import type {
 } from "@/types/leave.types"
 import type {
     Salary,
-    CreateSalaryDto,
-    UpdateSalaryDto,
+    AddSalaryDetailDto,
+    QuerySalaryParams,
 } from "@/types/salary.types"
 import type { HrStatisticsReport } from "@/types/report.types"
 import type { BaseFilters, PaginatedResponse } from "@/types/common.types"
@@ -85,35 +85,39 @@ export const leaveRequestService = {
 };
 
 export const salaryService = {
-    getSalaries: async (params?: { month?: number; year?: number }): Promise<Salary[]> => {
+    getSalaries: async (params?: QuerySalaryParams): Promise<Salary[]> => {
         return apiGet<Salary[]>(endpoints.salaries.root, params);
-    },
-
-    createSalary: async (data: CreateSalaryDto): Promise<Salary> => {
-        return apiPost<Salary>(endpoints.salaries.root, data);
-    },
-
-    updateSalary: async (id: string, data: UpdateSalaryDto): Promise<Salary> => {
-        return apiPatch<Salary>(endpoints.salaries.byId(id), data);
-    },
-
-    deleteSalary: async (id: string): Promise<void> => {
-        await apiDelete(endpoints.salaries.byId(id));
     },
 
     getMySalaries: async (params?: { month?: number; year?: number }): Promise<Salary[]> => {
         return apiGet<Salary[]>(endpoints.salaries.me, params);
     },
 
-    getSalaryReport: async (params?: { month?: number; year?: number }): Promise<any> => {
-        return apiGet<any>(endpoints.salaries.report, params);
+    getSalaryById: async (id: string): Promise<Salary> => {
+        return apiGet<Salary>(endpoints.salaries.byId(id));
     },
 
-    calculateAllSalaries: async (data: { month: number; year: number }): Promise<void> => {
-        await apiPost<void>(endpoints.salaries.calculateAll, data);
+    calculateAllSalaries: async (data: { month: number; year: number }): Promise<{ total: number; success: number }> => {
+        return apiPost<{ total: number; success: number }>(endpoints.salaries.calculateAll, data);
     },
 
-    calculateSalary: async (data: { employeeId: string; month: number; year: number }): Promise<void> => {
-        await apiPost<void>(endpoints.salaries.calculate, data);
+    calculateSalary: async (data: { employeeId: string; month: number; year: number }): Promise<Salary> => {
+        return apiPost<Salary>(endpoints.salaries.calculate, data);
+    },
+
+    approveSalary: async (id: string): Promise<Salary> => {
+        return apiPatch<Salary>(endpoints.salaries.status(id), { status: 'APPROVED' });
+    },
+
+    markAsPaid: async (id: string): Promise<Salary> => {
+        return apiPatch<Salary>(endpoints.salaries.status(id), { status: 'PAID' });
+    },
+
+    cancelSalary: async (id: string): Promise<Salary> => {
+        return apiPatch<Salary>(endpoints.salaries.status(id), { status: 'CANCELLED' });
+    },
+
+    addSalaryDetail: async (salaryId: string, detail: AddSalaryDetailDto): Promise<Salary> => {
+        return apiPost<Salary>(endpoints.salaries.details(salaryId), detail);
     },
 };

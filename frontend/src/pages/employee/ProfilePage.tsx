@@ -1,4 +1,5 @@
-import { useProfile } from "@/hooks/useProfile"
+import { useEffect } from "react"
+import { useEmployeeStore } from "@/stores/employee.store" // Dùng trực tiếp Store
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,21 +15,38 @@ export default function ProfilePage() {
     isLoadingProfile,
     isEditing,
     formData,
+    fetchMyProfile,
+    updateMyProfile,
     handleEdit,
-    handleChange,
-    handleSave,
     handleCancel,
-  } = useProfile()
+    setFormData
+  } = useEmployeeStore()
 
-  if (isLoadingProfile) {
+  // Fetch dữ liệu khi vào trang
+  useEffect(() => {
+    fetchMyProfile()
+  }, [fetchMyProfile])
+
+  if (isLoadingProfile && !myProfile) {
     return <PageLoading text="Đang tải hồ sơ nhân viên..." />
   }
 
   const profile = myProfile?.user.profile
 
+  // Handlers local cho UI
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ [e.target.name]: e.target.value })
+  }
+
+  const handleSave = async () => {
+    await updateMyProfile({
+      ...formData,
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined,
+    })
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6 md:p-10 space-y-8 animate-in fade-in duration-500">
-
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -42,13 +60,14 @@ export default function ProfilePage() {
         ) : (
           <div className="flex gap-3">
             <Button variant="outline" onClick={handleCancel}>Hủy</Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Lưu thay đổi</Button>
+            <Button onClick={handleSave} disabled={isLoadingProfile} className="bg-blue-600 hover:bg-blue-700">
+              {isLoadingProfile ? "Đang lưu..." : "Lưu thay đổi"}
+            </Button>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
         {/* Left Column: Quick View */}
         <div className="space-y-6">
           <Card className="border-none shadow-md bg-white">
@@ -155,13 +174,11 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   )
 }
 
-// Component phụ để render block thông tin gọn hơn
 function InfoBlock({ label, value, isEditing, input, bold }: { label: string; value?: string; isEditing?: boolean; input?: React.ReactNode; bold?: boolean }) {
   return (
     <div className="space-y-1.5">

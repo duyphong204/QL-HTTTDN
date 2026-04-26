@@ -1,192 +1,207 @@
 import {
-  ConflictException,
   Injectable,
+  BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  CreateSalaryDto,
-  QuerySalaryDto,
-  UpdateSalaryDto,
-} from './dto/salary.dto';
+import { CalculateSalaryDto } from './dto/calculate-salary.dto';
+import { QuerySalaryDto } from './dto/query-salary.dto';
+import { SalaryStatus } from '@prisma/client';
+import { AddSalaryDetailDto } from './dto/salary-detail.dto';
 
 @Injectable()
 export class SalariesService {
   constructor(private prisma: PrismaService) {}
 
-  // 1. Helper dùng chung để include dữ liệu nhân viên, tránh lặp code
-  private readonly salaryInclude = {
-    employee: {
-      select: {
-        id: true,
-        code: true,
-        baseSalary: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: { fullName: true, phone: true },
-            },
-          },
+  private async refreshSalaryTotals(salaryId: string) {
+    const salary = await this.prisma.salary.findUnique({
+      where: { id: salaryId },
+      include: { details: true, employee: true },
+    });
+    if (!salary) return null;
+
+    const totalBonus = salary.details
+      .filter((d) => ['BONUS', 'OT', 'ALLOWANCE'].includes(d.type))
+      .reduce((sum, d) => sum + d.amount, 0);
+
+    const totalDeduction = salary.details
+      .filter((d) => !['BONUS', 'OT', 'ALLOWANCE'].includes(d.type))
+      .reduce((sum, d) => sum + d.amount, 0);
+
+    const baseAmount =
+      (salary.employee.baseSalary / salary.workingDays) * salary.actualWorkDays;
+    const grossSalary = baseAmount + totalBonus;
+    const netSalary = grossSalary - totalDeduction;
+
+    return this.prisma.salary.update({
+      where: { id: salaryId },
+      data: { totalBonus, totalDeduction, grossSalary, netSalary },
+      include: {
+        details: true,
+        employee: {
+          include: { user: { include: { profile: true } } },
         },
       },
-    },
-  };
-
-  // 2. Helper tính toán Net Salary để trả về cho Frontend (nếu cần show)
-  private addNetSalary<T extends { amount: number }>(salary: T) {
-    return {
-      ...salary,
-      netSalary: salary.amount, // amount lúc này đã là (base + bonus - deduction)
-    };
+    });
   }
 
-  async calculateSalary(dto: CreateSalaryDto) {
-    // Kiểm tra tồn tại
-    const exist = await this.prisma.salary.findFirst({
-      where: { employeeId: dto.employeeId, month: dto.month, year: dto.year },
-    });
-    if (exist)
-      throw new ConflictException(
-        'Nhân viên này đã được tính lương tháng này rồi!',
-      );
+  private getMonthDateRange(month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const endDate = new Date(year, month, 1, 0, 0, 0, 0);
+    endDate.setTime(endDate.getTime() - 1);
+    return { startDate, endDate };
+  }
 
+  // =========================
+  // 1. TÍNH LƯƠNG (ĐƠN LẺ & HÀNG LOẠT)
+  // =========================
+  async calculateSalary(dto: CalculateSalaryDto) {
+    const { employeeId, month, year, details = [] } = dto;
     const employee = await this.prisma.employee.findUnique({
-      where: { id: dto.employeeId },
-      select: { baseSalary: true },
+      where: { id: employeeId },
     });
-    if (!employee) throw new NotFoundException('Nhân viên không tồn tại');
 
-    // Công thức chuẩn: amount = Lương cơ bản + Thưởng - Phạt
-    const finalAmount =
-      employee.baseSalary + (dto.bonus || 0) - (dto.deduction || 0);
+    if (!employee) throw new BadRequestException('Employee not found');
 
-    const salary = await this.prisma.salary.create({
-      data: {
-        ...dto,
-        status: dto.status ?? 'PENDING',
-        amount: finalAmount,
+    const { startDate, endDate } = this.getMonthDateRange(month, year);
+    const attendances = await this.prisma.attendance.findMany({
+      where: {
+        employeeId,
+        date: { gte: startDate, lte: endDate },
+        status: { in: ['PRESENT', 'LEAVE', 'LATE'] },
       },
-      include: this.salaryInclude,
     });
 
-    return this.addNetSalary(salary);
-  }
+    const workingDays = 26;
+    const actualWorkDays = attendances.length;
 
-  async calculateAllForMonth(month: number, year: number) {
-    const activeEmployees = await this.prisma.employee.findMany({
-      where: { resignDate: null, user: { isActive: true } },
-      select: { id: true, baseSalary: true },
-    });
-
-    return this.prisma.$transaction(async (tx) => {
-      let created = 0;
-      let skipped = 0;
-
-      for (const emp of activeEmployees) {
-        const existing = await tx.salary.findFirst({
-          where: { employeeId: emp.id, month, year },
-          select: { id: true },
-        });
-
-        if (existing) {
-          skipped++;
-          continue;
-        }
-
-        await tx.salary.create({
-          data: {
-            employeeId: emp.id,
-            month,
-            year,
-            bonus: 0,
-            deduction: 0,
-            amount: emp.baseSalary, // Mặc định là lương cơ bản
-            status: 'PENDING',
-          },
-        });
-        created++;
-      }
-
-      return {
+    const salary = await this.prisma.salary.upsert({
+      where: { employeeId_month_year: { employeeId, month, year } },
+      create: {
+        employeeId,
         month,
         year,
-        totalEmployees: activeEmployees.length,
-        created,
-        skipped,
-      };
-    });
-  }
-
-  async getMySalaries(userId: string, month?: number, year?: number) {
-    const salaries = await this.prisma.salary.findMany({
-      where: {
-        employee: { userId },
-        ...(month && { month }),
-        ...(year && { year }),
+        baseSalary: employee.baseSalary,
+        workingDays,
+        actualWorkDays,
+        grossSalary: 0,
+        totalBonus: 0,
+        totalDeduction: 0,
+        netSalary: 0,
+        details: { create: details },
       },
-      orderBy: [{ year: 'desc' }, { month: 'desc' }],
-      include: this.salaryInclude,
+      update: {
+        actualWorkDays,
+        details:
+          details.length > 0 ? { deleteMany: {}, create: details } : undefined,
+      },
     });
 
-    return salaries.map((s) => this.addNetSalary(s));
+    return this.refreshSalaryTotals(salary.id);
   }
 
-  async findAll(query: QuerySalaryDto) {
+  async calculateAllSalaries(month: number, year: number) {
+    const employees = await this.prisma.employee.findMany({
+      where: { resignDate: null },
+    });
+    const results: any[] = []; 
+    for (const emp of employees) {
+      try {
+        const res = await this.calculateSalary({
+          employeeId: emp.id,
+          month,
+          year,
+        });
+        if (res) results.push(res);
+      } catch (e) {
+        console.error(`Error calculating for ${emp.id}:`, e);
+      }
+    }
+    return { total: employees.length, success: results.length };
+  }
+
+  // =========================
+  // 2. TRUY VẤN LƯƠNG
+  // =========================
+  async findAll(query: QuerySalaryDto, userId?: string) {
     const { month, year, employeeId, status } = query;
 
-    const salaries = await this.prisma.salary.findMany({
-      where: { month, year, employeeId, status },
-      orderBy: [{ year: 'desc' }, { month: 'desc' }],
-      include: this.salaryInclude,
-    });
-
-    return salaries.map((s) => this.addNetSalary(s));
-  }
-
-  async findOne(id: string) {
-    const salary = await this.prisma.salary.findUnique({
-      where: { id },
-      include: this.salaryInclude,
-    });
-    if (!salary) throw new NotFoundException('Lương không tồn tại');
-    return this.addNetSalary(salary);
-  }
-
-  async markAsPaid(id: string) {
-    const salary = await this.prisma.salary.update({
-      where: { id },
-      data: { status: 'PAID' },
-      include: this.salaryInclude,
-    });
-    return this.addNetSalary(salary);
-  }
-
-  async update(id: string, dto: UpdateSalaryDto) {
-    const exist = await this.prisma.salary.findUnique({
-      where: { id },
-      include: { employee: { select: { baseSalary: true } } },
-    });
-    if (!exist) throw new NotFoundException('Lương không tồn tại');
-
-    // TÍNH TOÁN LẠI TỔNG TIỀN NẾU CÓ THAY ĐỔI BONUS/DEDUCTION
-    let newAmount = exist.amount;
-    if (dto.bonus !== undefined || dto.deduction !== undefined) {
-      const bonus = dto.bonus ?? exist.bonus;
-      const deduction = dto.deduction ?? exist.deduction;
-      newAmount = exist.employee.baseSalary + bonus - deduction;
+    let finalEmployeeId = employeeId;
+    if (userId) {
+      const emp = await this.prisma.employee.findUnique({ where: { userId } });
+      finalEmployeeId = emp?.id;
     }
 
-    const updatedSalary = await this.prisma.salary.update({
+    return this.prisma.salary.findMany({
+      where: {
+        month,
+        year,
+        employeeId: finalEmployeeId,
+        status,
+      },
+      include: {
+        employee: {
+          include: {
+            user: {
+              include: { profile: true }
+            }
+          }
+        },
+        details: true,
+      },
+      // SỬA TẠI ĐÂY: Chuyển object thành mảng
+      orderBy: [
+        { year: 'desc' },
+        { month: 'desc' }
+      ],
+    });
+  }
+
+  async findOne(id: string, userId?: string) {
+    const salary = await this.prisma.salary.findUnique({
+      where: { id },
+      include: { employee: true, details: true },
+    });
+    if (!salary) throw new NotFoundException('Salary not found');
+    if (userId && salary.employee.userId !== userId)
+      throw new ForbiddenException('Access denied');
+    return salary;
+  }
+
+  // =========================
+  // 3. TRẠNG THÁI & CHI TIẾT
+  // =========================
+  async updateStatus(id: string, status: SalaryStatus) {
+    return this.prisma.salary.update({
       where: { id },
       data: {
-        ...dto,
-        amount: newAmount,
+        status,
+        paidAt: status === SalaryStatus.PAID ? new Date() : null,
       },
-      include: this.salaryInclude,
     });
+  }
 
-    return this.addNetSalary(updatedSalary);
+  async addDetail(salaryId: string, dto: AddSalaryDetailDto) {
+    await this.prisma.salaryDetail.create({ data: { salaryId, ...dto } });
+    return this.refreshSalaryTotals(salaryId);
+  }
+
+  async removeDetail(salaryId: string, detailId: string) {
+    await this.prisma.salaryDetail.delete({ where: { id: detailId } });
+    return this.refreshSalaryTotals(salaryId);
+  }
+
+  // =========================
+  // 4. THỐNG KÊ (Dùng chung cho Report)
+  // =========================
+  async getStats(month?: number, year?: number) {
+    const stats = await this.prisma.salary.aggregate({
+      _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
+      _avg: { netSalary: true },
+      where: { month, year },
+    });
+    const list = await this.findAll({ month, year });
+    return { stats, data: list };
   }
 }

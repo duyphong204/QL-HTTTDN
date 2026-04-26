@@ -84,7 +84,7 @@ export const useHrStatisticsPage = () => {
   }, [month, year])
 
   const totalBonus = useMemo(
-    () => salaries.reduce((acc, salary) => acc + (salary.bonus || 0), 0),
+    () => salaries.reduce((acc, salary) => acc + (salary.totalBonus || 0), 0),
     [salaries]
   )
 

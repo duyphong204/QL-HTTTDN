@@ -1,12 +1,19 @@
+import { useEffect } from 'react';
 import { Plus, Pencil, Trash2, Package } from 'lucide-react';
 import { getCloudinaryThumbnailUrl } from '@/utils/cloudinary';
 import { ProductFormModal } from '@/components/forms/ProductFormModal';
 import { DataTableToolbar } from '@/components/common/DataTableToolbar';
 import { PaginationControls } from '@/components/common/PaginationControls';
 import { TableLoadingRow } from '@/components/common/Loading';
-import { useProduct } from '@/hooks/useProduct';
+
+import { useProductStore } from '@/stores/product.store';
+import { useEntityModal } from '@/hooks/useEntityModal';
+import { useConfirmAction } from '@/hooks/useConfirmAction';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
+import type { Product, CreateProductDto, UpdateProductDto } from '@/types/product.types';
 
 export default function ProductManagement() {
+  // 1. Store State & Actions
   const {
     products,
     isLoading,
@@ -14,18 +21,48 @@ export default function ProductManagement() {
     filters,
     categories,
     suppliers,
-    modalOpen,
-    editingProduct,
-    searchTerm,
-    setSearchTerm,
-    updateFilters,
-    goToPage,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-    handleDelete,
-    handleFormSubmit,
-  } = useProduct();
+    setFilters,
+    fetchProducts,
+    fetchDependencies,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+  } = useProductStore();
+
+  // 2. UI Hooks
+  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<Product>();
+  const { confirmAndRun } = useConfirmAction();
+
+  // 3. Search & Pagination Logic
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchProducts,
+    debounceMs: 400,
+  });
+
+  // Initial Fetch
+  useEffect(() => {
+    fetchProducts();
+    fetchDependencies();
+  }, []);
+
+  // 4. Handlers
+  const handleFormSubmit = async (data: CreateProductDto | UpdateProductDto) => {
+    if (editingEntity) {
+      await updateProduct(editingEntity.id, data as UpdateProductDto);
+    } else {
+      await createProduct(data as CreateProductDto);
+    }
+    closeModal();
+  };
+
+  const handleDelete = async (id: string, productName: string) => {
+    await confirmAndRun({
+      message: `Bạn có chắc muốn xoá sản phẩm "${productName}"?`,
+      action: () => deleteProduct(id),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -70,7 +107,6 @@ export default function ProductManagement() {
                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
               ))}
             </select>
-
           </DataTableToolbar>
 
           <div className="overflow-x-auto">
@@ -162,7 +198,7 @@ export default function ProductManagement() {
       <ProductFormModal
         isOpen={modalOpen}
         onClose={closeModal}
-        editingProduct={editingProduct}
+        editingProduct={editingEntity}
         categories={categories}
         suppliers={suppliers}
         onSubmit={handleFormSubmit}

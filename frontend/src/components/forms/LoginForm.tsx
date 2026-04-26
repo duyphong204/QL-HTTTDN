@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useForm } from "react-hook-form"
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/auth.store"
 import { type LoginValues } from "@/types/auth.types"
 import authBg from "@/assets/auth-bg.png";
 import { useNavigate } from "react-router-dom"
@@ -25,11 +25,11 @@ export function LoginForm({
   } = useForm<LoginValues>()
 
   const navigate = useNavigate()
-  const { handleLogin, isLoading } = useAuth()
+  const { login, isLoading } = useAuthStore()
 
   const onSubmit = async (data: LoginValues) => {
     try {
-      await handleLogin(data);
+      await login(data);
       navigate("/", { replace: true });
     }
     catch (error) {

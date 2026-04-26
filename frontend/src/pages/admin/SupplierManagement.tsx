@@ -1,32 +1,68 @@
-import { useSupplierPage } from "@/hooks/useSupplierPage"
-import { Plus, Pencil, Trash2 } from "lucide-react"
-import { SupplierFormModal } from "@/components/forms/SupplierFormModal"
-import { DataTableToolbar } from "@/components/common/DataTableToolbar"
-import { OverlayLoading } from "@/components/common/Loading"
-import { PaginationControls } from "@/components/common/PaginationControls"
+import { useEffect } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useSupplierStore } from "@/stores/supplier.store";
+import { useEntityModal } from "@/hooks/useEntityModal";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
+
+import { SupplierFormModal } from "@/components/forms/SupplierFormModal";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { OverlayLoading } from "@/components/common/Loading";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import type { Supplier, CreateSupplierDto } from "@/types/supplier.types";
 
 export default function SupplierManagement() {
+  // 1. Store State & Actions
   const {
     suppliers,
     meta,
     isLoading,
-    modalOpen,
-    closeModal,
-    editingSupplier,
-    searchTerm,
-    setSearchTerm,
     filters,
-    updateFilters,
-    goToPage,
-    openCreateModal,
-    openEditModal,
-    handleDelete,
-    handleFormSubmit,
-  } = useSupplierPage()
+    setFilters,
+    fetchSuppliers,
+    createSupplier,
+    updateSupplier,
+    deleteSupplier,
+  } = useSupplierStore();
+
+  // 2. UI Hooks
+  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<Supplier>();
+  const { confirmAndRun } = useConfirmAction();
+
+  // 3. Search & Pagination Logic
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
+    filters,
+    setFilters,
+    fetchData: fetchSuppliers,
+    debounceMs: 500,
+  });
+
+  // Initial Fetch
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  // 4. Handlers
+  const handleFormSubmit = async (data: CreateSupplierDto) => {
+    if (editingEntity) {
+      await updateSupplier(editingEntity.id, data);
+    } else {
+      await createSupplier(data);
+    }
+    closeModal();
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    await confirmAndRun({
+      message: `Bạn có chắc muốn xóa nhà cung cấp: ${name}?`,
+      action: () => deleteSupplier(id),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý Nhà cung cấp</h1>
@@ -42,7 +78,8 @@ export default function SupplierManagement() {
           </button>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative min-h-100">
+        {/* Table Container */}
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative min-h-[400px]">
           <DataTableToolbar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
@@ -64,9 +101,7 @@ export default function SupplierManagement() {
           </DataTableToolbar>
 
           <div className="relative">
-            {isLoading && (
-              <OverlayLoading text="Đang tải dữ liệu..." />
-            )}
+            {isLoading && <OverlayLoading text="Đang tải dữ liệu..." />}
 
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left whitespace-nowrap">
@@ -131,7 +166,7 @@ export default function SupplierManagement() {
       <SupplierFormModal
         isOpen={modalOpen}
         onClose={closeModal}
-        editingSupplier={editingSupplier}
+        editingSupplier={editingEntity}
         onSubmit={handleFormSubmit}
       />
     </div>

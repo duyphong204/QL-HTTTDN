@@ -93,7 +93,7 @@ export class ReportService {
           ...(month ? { month } : {}),
           year,
         },
-        _sum: { amount: true, bonus: true },
+        _sum: { netSalary: true, totalBonus: true },
       }),
       this.prisma.systemLog.findMany({
         where: { createdAt: { gte: periodStart, lte: periodEnd } },
@@ -208,8 +208,8 @@ export class ReportService {
         totalItemsSold,
         totalOrders: completedOrders.length,
         totalEmployees: employees,
-        totalSalaryPaid: this.toNumber(salaries._sum.amount),
-        totalBonus: this.toNumber(salaries._sum.bonus),
+        totalSalaryPaid: this.toNumber(salaries._sum.netSalary),
+        totalBonus: this.toNumber(salaries._sum.totalBonus),
         userActivity: {
           totalActions: logs.length,
           uniqueUsers: activeUsers.size,
@@ -288,15 +288,15 @@ export class ReportService {
       this.prisma.salary.findMany({
         where: { month, year },
         select: {
-          amount: true,
-          bonus: true,
-          deduction: true,
+          netSalary: true,
+          totalBonus: true,
+          totalDeduction: true,
           employee: { select: { department: true } },
         },
       }),
       this.prisma.salary.findMany({
         where: { year },
-        select: { month: true, amount: true, bonus: true },
+        select: { month: true, netSalary: true, totalBonus: true },
       }),
       this.prisma.employee.findMany({
         select: { joinDate: true, resignDate: true },
@@ -319,15 +319,15 @@ export class ReportService {
 
     for (const row of monthSalaries) {
       const dept = row.employee?.department || 'Chưa phân phòng ban';
-      byDepartment.set(dept, (byDepartment.get(dept) || 0) + this.toNumber(row.amount));
-      totalSalary += this.toNumber(row.amount);
-      totalBonus += this.toNumber(row.bonus);
+      byDepartment.set(dept, (byDepartment.get(dept) || 0) + this.toNumber(row.netSalary));
+      totalSalary += this.toNumber(row.netSalary);
+      totalBonus += this.toNumber(row.totalBonus);
     }
 
     const salaryByMonth = Array.from({ length: 12 }, () => ({ salary: 0, bonus: 0 }));
     for (const row of allSalariesInYear) {
-      salaryByMonth[row.month - 1].salary += this.toNumber(row.amount);
-      salaryByMonth[row.month - 1].bonus += this.toNumber(row.bonus);
+      salaryByMonth[row.month - 1].salary += this.toNumber(row.netSalary);
+      salaryByMonth[row.month - 1].bonus += this.toNumber(row.totalBonus);
     }
 
     const activeHeadcountByMonth = Array.from({ length: 12 }, (_, idx) => {
@@ -701,9 +701,9 @@ export class ReportService {
     const labels = salaries.map((s) => `${s.year}-${String(s.month).padStart(2, '0')}`);
 
     const baseSalaryData = salaries.map((s) => this.toNumber(s.employee?.baseSalary));
-    const bonusData = salaries.map((s) => this.toNumber(s.bonus));
-    const deductionData = salaries.map((s) => this.toNumber(s.deduction));
-    const netData = salaries.map((s) => this.toNumber(s.amount));
+    const bonusData = salaries.map((s) => this.toNumber(s.totalBonus));
+    const deductionData = salaries.map((s) => this.toNumber(s.totalDeduction));
+    const netData = salaries.map((s) => this.toNumber(s.netSalary));
 
     const summary = {
       totalRecords: salaries.length,
@@ -728,9 +728,9 @@ export class ReportService {
         month: s.month,
         year: s.year,
         baseSalary: this.toNumber(s.employee?.baseSalary),
-        bonus: this.toNumber(s.bonus),
-        deduction: this.toNumber(s.deduction),
-        totalSalary: this.toNumber(s.amount),
+        bonus: this.toNumber(s.totalBonus),
+        deduction: this.toNumber(s.totalDeduction),
+        totalSalary: this.toNumber(s.netSalary),
         status: s.status,
         employeeName: s.employee?.user?.profile?.fullName || '',
       })),

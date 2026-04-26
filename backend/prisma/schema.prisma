@@ -40,7 +40,7 @@ model Employee {
   userId        String         @unique
   code          String         @unique
   position      String?
-  baseSalary    Float
+  baseSalary    Float          @default(0)
   joinDate      DateTime       @default(now())
   resignDate    DateTime?
   department    String?
@@ -48,6 +48,7 @@ model Employee {
   jobHistories  JobHistory[]
   leaveRequests LeaveRequest[]
   salaries      Salary[]
+  attendances  Attendance[]
 }
 
 model JobHistory {
@@ -62,16 +63,80 @@ model JobHistory {
 }
 
 model Salary {
+  id            String   @id @default(uuid())
+  employeeId    String
+  month         Int
+  year          Int
+
+  baseSalary    Float    @default(0)
+
+  workingDays   Int      @default(26)
+  actualWorkDays Int     @default(0)
+
+  grossSalary   Float    @default(0)
+  totalBonus    Float    @default(0)
+  totalDeduction Float   @default(0)
+
+  netSalary     Float   @default(0)
+
+  status        SalaryStatus @default(PENDING)
+  note          String?
+
+  createdAt     DateTime @default(now())  
+  updatedAt     DateTime @updatedAt @default(now())
+
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  details       SalaryDetail[]
+
+  paidAt DateTime?
+  
+  @@unique([employeeId, month, year])
+  @@index([month, year])
+  @@index([employeeId])
+}
+
+model SalaryDetail {
+  id          String     @id @default(uuid())
+  salaryId    String
+  type        DetailType
+  amount      Float
+  description String?    // Ví dụ: "Thưởng dự án A", "Trừ BHXH 10.5%"
+  salary      Salary     @relation(fields: [salaryId], references: [id], onDelete: Cascade)
+}
+
+model Attendance {
   id         String   @id @default(uuid())
   employeeId String
-  month      Int
-  year       Int
-  amount     Float
-  status     String
-  createdAt  DateTime @default(now())
-  bonus      Float    @default(0)
-  deduction  Float    @default(0)
+  date       DateTime
+  checkIn    DateTime?
+  checkOut   DateTime?
+  status     AttendanceStatus @default(PRESENT) // PRESENT, ABSENT, LEAVE, LATE
+
   employee   Employee @relation(fields: [employeeId], references: [id])
+  @@unique([employeeId, date])   // Một ngày chỉ chấm công một lần
+}
+
+enum DetailType {
+  BONUS        // +
+  OT           // +
+  ALLOWANCE    // +
+
+  DEDUCTION    // -
+  INSURANCE    // -
+  TAX          // -
+}
+
+enum SalaryStatus {
+  PENDING
+  APPROVED
+  PAID
+  CANCELLED
+}
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+  LATE
 }
 
 model LeaveRequest {

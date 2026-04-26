@@ -1,6 +1,6 @@
 import type { Role } from "@/types/auth.types";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/auth.store";
 
 const ProtectedRoute = ({
     children,
@@ -9,7 +9,7 @@ const ProtectedRoute = ({
     children: React.ReactNode;
     roles?: Role[];
 }) => {
-    const { isAuthenticated, isLoading, user } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuthStore();
 
     if (isLoading) {
         return (

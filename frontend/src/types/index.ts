@@ -41,8 +41,6 @@ export type {
 
 export type {
     Salary,
-    CreateSalaryDto,
-    UpdateSalaryDto,
     QuerySalaryDto,
 } from "./salary.types"
 

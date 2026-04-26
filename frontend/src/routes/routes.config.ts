@@ -69,7 +69,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         title: "Duyệt đơn nghỉ",
         icon: FileText,
         roles: ["HR_MANAGER"],
-        portals: ["hr"],
+        portals: ["hr","admin"],
         inSidebar: true,
     },
     {
@@ -77,7 +77,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         title: "Quản lý Lương",
         icon: FileText,
         roles: ["HR_MANAGER"],
-        portals: ["hr"],
+        portals: ["hr","admin"],
         inSidebar: true,
     },
     {
@@ -85,7 +85,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         title: "Thống kê Nhân sự",
         icon: BarChart3,
         roles: ["HR_MANAGER"],
-        portals: ["hr"],
+        portals: ["hr","admin"],
         inSidebar: true,
     },
     {
@@ -93,7 +93,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
         title: "Báo cáo kho",
         icon: BarChart3,
         roles: ["WAREHOUSE_MANAGER"],
-        portals: ["warehouse"],
+        portals: ["warehouse","admin"],
         inSidebar: true,
     },
     {
