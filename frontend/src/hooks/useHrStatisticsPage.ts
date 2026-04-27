@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useHrStatisticsStore } from '@/stores/hrStatistics.store'
-import { useHrSalaryStore } from '@/stores/hrSalary.store'
+import { useSalaryStore } from '@/stores/Salary.store'
 import { employeeService, salaryService } from '@/services/hr.service'
 import { reportService } from '@/services/report.service'
 import { getErrorMessage } from '@/stores/store.helpers'
@@ -17,10 +17,10 @@ export const useHrStatisticsPage = () => {
   const setStatistics = useHrStatisticsStore((state) => state.setStatistics)
   const setLoadingStatistics = useHrStatisticsStore((state) => state.setLoading)
 
-  const salaries = useHrSalaryStore((state) => state.salaries)
-  const loadingSalaries = useHrSalaryStore((state) => state.isLoading)
-  const setSalaries = useHrSalaryStore((state) => state.setSalaries)
-  const setLoadingSalaries = useHrSalaryStore((state) => state.setLoading)
+  const salaries = useSalaryStore((state) => state.salaries)
+  const loadingSalaries = useSalaryStore((state) => state.isLoading)
+  const setSalaries = useSalaryStore((state) => state.setSalaries)
+  const setLoadingSalaries = useSalaryStore((state) => state.setLoading)
   const [reportData, setReportData] = useState<RoleReportResponse | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
 

@@ -3,7 +3,7 @@ export { useUserStore } from './user.store';
 export { useEmployeeStore } from './employee.store';
 export { useProductStore } from './product.store';
 export { useHrEmployeeStore } from './hrEmployee.store';
-export { useHrSalaryStore } from './hrSalary.store';
+export { useHrSalaryStore } from './Salary.store';
 export { useHrStatisticsStore } from './hrStatistics.store';
 export { useLeaveRequestStore } from './leaveRequest.store';
 export { useSalesStore } from './sales.store';

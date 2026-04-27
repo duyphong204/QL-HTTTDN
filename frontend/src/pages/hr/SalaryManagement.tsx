@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
+// src/pages/hr/SalaryManagement.tsx
+import { useEffect, useMemo, useState } from 'react'
 import { DollarSign, Users, CheckCircle2, Calculator, Printer } from "lucide-react"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { TableLoadingRow } from "@/components/common/Loading"
 import { PaginationControls } from "@/components/common/PaginationControls"
 import { SALARY_STATUS_BADGE } from "@/utils/salary"
-import { useSalary } from "@/hooks/useSalary"
 import { formatCurrencyVnd } from "@/utils/format"
+import { useSalaryStore } from '@/stores/Salary.store'
+import type { Salary } from '@/types/salary.types'
 
 export default function SalaryManagement() {
   const {
@@ -16,21 +18,39 @@ export default function SalaryManagement() {
     approveSalary,
     markAsPaid,
     cancelSalary,
-    updateFilters,
-    goToPage,
-    stats,
-  } = useSalary()
+    setSalariesFilters,
+    fetchSalaries,
+  } = useSalaryStore()
 
   const [searchTerm, setSearchTerm] = useState('')
 
-  // Get current stats
-  const currentStats = stats()
+  // Auto fetch
+  useEffect(() => {
+    void fetchSalaries()
+  }, [fetchSalaries, salariesFilters])
+
+  // Stats
+  const currentStats = useMemo(() => {
+    const total = salaries.reduce((sum: number, s: Salary) => sum + (s.netSalary || 0), 0)
+    const paid = salaries.filter((s: Salary) => s.status === 'PAID').length
+    const pending = salaries.filter((s: Salary) => s.status === 'PENDING').length
+    const approved = salaries.filter((s: Salary) => s.status === 'APPROVED').length
+
+    return {
+      total,
+      count: salaries.length,
+      paid,
+      pending,
+      approved,
+      avgSalary: salaries.length > 0 ? total / salaries.length : 0,
+    }
+  }, [salaries])
 
   const filteredSalaries = useMemo(() => {
     const q = searchTerm.trim().toLowerCase()
     if (!q) return salaries
 
-    return salaries.filter((salary) => {
+    return salaries.filter((salary: Salary) => {
       const fullName = salary.employee?.user?.profile?.fullName?.toLowerCase() || ''
       const employeeCode = salary.employee?.code?.toLowerCase() || ''
       return fullName.includes(q) || employeeCode.includes(q)
@@ -49,25 +69,26 @@ export default function SalaryManagement() {
     totalPages: Math.max(1, Math.ceil(filteredSalaries.length / salariesFilters.limit)),
   }), [filteredSalaries.length, salariesFilters.page, salariesFilters.limit])
 
-  // Handle filter changes
   const handleMonthChange = (value: string) => {
-    updateFilters({ month: parseInt(value) || undefined })
+    setSalariesFilters({ month: value ? parseInt(value) : undefined, page: 1 })
   }
 
   const handleYearChange = (value: string) => {
-    updateFilters({ year: parseInt(value) || undefined })
+    setSalariesFilters({ year: parseInt(value) || undefined, page: 1 })
   }
 
-  // Handle calculate all
   const handleCalculateAll = async () => {
     if (salariesFilters.month && salariesFilters.year) {
       await calculateAllSalaries(salariesFilters.month, salariesFilters.year)
     }
   }
 
-  // Handle print
   const handlePrint = () => {
     window.print()
+  }
+
+  const handlePageChange = (page: number) => {
+    setSalariesFilters({ page })
   }
 
   return (
@@ -167,7 +188,7 @@ export default function SalaryManagement() {
                 ) : filteredSalaries.length === 0 ? (
                   <EmptyRow text="Không có dữ liệu bảng lương." />
                 ) : (
-                  paginatedSalaries.map((s) => (
+                  paginatedSalaries.map((s: Salary) => (
                     <tr key={s.id} className="hover:bg-gray-50/70 transition-colors group">
                       <td className="px-6 py-4 font-semibold text-gray-900">
                         {s.employee?.user?.profile?.fullName || "—"}
@@ -245,7 +266,7 @@ export default function SalaryManagement() {
             currentPage={salariesFilters.page}
             isLoading={isLoadingSalaries}
             totalLabel="Tổng nhân viên"
-            onPageChange={goToPage}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>
@@ -269,7 +290,7 @@ export default function SalaryManagement() {
             </tr>
           </thead>
           <tbody>
-            {filteredSalaries.map((s) => (
+            {filteredSalaries.map((s: Salary) => (
               <tr key={s.id}>
                 <td className="border border-black p-2">{s.employee?.user?.profile?.fullName || "-"}</td>
                 <td className="border border-black p-2 text-right">{formatCurrencyVnd(s.baseSalary || 0)}</td>

@@ -1,9 +1,12 @@
+// src/pages/employee/MySalaryPage.tsx
+import { useEffect, useMemo } from 'react'
 import { Printer } from "lucide-react"
 import { TableLoadingRow } from "@/components/common/Loading"
-import { useMySalary } from "@/hooks/useSalary"
 import { SALARY_STATUS_BADGE, DETAIL_TYPE_BADGE } from "@/utils/salary"
 import { formatCurrencyVnd } from "@/utils/format"
 import type { SalaryDetail } from "@/types/salary.types"
+import { useSalaryStore } from '@/stores/Salary.store'
+import type { Salary } from '@/types/salary.types'
 
 export default function MySalaryPage() {
   const {
@@ -13,14 +16,55 @@ export default function MySalaryPage() {
     setFilterYear,
     filterMonth,
     setFilterMonth,
-    monthlySalary,
-    printMonthly,
-    printYearly,
-    salaryBreakdown,
-  } = useMySalary()
+    fetchMySalaries,
+  } = useSalaryStore()
 
-  const salary = monthlySalary
-  const breakdown = salary ? salaryBreakdown(salary) : null
+  // Tính monthlySalary
+  const salary = useMemo(() => {
+    if (filterMonth === 'ALL') return null
+    const monthNum = Number(filterMonth)
+    return mySalaries.find((s: Salary) => s.month === monthNum && s.year === Number(filterYear)) || null
+  }, [mySalaries, filterMonth, filterYear])
+
+  // Tính breakdown
+  const breakdown = useMemo(() => {
+    if (!salary) return null
+
+    const dailyRate = (salary.baseSalary || 0) / (salary.workingDays || 26)
+    const workedAmount = dailyRate * (salary.actualWorkDays || 0)
+
+    return {
+      baseSalary: salary.baseSalary || 0,
+      workingDays: salary.workingDays || 26,
+      actualWorkDays: salary.actualWorkDays || 0,
+      dailyRate,
+      workedAmount,
+      totalBonus: salary.totalBonus || 0,
+      totalDeduction: salary.totalDeduction || 0,
+      grossSalary: salary.grossSalary || 0,
+      netSalary: salary.netSalary || 0,
+      details: salary.details || [],
+    }
+  }, [salary])
+
+  // Auto fetch khi filter thay đổi
+  useEffect(() => {
+    void fetchMySalaries()
+  }, [fetchMySalaries, filterYear, filterMonth])
+
+  // Print functions
+  const printMonthly = () => {
+    if (filterMonth === 'ALL') return
+    document.body.classList.add('print-monthly')
+    window.print()
+    document.body.classList.remove('print-monthly')
+  }
+
+  const printYearly = () => {
+    document.body.classList.add('print-yearly')
+    window.print()
+    document.body.classList.remove('print-yearly')
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
@@ -123,7 +167,6 @@ export default function MySalaryPage() {
               </p>
             </div>
 
-            {/* Chi tiết lương */}
             {breakdown.details && breakdown.details.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Chi tiết thu nhập/khấu trừ</h3>
@@ -158,7 +201,6 @@ export default function MySalaryPage() {
               </div>
             )}
 
-            {/* Status */}
             <div className="mt-4 flex items-center gap-2">
               <span className="text-sm text-gray-500">Trạng thái:</span>
               <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
@@ -193,11 +235,9 @@ export default function MySalaryPage() {
                   <TableLoadingRow colSpan={6} text="Đang tải..." />
                 ) : mySalaries.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
-                      Chưa có dữ liệu lương
-                    </td>
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-400">Chưa có dữ liệu lương</td>
                   </tr>
-                ) : mySalaries.map((s) => (
+                ) : mySalaries.map((s: Salary) => (
                   <tr key={s.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium">Tháng {s.month}</td>
                     <td className="px-6 py-3 text-right">{formatCurrencyVnd(s.baseSalary || 0)}</td>
@@ -221,7 +261,7 @@ export default function MySalaryPage() {
 
       {/* Print Monthly */}
       <div id="print-monthly" className="p-8 text-black">
-        {salary && (
+        {salary && breakdown && (
           <>
             <h2 className="text-xl font-bold text-center mb-2">BẢNG LƯƠNG THÁNG {salary.month}/{salary.year}</h2>
             <p className="text-center mb-6">Nhân viên: {salary.employee?.user?.profile?.fullName}</p>
@@ -229,23 +269,23 @@ export default function MySalaryPage() {
               <tbody>
                 <tr>
                   <td className="border border-black p-2">Lương cơ bản</td>
-                  <td className="border border-black p-2 text-right">{formatCurrencyVnd(breakdown?.baseSalary || 0)}</td>
+                  <td className="border border-black p-2 text-right">{formatCurrencyVnd(breakdown.baseSalary)}</td>
                 </tr>
                 <tr>
                   <td className="border border-black p-2">Ngày làm việc</td>
-                  <td className="border border-black p-2 text-right">{breakdown?.actualWorkDays}/{breakdown?.workingDays}</td>
+                  <td className="border border-black p-2 text-right">{breakdown.actualWorkDays}/{breakdown.workingDays}</td>
                 </tr>
                 <tr>
                   <td className="border border-black p-2">Thưởng/Phụ cấp</td>
-                  <td className="border border-black p-2 text-right">+{formatCurrencyVnd(breakdown?.totalBonus || 0)}</td>
+                  <td className="border border-black p-2 text-right">+{formatCurrencyVnd(breakdown.totalBonus)}</td>
                 </tr>
                 <tr>
                   <td className="border border-black p-2">Khấu trừ</td>
-                  <td className="border border-black p-2 text-right">-{formatCurrencyVnd(breakdown?.totalDeduction || 0)}</td>
+                  <td className="border border-black p-2 text-right">-{formatCurrencyVnd(breakdown.totalDeduction)}</td>
                 </tr>
                 <tr>
                   <td className="border border-black p-2 font-bold">Thực lĩnh</td>
-                  <td className="border border-black p-2 text-right font-bold">{formatCurrencyVnd(breakdown?.netSalary || 0)}</td>
+                  <td className="border border-black p-2 text-right font-bold">{formatCurrencyVnd(breakdown.netSalary)}</td>
                 </tr>
               </tbody>
             </table>
@@ -268,7 +308,7 @@ export default function MySalaryPage() {
             </tr>
           </thead>
           <tbody>
-            {mySalaries.map((s) => (
+            {mySalaries.map((s: Salary) => (
               <tr key={s.id}>
                 <td className="border border-black p-2">Tháng {s.month}</td>
                 <td className="border border-black p-2 text-right">{formatCurrencyVnd(s.baseSalary || 0)}</td>
@@ -281,10 +321,18 @@ export default function MySalaryPage() {
           <tfoot>
             <tr>
               <td className="border border-black p-2 font-bold">Tổng cả năm</td>
-              <td className="border border-black p-2 text-right font-bold">{formatCurrencyVnd(mySalaries.reduce((sum, s) => sum + (s.baseSalary || 0), 0))}</td>
-              <td className="border border-black p-2 text-right font-bold">+{formatCurrencyVnd(mySalaries.reduce((sum, s) => sum + (s.totalBonus || 0), 0))}</td>
-              <td className="border border-black p-2 text-right font-bold">-{formatCurrencyVnd(mySalaries.reduce((sum, s) => sum + (s.totalDeduction || 0), 0))}</td>
-              <td className="border border-black p-2 text-right font-bold">{formatCurrencyVnd(mySalaries.reduce((sum, s) => sum + (s.netSalary || 0), 0))}</td>
+              <td className="border border-black p-2 text-right font-bold">
+                {formatCurrencyVnd(mySalaries.reduce((sum: number, s: Salary) => sum + (s.baseSalary || 0), 0))}
+              </td>
+              <td className="border border-black p-2 text-right font-bold">
+                +{formatCurrencyVnd(mySalaries.reduce((sum: number, s: Salary) => sum + (s.totalBonus || 0), 0))}
+              </td>
+              <td className="border border-black p-2 text-right font-bold">
+                -{formatCurrencyVnd(mySalaries.reduce((sum: number, s: Salary) => sum + (s.totalDeduction || 0), 0))}
+              </td>
+              <td className="border border-black p-2 text-right font-bold">
+                {formatCurrencyVnd(mySalaries.reduce((sum: number, s: Salary) => sum + (s.netSalary || 0), 0))}
+              </td>
             </tr>
           </tfoot>
         </table>
