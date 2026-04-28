@@ -5,6 +5,7 @@ import { Plus, Trash2, FileText } from 'lucide-react'
 import { DataTableToolbar } from '@/components/common/DataTableToolbar'
 import { PaginationControls } from '@/components/common/PaginationControls'
 import { useClientTable } from '@/hooks/useClientTable'
+import { getEffectiveProductPrice } from '@/lib/pricing'
 
 const formatCurrency = (n: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0)
@@ -49,7 +50,7 @@ export default function ExportSlipManagement() {
     const calcTotal = () =>
         items.reduce((sum, item) => {
             const p = productOptions.find(x => x.id === item.productId)
-            return sum + (p?.price || 0) * item.quantity
+            return sum + getEffectiveProductPrice(p) * item.quantity
         }, 0)
 
     const handleSubmit = async (e: React.FormEvent) => {

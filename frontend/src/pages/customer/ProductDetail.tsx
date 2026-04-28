@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { Product } from '@/types/warehouse.type';
 import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
 import { useProductStore } from '@/store/product.store';
+import { toast } from 'sonner';
+import {
+  getEffectiveProductPrice,
+  getProductDiscountPercent,
+  hasProductSale,
+} from '@/lib/pricing';
 
 
 export default function ProductDetail() {
@@ -14,12 +20,25 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const { fetchProductById, fetchProductsByQuery } = useProductStore();
   const addToCart = useCartStore((state) => state.addToCart);
-  const isOutOfStock = (product?.stockQuantity ?? 0) <= 0;
-  const hasSale =
-    Boolean(product?.isOnSale) &&
-    typeof product?.salePrice === 'number' &&
-    (product?.salePrice as number) < (product?.price ?? 0);
-  const currentPrice = hasSale ? (product?.salePrice as number) : (product?.price ?? 0);
+  const cartQuantity = useCartStore(
+    (state) => (product ? state.items.find((item) => item.id === product.id)?.quantity ?? 0 : 0),
+  );
+  const availableToAdd = useMemo(
+    () => Math.max(0, (product?.stockQuantity ?? 0) - cartQuantity),
+    [cartQuantity, product?.stockQuantity],
+  );
+  const isOutOfStock = availableToAdd <= 0;
+  const currentPrice = product ? getEffectiveProductPrice(product) : 0;
+  const hasSale = product ? hasProductSale(product) : false;
+  const discountPercent = product ? getProductDiscountPercent(product, currentPrice) : 0;
+
+  useEffect(() => {
+    if (availableToAdd <= 0) {
+      return;
+    }
+
+    setQuantity((current) => Math.min(Math.max(1, current), availableToAdd));
+  }, [availableToAdd]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -78,14 +97,17 @@ export default function ProductDetail() {
   }, [product, fetchProductsByQuery]);
 
   const addSelectedQuantityToCart = (targetProduct: Product) => {
-    if (targetProduct.stockQuantity <= 0) {
+    if (availableToAdd <= 0) {
+      toast.error('Sản phẩm đã đạt số lượng tối đa trong giỏ hàng');
       return;
     }
+
+    const quantityToAdd = Math.min(quantity, availableToAdd);
 
     const cartProduct = hasSale
       ? { ...targetProduct, price: currentPrice }
       : targetProduct;
-    addToCart(cartProduct, quantity);
+    addToCart(cartProduct, quantityToAdd);
   };
 
   if (isLoading) {
@@ -125,11 +147,11 @@ export default function ProductDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Phần ảnh lớn */}
-        <div className="relative rounded-2xl overflow-hidden bg-gray-50 shadow-lg">
+        <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 shadow-lg">
           <img
             src={product.imageUrl || 'https://via.placeholder.com/600x600?text=TechStore'}
             alt={product.name}
-            className="w-full h-auto object-contain transition-transform duration-500 hover:scale-105"
+            className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
           />
 
           {/* Badge giảm giá giả lập (nếu muốn thêm sau thì dùng product.discount) */}
@@ -139,95 +161,101 @@ export default function ProductDetail() {
         </div>
 
         {/* Phần thông tin bên phải */}
-<div className="flex flex-col">
-  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-    {product.name}
-  </h1>
+        <div className="flex flex-col max-w-2xl">
+          {/* Tên sản phẩm */}
+          <h1 className="text-xl font-semibold text-gray-900 leading-tight mb-5">
+            {product.name}
+          </h1>
 
-  {/* Giá sản phẩm */}
-  <div className="mt-4 flex items-baseline gap-3">
-    <span className="text-4xl sm:text-5xl font-bold text-blue-600">
-      {currentPrice?.toLocaleString('vi-VN')} đ
-    </span>
-    {hasSale && (
-      <>
-        <span className="text-lg text-gray-500 line-through">
-          {product.price?.toLocaleString('vi-VN')} đ
-        </span>
-        <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-          -{product.discountPercent ?? 0}%
-        </span>
-      </>
-    )}
-  </div>
+          {/* Giá sản phẩm */}
+          <div className="flex items-baseline gap-3">
+            <span className="text-3xl sm:text-4xl font-bold text-gray-900">
+              {currentPrice?.toLocaleString('vi-VN')} đ
+            </span>
+            
+            {hasSale && (
+              <>
+                <span className="text-lg text-gray-500 line-through">
+                  {product.price?.toLocaleString('vi-VN')} đ
+                </span>
+                <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                  -{discountPercent}%
+                </span>
+              </>
+            )}
+          </div>
 
-  {/* Mô tả */}
-  <p className="mt-6 text-gray-700 leading-relaxed text-lg">
-    {product.description || 'Sản phẩm chất lượng cao từ TechStore – bảo hành chính hãng, giao hàng nhanh chóng.'}
-  </p>
+          {/* Mô tả */}
+          <p className="mt-5 text-gray-600 leading-relaxed text-[15px]">
+            {product.description || 'Sản phẩm chất lượng cao từ TechStore – bảo hành chính hãng, giao hàng nhanh chóng.'}
+          </p>
 
-  {/* Nút hành động */}
-  <div className="mt-8">
-    <button 
-      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold text-lg py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md hover:shadow-lg"
-      onClick={() => addSelectedQuantityToCart(product)}
-      disabled={isOutOfStock}
-    >
-      <ShoppingCart size={22} />
-      {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-    </button>
-  </div>
+          {/* Phần tương tác: Số lượng & Nút bấm */}
+          <div className="mt-8 space-y-6">
+            {/* Chọn số lượng */}
+            <div>
+              <span className="block text-sm font-medium text-gray-600 mb-2">Số lượng</span>
+              <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white w-fit shadow-sm">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  className="px-4 py-2 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                >
+                  <Minus size={16} />
+                </button>
+                
+                <span className="px-6 py-2 font-semibold text-base text-gray-900 min-w-[50px] text-center border-x border-gray-200">
+                  {quantity}
+                </span>
+                
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  disabled={quantity >= availableToAdd}
+                  className="px-4 py-2 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 ml-1">
+                Còn <strong>{product.stockQuantity ?? 0}</strong> sản phẩm trong kho, có thể thêm <strong>{availableToAdd}</strong>
+              </p>
+            </div>
 
-  {/* Chọn số lượng - đã chỉnh nhỏ gọn tối đa */}
-  <div className="mt-6">
-    <span className="block text-sm font-medium text-gray-600 mb-1.5">Số lượng</span>
-    
-    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white w-fit">
-      <button
-        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-        disabled={quantity <= 1}
-        className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 transition-colors"
-      >
-        <Minus size={16} />
-      </button>
-      
-      <span className="px-5 py-2 font-semibold text-base text-gray-900 min-w-[42px] text-center border-x border-gray-300">
-        {quantity}
-      </span>
-      
-      <button
-        onClick={() => setQuantity(quantity + 1)}
-        disabled={quantity >= (product.stockQuantity ?? 0)}
-        className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 transition-colors"
-      >
-        <Plus size={16} />
-      </button>
-    </div>
+            {/* Nút hành động - Đã thu gọn chiều rộng cho cân đối */}
+            <div className="flex gap-4">
+              <button 
+                className="min-w-[240px] sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed 
+                          text-white font-semibold text-[15px] 
+                          py-3.5 px-10 rounded-2xl 
+                          flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+                onClick={() => addSelectedQuantityToCart(product)}
+                disabled={isOutOfStock}
+              >
+                <ShoppingCart size={18} />
+                {isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ hàng'}
+              </button>
+            </div>
+          </div>
 
-    <p className="text-xs text-gray-500 mt-1">
-      Còn {product.stockQuantity ?? 0} sản phẩm
-    </p>
-  </div>
-
-  {/* Thông tin bổ sung */}
-  <div className="mt-12 border-t border-gray-200 pt-8">
-    <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin sản phẩm</h3>
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
-      <div>
-        <span className="font-medium">Danh mục:</span> {product.category?.name || 'Đang cập nhật'}
-      </div>
-      <div>
-        <span className="font-medium">Số lượng tồn kho:</span> {product.stockQuantity ?? 0} sản phẩm
-      </div>
-      <div>
-        <span className="font-medium">Giao hàng:</span> Miễn phí toàn quốc (đơn từ 500k)
-      </div>
-      <div>
-        <span className="font-medium">Bảo hành:</span> 12 tháng chính hãng
-      </div>
-    </div>
-  </div>
-</div>
+          {/* Thông tin bổ sung */}
+          <div className="mt-12 border-t border-gray-200 pt-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin sản phẩm</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm text-gray-700">
+              <div>
+                <span className="font-medium text-gray-500">Danh mục:</span> {product.category?.name || 'Đang cập nhật'}
+              </div>
+              <div>
+                <span className="font-medium text-gray-500">Tồn kho:</span> {product.stockQuantity ?? 0} sản phẩm
+              </div>
+              <div>
+                <span className="font-medium text-gray-500">Giao hàng:</span> Miễn phí toàn quốc (đơn từ 500k)
+              </div>
+              <div>
+                <span className="font-medium text-gray-500">Bảo hành:</span> 12 tháng chính hãng
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {relatedProducts.length > 0 && (
@@ -250,7 +278,7 @@ export default function ProductDetail() {
                 <div className="p-4">
                   <h4 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[40px]">{item.name}</h4>
                   <p className="text-blue-600 font-bold mt-2">
-                    {(item.salePrice && item.isOnSale ? item.salePrice : item.price).toLocaleString('vi-VN')} đ
+                    {getEffectiveProductPrice(item).toLocaleString('vi-VN')} đ
                   </p>
                 </div>
               </Link>

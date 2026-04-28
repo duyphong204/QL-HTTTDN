@@ -2,66 +2,23 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Prisma } from '@prisma/client';
-import { VnpayService } from 'src/modules/sales/payments/vnpay.service';
+import { MomoService } from 'src/modules/sales/payments/momo.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import {
+  calculateSalePrice,
+  resolveActivePromotion as resolveProductPromotion,
+} from 'src/common/utils/pricing.helper';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
-    private vnpayService: VnpayService,
+    private momoService: MomoService,
   ) {}
 
-  private resolveActivePromotion(product: {
-    promotionLinks?: Array<{
-      promotion: {
-        type: 'PERCENT' | 'FIXED';
-        value: number;
-        isActive: boolean;
-        startAt: Date | null;
-        endAt: Date | null;
-      };
-    }>;
-  }) {
-    const now = new Date();
-    const link = (product.promotionLinks ?? []).find(({ promotion }) => {
-      if (!promotion.isActive) {
-        return false;
-      }
-      if (promotion.startAt && promotion.startAt > now) {
-        return false;
-      }
-      if (promotion.endAt && promotion.endAt < now) {
-        return false;
-      }
-      return true;
-    });
-
-    return link?.promotion;
-  }
-
-  private calculateSalePrice(
-    price: number,
-    promotion?: {
-      type: 'PERCENT' | 'FIXED';
-      value: number;
-    },
-  ) {
-    if (!promotion) {
-      return price;
-    }
-
-    if (promotion.type === 'PERCENT') {
-      const percent = Math.max(0, Math.min(100, promotion.value));
-      return Math.max(0, price * (1 - percent / 100));
-    }
-
-    return Math.max(0, price - promotion.value);
-  }
-
-  async createOrder(userId: string, dto: CreateOrderDto, clientIp?: string) {
+  async createOrder(userId: string, dto: CreateOrderDto) {
     if (dto.paymentMethod === 'BANK_TRANSFER') {
-      this.vnpayService.ensureConfigured();
+      this.momoService.ensureConfigured();
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -126,11 +83,8 @@ export class OrdersService {
           });
         }
 
-        const promotion = this.resolveActivePromotion(product);
-        const effectivePrice = this.calculateSalePrice(
-          product.price,
-          promotion,
-        );
+        const promotion = resolveProductPromotion(product);
+        const effectivePrice = calculateSalePrice(product.price, promotion);
 
         const amount = effectivePrice * item.quantity;
         totalAmount += amount;
@@ -164,11 +118,10 @@ export class OrdersService {
       });
 
       if (paymentMethod === 'BANK_TRANSFER') {
-        const paymentUrl = this.vnpayService.createPaymentUrl({
+        const paymentUrl = await this.momoService.createPaymentUrl({
           orderId: order.id,
           amount: totalAmount,
           orderInfo: `Thanh toan don hang ${order.id}`,
-          ipAddr: clientIp,
         });
 
         return {
@@ -183,6 +136,78 @@ export class OrdersService {
         requiresPayment: false,
       };
     });
+  }
+
+  async retryOrderPayment(userId: string, orderId: string) {
+    this.momoService.ensureConfigured();
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        details: true,
+      },
+    });
+
+    if (!order) {
+      throw new BadRequestException('Không tìm thấy đơn hàng');
+    }
+
+    if (order.userId !== userId) {
+      throw new BadRequestException(
+        'Bạn không có quyền thanh toán đơn hàng này',
+      );
+    }
+
+    if (order.paymentMethod !== 'BANK_TRANSFER') {
+      throw new BadRequestException(
+        'Đơn hàng này không dùng phương thức thanh toán online',
+      );
+    }
+
+    if (order.paymentStatus === 'PAID') {
+      throw new BadRequestException('Đơn hàng đã được thanh toán');
+    }
+
+    if (order.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'Đơn hàng đã hủy, không thể thanh toán lại',
+      );
+    }
+
+    for (const detail of order.details) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: detail.productId },
+        select: {
+          id: true,
+          name: true,
+          stockQuantity: true,
+        },
+      });
+
+      if (!product) {
+        throw new BadRequestException(
+          `Sản phẩm ${detail.productId} không còn tồn tại, không thể thanh toán lại`,
+        );
+      }
+
+      if (product.stockQuantity < detail.quantity) {
+        throw new BadRequestException(
+          `Sản phẩm ${product.name} không đủ tồn kho để thanh toán đơn hàng này`,
+        );
+      }
+    }
+
+    const paymentUrl = await this.momoService.createPaymentUrl({
+      orderId: order.id,
+      amount: order.totalAmount,
+      orderInfo: `Thanh toan don hang ${order.id}`,
+    });
+
+    return {
+      order,
+      paymentUrl,
+      requiresPayment: true,
+    };
   }
 
   private mapOrderForResponse(order: {

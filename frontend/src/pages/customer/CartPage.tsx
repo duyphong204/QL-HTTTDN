@@ -8,7 +8,13 @@ export default function Cart() {
   const { items, increase, decrease, removeFromCart } = useCartStore();
   const { categories, fetchCategories } = useProductStore();
 
-  const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const getUnitPrice = (price: number, salePrice?: number) =>
+    typeof salePrice === 'number' ? salePrice : price;
+
+  const totalPrice = items.reduce(
+    (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
+    0,
+  );
 
   useEffect(() => {
     fetchCategories();
@@ -148,11 +154,16 @@ export default function Cart() {
 
                     <div className="text-right ml-auto">
                       <p className="text-lg font-bold text-blue-600">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                        {(getUnitPrice(item.price, item.salePrice) * item.quantity).toLocaleString('vi-VN')} đ
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {item.price.toLocaleString('vi-VN')} đ/cái
-                      </p>
+                      {typeof item.salePrice === 'number' && item.salePrice < item.price ? (
+                        <div className="text-sm">
+                          <p className="text-red-600 font-medium">{item.salePrice.toLocaleString('vi-VN')} đ/cái</p>
+                          <p className="text-gray-400 line-through">{item.price.toLocaleString('vi-VN')} đ/cái</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">{item.price.toLocaleString('vi-VN')} đ/cái</p>
+                      )}
                     </div>
                   </div>
                 </div>

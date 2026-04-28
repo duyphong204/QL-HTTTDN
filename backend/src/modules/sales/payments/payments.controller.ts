@@ -1,43 +1,61 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
-import { VnpayService } from './vnpay.service';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { MomoService } from './momo.service';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Sales - Payments')
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly vnpayService: VnpayService) {}
+  constructor(private readonly momoService: MomoService) {}
 
-  @Get('vnpay/verify-return')
+  @Get('momo/verify-return')
   async verifyReturn(@Query() query: Record<string, string>) {
-    const result = await this.vnpayService.processReturn(query);
+    const result = await this.momoService.processReturn(query);
 
     return {
       success: result.paid,
       orderId: result.orderId,
       paymentStatus: result.paid ? 'PAID' : 'FAILED',
-      responseCode: result.responseCode,
-      transactionStatus: result.transactionStatus,
-      message: result.paid
-        ? 'Thanh toán thành công'
-        : 'Thanh toán thất bại hoặc bị hủy',
+      resultCode: result.resultCode,
+      transId: result.transId,
+      message: result.message,
     };
   }
 
-  @Get('vnpay/ipn')
+  @Get('momo/ipn')
   async ipn(@Query() query: Record<string, string>) {
     try {
-      await this.vnpayService.processReturn(query);
-      return { RspCode: '00', Message: 'Confirm Success' };
+      await this.momoService.processReturn(query);
+      return { resultCode: 0, message: 'Confirm Success' };
     } catch (error) {
       if (error instanceof BadRequestException) {
-        return { RspCode: '97', Message: 'Invalid signature or data' };
+        return { resultCode: 97, message: 'Invalid signature or data' };
       }
-      return { RspCode: '99', Message: 'Unknown error' };
+      return { resultCode: 99, message: 'Unknown error' };
+    }
+  }
+
+  @Post('momo/ipn')
+  async ipnPost(@Body() body: Record<string, string>) {
+    try {
+      await this.momoService.processReturn(body);
+      return { resultCode: 0, message: 'Confirm Success' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        return { resultCode: 97, message: 'Invalid signature or data' };
+      }
+      return { resultCode: 99, message: 'Unknown error' };
     }
   }
 
   @Get('order-status')
   async getOrderPaymentStatus(@Query('orderId') orderId: string) {
-    return this.vnpayService.getOrderPaymentStatus(orderId);
+    return this.momoService.getOrderPaymentStatus(orderId);
   }
 }

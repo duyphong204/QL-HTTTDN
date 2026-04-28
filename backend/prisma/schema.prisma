@@ -24,6 +24,12 @@ enum PromotionType {
   FIXED
 }
 
+enum StockInStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id               String    @id @default(uuid())
   email            String    @unique
@@ -137,7 +143,8 @@ model Product {
   stockQuantity Int     @default(0)
   minStock      Int     @default(10)
 
-  imageUrl String?
+  imageUrl  String?
+  deletedAt DateTime?
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
@@ -175,12 +182,14 @@ model PromotionProduct {
 }
 
 model StockIn {
-  id          String   @id @default(uuid())
-  supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
-  date        DateTime @default(now())
-  totalAmount Float
-  createdById String?
+  id           String        @id @default(uuid())
+  supplierId   String
+  supplier     Supplier      @relation(fields: [supplierId], references: [id])
+  date         DateTime      @default(now())
+  totalAmount  Float
+  status       StockInStatus @default(PENDING)
+  createdById  String?
+  approvedById String?
 
   details StockInDetail[]
 }

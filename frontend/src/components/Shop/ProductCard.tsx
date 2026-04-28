@@ -2,6 +2,12 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
 import type { Product } from '@/types/warehouse.type';
+import { toast } from 'sonner';
+import {
+  getEffectiveProductPrice,
+  getProductDiscountPercent,
+  hasProductSale,
+} from '@/lib/pricing';
 
 interface ProductCardProps {
   product: Product;
@@ -19,23 +25,20 @@ export default function ProductCard({
   compactAddToCart = false,
 }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
-  const isOutOfStock = product.stockQuantity <= 0;
+  const cartQuantity = useCartStore(
+    (state) => state.items.find((item) => item.id === product.id)?.quantity ?? 0,
+  );
+  const remainingStock = Math.max(0, (product.stockQuantity ?? 0) - cartQuantity);
+  const isOutOfStock = remainingStock <= 0;
   const effectiveDiscountPercent = discountPercent || product.discountPercent || 0;
-  const hasComputedSale =
-    Boolean(product.isOnSale) &&
-    typeof product.salePrice === 'number' &&
-    product.salePrice < product.price;
-  const effectivePrice =
-    typeof priceOverride === 'number' && priceOverride > 0
-      ? priceOverride
-      : hasComputedSale
-        ? (product.salePrice as number)
-      : product.price;
+  const effectivePrice = getEffectiveProductPrice(product, priceOverride);
   const shouldShowOriginalPrice =
-    showOriginalPrice || hasComputedSale || effectivePrice < product.price;
+    showOriginalPrice || hasProductSale(product) || effectivePrice < product.price;
+  const computedDiscountPercent = getProductDiscountPercent(product, effectivePrice);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     if (isOutOfStock) {
+      toast.error('Sản phẩm đã đạt số lượng tối đa trong giỏ hàng');
       return;
     }
     e.preventDefault();
@@ -50,9 +53,9 @@ export default function ProductCard({
     >
       {/* Ảnh */}
       <div className="relative bg-gray-50 aspect-square overflow-hidden">
-        {effectiveDiscountPercent > 0 && (
+        {(effectiveDiscountPercent || computedDiscountPercent) > 0 && (
           <span className="absolute top-2 left-2 z-10 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
-            -{effectiveDiscountPercent}%
+            -{effectiveDiscountPercent || computedDiscountPercent}%
           </span>
         )}
         <img
@@ -85,7 +88,7 @@ export default function ProductCard({
 
               <button
                 type="button"
-                aria-label={isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ hàng'}
+                aria-label={isOutOfStock ? 'Không còn số lượng để thêm' : 'Thêm vào giỏ hàng'}
                 disabled={isOutOfStock}
                 className={`h-9 w-9 rounded-full border transition-colors flex items-center justify-center ${
                   isOutOfStock
@@ -122,7 +125,7 @@ export default function ProductCard({
             onClick={handleAddToCart}
           >
             <ShoppingCart size={15} className="sm:h-4 sm:w-4" />
-            {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+            {isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ'}
           </button>
         )}
       </div>

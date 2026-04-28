@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useOrderStore, type OrderHistoryOrder } from '@/store/order.store';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Package, Clock, CheckCircle, Truck, XCircle, ArrowRight, MapPin, Phone, CreditCard, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
 
 type OrderDetailFallback = {
   id?: string;
@@ -41,10 +42,11 @@ const STATUS_TABS: OrderStatusTab[] = [
 ];
 
 export default function CustomerOrders() {
-  const { orders, fetchMyOrders, loading } = useOrderStore();
+  const { orders, fetchMyOrders, loading, retryOrderPayment } = useOrderStore();
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<OrderStatusTab>('ALL');
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
 
   const isDetailView = Boolean(id);
 
@@ -102,6 +104,26 @@ export default function CustomerOrders() {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, [isDetailView, id]);
+
+  const handleRetryPayment = async (orderId: string) => {
+    try {
+      setRetryingOrderId(orderId);
+      const response = await retryOrderPayment(orderId);
+
+      if (response.requiresPayment && response.paymentUrl) {
+        toast.success('Đang chuyển sang cổng thanh toán MoMo...');
+        window.location.href = response.paymentUrl;
+        return;
+      }
+
+      toast.error('Không lấy được liên kết thanh toán');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể thanh toán lại đơn hàng';
+      toast.error(message);
+    } finally {
+      setRetryingOrderId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -326,6 +348,22 @@ export default function CustomerOrders() {
                            paymentStatus === 'PENDING' ? 'Chờ thanh toán' : paymentStatus}
                         </span>
                       </div>
+
+                      {order.paymentMethod === 'BANK_TRANSFER' &&
+                      paymentStatus !== 'PAID' &&
+                      status !== 'CANCELLED' ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRetryPayment(order.id);
+                          }}
+                          disabled={retryingOrderId === order.id}
+                          className="w-full mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {retryingOrderId === order.id ? 'Đang tạo link thanh toán...' : 'Thanh toán lại với MoMo'}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

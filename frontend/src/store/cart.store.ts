@@ -1,156 +1,265 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Product } from "@/types/warehouse.type";
 import { toast } from "sonner";
+import { cartApi } from "@/api/order.api";
+import type { Product } from "@/types/warehouse.type";
+import type {
+  Cart as ServerCart,
+  SyncCartDto,
+  AddToCartDto,
+} from "@/types/sales.type";
 
 export interface CartItem extends Product {
   quantity: number;
 }
 
-type Owner = string; // 'guest' hoặc userId
+type Owner = string;
 
 interface CartState {
   owner: Owner;
   items: CartItem[];
+  isLoading: boolean;
 
-  setOwner: (owner: Owner) => void;
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (id: string) => void;
-  increase: (id: string) => void;
-  decrease: (id: string) => void;
-  clearCart: () => void;
+  setOwner: (owner: Owner) => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
+  increase: (id: string) => Promise<void>;
+  decrease: (id: string) => Promise<void>;
+  clearCart: () => Promise<void>;
 
-  mergeGuestToUser: (userId: string) => void;
+  mergeGuestToUser: (userId: string) => Promise<void>;
 }
 
 const getStorageKey = (owner: Owner) => `cart_${owner}`;
+const isGuest = (owner: Owner) => owner === "guest";
 
-export const useCartStore = create<CartState>()(
-  persist(
-    (set) => ({
-      owner: "guest",
-      items: [],
+const getAvailableStock = (product: Product, currentQuantity = 0): number =>
+  Math.max(0, (product.stockQuantity ?? 0) - currentQuantity);
 
-      setOwner: (owner) => {
-        const key = getStorageKey(owner);
-        const data = localStorage.getItem(key);
+const readGuestItems = (): CartItem[] => {
+  try {
+    const raw = localStorage.getItem(getStorageKey("guest"));
+    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+  } catch {
+    return [];
+  }
+};
 
-        set({
-          owner,
-          items: data ? JSON.parse(data) : [],
-        });
-      },
+const saveGuestItems = (items: CartItem[]): void => {
+  localStorage.setItem(getStorageKey("guest"), JSON.stringify(items));
+};
 
-      addToCart: (product, quantity = 1) => {
-        const safeQuantity = Math.max(1, quantity);
+const clearGuestItems = (): void => {
+  localStorage.removeItem(getStorageKey("guest"));
+};
 
-        set((state) => {
-          const exist = state.items.find((i) => i.id === product.id);
+const flattenServerCart = (cart: ServerCart | null | undefined): CartItem[] =>
+  cart?.items.map((item) => ({
+    ...item.product,
+    quantity: item.quantity,
+  })) ?? [];
 
-          let newItems;
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Lỗi không xác định";
 
-          if (exist) {
-            newItems = state.items.map((i) =>
-              i.id === product.id
-                ? { ...i, quantity: i.quantity + safeQuantity }
-                : i,
-            );
-          } else {
-            newItems = [...state.items, { ...product, quantity: safeQuantity }];
-          }
+export const useCartStore = create<CartState>((set, get) => ({
+  owner: "guest",
+  items: [],
+  isLoading: false,
 
-          localStorage.setItem(
-            getStorageKey(state.owner),
-            JSON.stringify(newItems),
-          );
+  setOwner: async (owner) => {
+    set({ owner, isLoading: true });
 
-          return { items: newItems };
-        });
+    if (isGuest(owner)) {
+      set({
+        items: readGuestItems(),
+        isLoading: false,
+      });
+      return;
+    }
 
-        toast.success(`Đã thêm ${safeQuantity} sản phẩm vào giỏ hàng`);
-      },
+    try {
+      const cart = await cartApi.getCart();
+      set({ items: flattenServerCart(cart), isLoading: false });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+      set({ items: [], isLoading: false });
+    }
+  },
 
-      removeFromCart: (id) =>
-        set((state) => {
-          const newItems = state.items.filter((i) => i.id !== id);
+  addToCart: async (product, quantity = 1) => {
+    const safeQuantity = Math.max(1, quantity);
+    const state = get();
+    const exist = state.items.find((item) => item.id === product.id);
+    const currentQuantity = exist?.quantity ?? 0;
+    const availableStock = getAvailableStock(product, currentQuantity);
 
-          localStorage.setItem(
-            getStorageKey(state.owner),
-            JSON.stringify(newItems),
-          );
+    if (availableStock <= 0) {
+      toast.error("Sản phẩm đã đạt số lượng tối đa trong giỏ hàng");
+      return;
+    }
 
-          return { items: newItems };
-        }),
+    const quantityToAdd = Math.min(safeQuantity, availableStock);
 
-      increase: (id) =>
-        set((state) => {
-          const newItems = state.items.map((i) =>
-            i.id === id ? { ...i, quantity: i.quantity + 1 } : i,
-          );
+    if (isGuest(state.owner)) {
+      const newItems = exist
+        ? state.items.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + quantityToAdd }
+              : item,
+          )
+        : [...state.items, { ...product, quantity: quantityToAdd }];
 
-          localStorage.setItem(
-            getStorageKey(state.owner),
-            JSON.stringify(newItems),
-          );
+      saveGuestItems(newItems);
+      set({ items: newItems });
 
-          return { items: newItems };
-        }),
+      if (quantityToAdd < safeQuantity) {
+        toast.error(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      } else {
+        toast.success(`Đã thêm ${quantityToAdd} sản phẩm vào giỏ hàng`);
+      }
+      return;
+    }
 
-      decrease: (id) =>
-        set((state) => {
-          const newItems = state.items
-            .map((i) => (i.id === id ? { ...i, quantity: i.quantity - 1 } : i))
-            .filter((i) => i.quantity > 0);
+    try {
+      const cart = await cartApi.addToCart({
+        productId: product.id,
+        quantity: quantityToAdd,
+      });
+      set({ items: flattenServerCart(cart) });
 
-          localStorage.setItem(
-            getStorageKey(state.owner),
-            JSON.stringify(newItems),
-          );
+      if (quantityToAdd < safeQuantity) {
+        toast.error(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      } else {
+        toast.success(`Đã thêm ${quantityToAdd} sản phẩm vào giỏ hàng`);
+      }
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+    }
+  },
 
-          return { items: newItems };
-        }),
+  removeFromCart: async (id) => {
+    const state = get();
 
-      clearCart: () =>
-        set((state) => {
-          localStorage.removeItem(getStorageKey(state.owner));
-          return { items: [] };
-        }),
+    if (isGuest(state.owner)) {
+      const newItems = state.items.filter((item) => item.id !== id);
+      saveGuestItems(newItems);
+      set({ items: newItems });
+      return;
+    }
 
-      mergeGuestToUser: (userId) => {
-        const guestKey = getStorageKey("guest");
-        const userKey = getStorageKey(userId);
+    try {
+      const cart = await cartApi.removeCartItem(id);
+      set({ items: flattenServerCart(cart) });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+    }
+  },
 
-        const guestItems: CartItem[] = JSON.parse(
-          localStorage.getItem(guestKey) || "[]",
-        );
+  increase: async (id) => {
+    const state = get();
+    const targetItem = state.items.find((item) => item.id === id);
+    if (!targetItem) {
+      return;
+    }
 
-        const userItems: CartItem[] = JSON.parse(
-          localStorage.getItem(userKey) || "[]",
-        );
+    const remainingStock = getAvailableStock(targetItem, targetItem.quantity);
+    if (remainingStock <= 0) {
+      toast.error("Đã đạt số lượng tồn kho tối đa");
+      return;
+    }
 
-        const merged = [...userItems];
+    if (isGuest(state.owner)) {
+      const newItems = state.items.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+      );
+      saveGuestItems(newItems);
+      set({ items: newItems });
+      return;
+    }
 
-        guestItems.forEach((g) => {
-          const exist = merged.find((i) => i.id === g.id);
+    try {
+      const cart = await cartApi.updateCartItem(id, targetItem.quantity + 1);
+      set({ items: flattenServerCart(cart) });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+    }
+  },
 
-          if (exist) {
-            exist.quantity += g.quantity;
-          } else {
-            merged.push(g);
-          }
-        });
+  decrease: async (id) => {
+    const state = get();
+    const targetItem = state.items.find((item) => item.id === id);
+    if (!targetItem) {
+      return;
+    }
 
-        localStorage.setItem(userKey, JSON.stringify(merged));
-        localStorage.removeItem(guestKey);
+    if (isGuest(state.owner)) {
+      const newItems = state.items
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity - 1 } : item,
+        )
+        .filter((item) => item.quantity > 0);
 
-        set({
-          owner: userId,
-          items: merged,
-        });
-      },
-    }),
-    {
-      name: "cart-temp", // không dùng chính
-    },
-  ),
-);
+      saveGuestItems(newItems);
+      set({ items: newItems });
+      return;
+    }
+
+    try {
+      if (targetItem.quantity <= 1) {
+        const cart = await cartApi.removeCartItem(id);
+        set({ items: flattenServerCart(cart) });
+        return;
+      }
+
+      const cart = await cartApi.updateCartItem(id, targetItem.quantity - 1);
+      set({ items: flattenServerCart(cart) });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+    }
+  },
+
+  clearCart: async () => {
+    const state = get();
+
+    if (isGuest(state.owner)) {
+      clearGuestItems();
+      set({ items: [] });
+      return;
+    }
+
+    try {
+      const cart = await cartApi.clearCart();
+      set({ items: flattenServerCart(cart) });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+    }
+  },
+
+  mergeGuestToUser: async (userId) => {
+    const guestItems = readGuestItems();
+
+    if (!guestItems.length) {
+      await get().setOwner(userId);
+      return;
+    }
+
+    const payload: SyncCartDto = {
+      items: guestItems.map<AddToCartDto>((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      })),
+    };
+
+    try {
+      const cart = await cartApi.syncCart(payload);
+      clearGuestItems();
+      set({
+        owner: userId,
+        items: flattenServerCart(cart),
+      });
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+      await get().setOwner(userId);
+    }
+  },
+}));

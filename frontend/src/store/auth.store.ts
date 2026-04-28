@@ -18,6 +18,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
+let checkAuthInFlight: Promise<void> | null = null;
+
 const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Lỗi không xác định";
 
@@ -42,7 +44,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // ✅ xử lý cart SAU khi có user
       const cart = useCartStore.getState();
-      cart.mergeGuestToUser(res.user.id);
+      await cart.mergeGuestToUser(res.user.id);
 
       toast.success("Đăng nhập thành công 🎉");
     } catch (error: unknown) {
@@ -79,7 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // load cart theo user
       const cart = useCartStore.getState();
-      cart.setOwner(user.id);
+      await cart.setOwner(user.id);
     } catch (error: unknown) {
       set({ user: null, isAuthenticated: false });
     }
@@ -87,37 +89,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // 🔥 CHECK AUTH (quan trọng nhất khi reload)
   checkAuth: async () => {
+    if (checkAuthInFlight) {
+      return checkAuthInFlight;
+    }
+
     set({ isLoading: true });
 
-    try {
-      const { accessToken } = await authApi.refresh();
-      setAccessToken(accessToken);
+    const request = (async () => {
+      try {
+        const { accessToken } = await authApi.refresh();
+        setAccessToken(accessToken);
 
-      const user = await authApi.getProfile();
+        const user = await authApi.getProfile();
 
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+        set({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
 
-      // ✅ load cart theo user
-      const cart = useCartStore.getState();
-      cart.setOwner(user.id);
-    } catch (error: unknown) {
-      setAccessToken(null);
+        // ✅ load cart theo user
+        const cart = useCartStore.getState();
+        await cart.setOwner(user.id);
+      } catch {
+        setAccessToken(null);
 
-      set({
-        user: null,
-        isAuthenticated: false,
-      });
+        set({
+          user: null,
+          isAuthenticated: false,
+        });
 
-      // 👉 fallback về guest
-      const cart = useCartStore.getState();
-      cart.setOwner("guest");
-    } finally {
-      set({ isLoading: false });
-    }
+        // 👉 fallback về guest
+        const cart = useCartStore.getState();
+        await cart.setOwner("guest");
+      } finally {
+        set({ isLoading: false });
+        checkAuthInFlight = null;
+      }
+    })();
+
+    checkAuthInFlight = request;
+    return request;
   },
 
   // 🔥 LOGOUT
@@ -134,6 +146,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // ✅ chuyển về guest cart
     const cart = useCartStore.getState();
-    cart.setOwner("guest");
+    await cart.setOwner("guest");
   },
 }));

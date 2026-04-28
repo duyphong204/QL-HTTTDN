@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "./base";
+import { apiGet, apiPatch, apiPost, apiDelete } from "./base";
 import type {
   CreatePromotionDto,
   Promotion,
@@ -22,5 +22,9 @@ export const promotionApi = {
     return apiPatch<Promotion>(`/promotions/${id}/products`, {
       productIds,
     });
+  },
+
+  deletePromotion: async (id: string) => {
+    return apiDelete<Promotion>(`/promotions/${id}`);
   },
 };

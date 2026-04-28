@@ -6,8 +6,8 @@ import type {
   VerifyPaymentReturnResponse,
   SalesStats,
   Cart,
-  CartItem,
   AddToCartDto,
+  SyncCartDto,
 } from "@/types/sales.type";
 
 export const orderApi = {
@@ -27,9 +27,13 @@ export const orderApi = {
     return apiPost<CreateOrderResponse>("/orders", data);
   },
 
-  verifyVnpayReturn: async (params: URLSearchParams) => {
+  retryOrderPayment: async (orderId: string) => {
+    return apiPost<CreateOrderResponse>(`/orders/${orderId}/retry-payment`);
+  },
+
+  verifyMomoReturn: async (params: URLSearchParams) => {
     return apiGet<VerifyPaymentReturnResponse>(
-      "/payments/vnpay/verify-return",
+      "/payments/momo/verify-return",
       Object.fromEntries(params.entries()),
     );
   },
@@ -61,20 +65,24 @@ export const cartApi = {
   },
 
   addToCart: async (data: AddToCartDto) => {
-    return apiPost<CartItem>("/cart/items", data);
+    return apiPost<Cart>("/cart/items", data);
   },
 
   updateCartItem: async (itemId: string, quantity: number) => {
-    return apiPatch<CartItem>(`/cart/items/${itemId}`, {
+    return apiPatch<Cart>(`/cart/items/${itemId}`, {
       quantity,
     });
   },
 
   removeCartItem: async (itemId: string) => {
-    await apiDelete(`/cart/items/${itemId}`);
+    return apiDelete<Cart>(`/cart/items/${itemId}`);
   },
 
   clearCart: async () => {
-    await apiPost("/cart/clear");
+    return apiPost<Cart>("/cart/clear");
+  },
+
+  syncCart: async (data: SyncCartDto) => {
+    return apiPost<Cart>("/cart/sync", data);
   },
 };

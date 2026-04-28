@@ -207,4 +207,16 @@ export class PromotionsService {
       });
     });
   }
+
+  async remove(id: string) {
+    const existing = await this.prisma.promotion.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Khong tim thay chuong trinh khuyen mai');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.promotionProduct.deleteMany({ where: { promotionId: id } });
+      return tx.promotion.delete({ where: { id } });
+    });
+  }
 }

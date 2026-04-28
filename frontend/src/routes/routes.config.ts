@@ -101,7 +101,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
   {
     path: "/sales/export-slips",
     title: "Phiếu xuất",
-    icon: ShoppingCart,
+    icon: FileText,
     roles: ["SALES_MANAGER"],
     inSidebar: true,
   },
@@ -123,7 +123,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     path: "/employee/profile",
     title: "Hồ sơ cá nhân",
     icon: FileText,
-    roles: ["EMPLOYEE"],
+    roles: ["EMPLOYEE", "HR_MANAGER", "SALES_MANAGER", "WAREHOUSE_MANAGER"],
     inSidebar: true,
   },
   {

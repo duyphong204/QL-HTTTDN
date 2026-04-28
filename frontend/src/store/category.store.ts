@@ -32,6 +32,9 @@ interface CategoryState {
   deleteCategory: (id: string) => Promise<void>;
 }
 
+const toErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
 export const useCategoryStore = create<CategoryState>((set, get) => ({
   categories: [],
   meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
@@ -102,7 +105,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       // Refetch to update pagination
       await get().fetchCategories();
     } catch (error) {
-      toast.error("Không thể thêm danh mục");
+      toast.error(toErrorMessage(error, "Không thể thêm danh mục"));
     }
   },
   updateCategory: async (id: string, data: { name: string }) => {
@@ -117,7 +120,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       // Refetch to maintain correct sorting/filtering
       await get().fetchCategories();
     } catch (error) {
-      toast.error("Không thể cập nhật danh mục");
+      toast.error(toErrorMessage(error, "Không thể cập nhật danh mục"));
     }
   },
   deleteCategory: async (id: string) => {
@@ -130,7 +133,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       // Refetch to update pagination
       await get().fetchCategories();
     } catch (error) {
-      toast.error("Không thể xóa danh mục");
+      toast.error(toErrorMessage(error, "Không thể xóa danh mục"));
     }
   },
 }));

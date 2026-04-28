@@ -23,7 +23,7 @@ export default function ShopHome() {
         await fetchCategories();
 
         const [featuredRes, flashRes] = await Promise.all([
-          fetchProductsByQuery({ page: 1, limit: 8, sortBy: 'newest' }),
+          fetchProductsByQuery({ page: 1, limit: 18, sortBy: 'newest' }),
           fetchProductsByQuery({ page: 1, limit: 24, sortBy: 'newest' }),
         ]);
 
@@ -59,7 +59,7 @@ export default function ShopHome() {
   }, [categories]);
 
   const flashSaleItems = useMemo(() => {
-    return flashProducts.slice(0, 4);
+    return flashProducts.slice(0, 6);
   }, [flashProducts]);
 
   return (
@@ -191,7 +191,7 @@ export default function ShopHome() {
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
                   {flashSaleItems.map((prod) => (
                     <ProductCard
                       key={prod.id}
@@ -223,7 +223,7 @@ export default function ShopHome() {
               ))}
             </div>
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} compactAddToCart />
               ))}

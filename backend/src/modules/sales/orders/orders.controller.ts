@@ -35,11 +35,13 @@ export class OrdersController {
   @Post()
   @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
   createOrder(@Body() dto: CreateOrderDto, @Request() req: any) {
-    const clientIp =
-      req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() ||
-      req.ip ||
-      '127.0.0.1';
-    return this.ordersService.createOrder(req.user.id, dto, clientIp);
+    return this.ordersService.createOrder(req.user.id, dto);
+  }
+
+  @Post(':id/retry-payment')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
+  retryPayment(@Param('id') id: string, @Request() req: any) {
+    return this.ordersService.retryOrderPayment(req.user.id, id);
   }
 
   @Get('me')

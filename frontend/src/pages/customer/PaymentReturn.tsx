@@ -13,7 +13,7 @@ export default function PaymentReturn() {
   const location = useLocation();
   const [state, setState] = useState<VerifyState>({ status: 'loading' });
   const clearCart = useCartStore((s) => s.clearCart);
-  const verifyVnpayReturn = useOrderStore((s) => s.verifyVnpayReturn);
+  const verifyMomoReturn = useOrderStore((s) => s.verifyMomoReturn);
 
   const queryString = useMemo(() => location.search, [location.search]);
 
@@ -21,10 +21,10 @@ export default function PaymentReturn() {
     const verify = async () => {
       try {
         const params = new URLSearchParams(queryString);
-        const res = await verifyVnpayReturn(params);
+        const res = await verifyMomoReturn(params);
 
         if (res.success) {
-          clearCart();
+          await clearCart();
           setState({
             status: 'success',
             orderId: res.orderId,
@@ -45,7 +45,7 @@ export default function PaymentReturn() {
     };
 
     verify();
-  }, [queryString, clearCart, verifyVnpayReturn]);
+  }, [queryString, clearCart, verifyMomoReturn]);
 
   if (state.status === 'loading') {
     return (

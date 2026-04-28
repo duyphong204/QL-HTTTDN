@@ -9,8 +9,7 @@ import CategoryManagement from '@/pages/warehouse/CategoryManagement';
 import LoginPage from '@/pages/auth/login';
 import RegisterPage from '@/pages/auth/register';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/store/auth.store';
-import { useEffect, useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { Toaster } from 'sonner';
 import NotFoundPage from '@/pages/NotFoundPage';
 import SalaryManagement from '@/pages/hr/SalaryManagement';
@@ -37,12 +36,7 @@ import Profile from '@/pages/customer/Profile';
 import About from '@/pages/customer/About';
 import Contact from '@/pages/customer/Contact';
 export const AppRouter = () => {
-  const checkAuth = useAuthStore((state) => state.checkAuth);
   const location = useLocation();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

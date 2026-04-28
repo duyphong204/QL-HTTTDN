@@ -5,6 +5,51 @@ import { toast } from 'sonner';
 import { ArrowLeft, MapPin, ShieldCheck, Lock } from 'lucide-react';
 import { useOrderStore } from '@/store/order.store';
 
+type CheckoutErrors = {
+  fullName?: string;
+  phone?: string;
+  address?: string;
+};
+
+const normalizePhone = (value: string): string =>
+  value.replace(/[\s.-]/g, '');
+
+const validateFullName = (value: string): string | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 'Vui lòng nhập họ tên người nhận';
+  }
+  if (trimmed.length < 2) {
+    return 'Họ tên phải có ít nhất 2 ký tự';
+  }
+  if (!/^[A-Za-zÀ-ỹ\s]+$/.test(trimmed)) {
+    return 'Họ tên chỉ được chứa chữ cái và khoảng trắng';
+  }
+  return undefined;
+};
+
+const validatePhone = (value: string): string | undefined => {
+  const normalized = normalizePhone(value.trim());
+  if (!normalized) {
+    return 'Vui lòng nhập số điện thoại';
+  }
+  if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(normalized)) {
+    return 'Số điện thoại không hợp lệ (ví dụ: 09xxxxxxxx)';
+  }
+  return undefined;
+};
+
+const validateAddress = (value: string): string | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return 'Vui lòng nhập địa chỉ giao hàng';
+  }
+  if (trimmed.length < 8) {
+    return 'Địa chỉ phải có ít nhất 8 ký tự';
+  }
+  return undefined;
+};
+
 export default function CheckoutPage() {
   const { items, clearCart, removeFromCart } = useCartStore();
   const createOrder = useOrderStore((state) => state.createOrder);
@@ -16,11 +61,48 @@ export default function CheckoutPage() {
     address: '',
     paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER',
   });
+  const [errors, setErrors] = useState<CheckoutErrors>({});
 
   const [loading, setLoading] = useState(false);
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const getUnitPrice = (price: number, salePrice?: number) =>
+    typeof salePrice === 'number' ? salePrice : price;
+
+  const subtotal = items.reduce(
+    (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
+    0,
+  );
   const total = subtotal;
+
+  const validateForm = (): boolean => {
+    const nextErrors: CheckoutErrors = {
+      fullName: validateFullName(form.fullName),
+      phone: validatePhone(form.phone),
+      address: validateAddress(form.address),
+    };
+
+    setErrors(nextErrors);
+    return !nextErrors.fullName && !nextErrors.phone && !nextErrors.address;
+  };
+
+  const updateField = (field: keyof typeof form, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const validateFieldOnBlur = (field: keyof CheckoutErrors) => {
+    if (field === 'fullName') {
+      setErrors((prev) => ({ ...prev, fullName: validateFullName(form.fullName) }));
+      return;
+    }
+
+    if (field === 'phone') {
+      setErrors((prev) => ({ ...prev, phone: validatePhone(form.phone) }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, address: validateAddress(form.address) }));
+  };
 
   const handleSubmit = async () => {
     if (!items.length) {
@@ -28,8 +110,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!form.fullName.trim() || !form.phone.trim() || !form.address.trim()) {
-      toast.error('Vui lòng nhập đầy đủ Họ tên, Số điện thoại và Địa chỉ');
+    if (!validateForm()) {
+      toast.error('Vui lòng kiểm tra lại thông tin nhận hàng');
       return;
     }
 
@@ -38,7 +120,7 @@ export default function CheckoutPage() {
 
       const payload = {
         fullName: form.fullName.trim(),
-        phone: form.phone.trim(),
+        phone: normalizePhone(form.phone.trim()),
         address: form.address.trim(),
         paymentMethod: form.paymentMethod,
         items: items.map((i) => ({
@@ -50,12 +132,12 @@ export default function CheckoutPage() {
       const res = await createOrder(payload);
 
       if (res.requiresPayment && res.paymentUrl) {
-        toast.success('Đang chuyển sang cổng thanh toán VNPAY...');
+        toast.success('Đang chuyển sang cổng thanh toán MoMo...');
         window.location.href = res.paymentUrl;
         return;
       }
 
-      clearCart();
+      await clearCart();
       toast.success('Đặt hàng thành công 🎉');
       navigate(`/order-success/${res.order.id}`);
     } catch (err: unknown) {
@@ -119,10 +201,18 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   placeholder="Nguyễn Hoàng Phú"
-                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition"
+                  className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
+                    errors.fullName
+                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
+                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                  }`}
                   value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                  onChange={(e) => updateField('fullName', e.target.value)}
+                  onBlur={() => validateFieldOnBlur('fullName')}
                 />
+                {errors.fullName ? (
+                  <p className="text-sm text-red-600 mt-1.5">{errors.fullName}</p>
+                ) : null}
               </div>
 
               {/* Số điện thoại */}
@@ -133,10 +223,18 @@ export default function CheckoutPage() {
                 <input
                   type="tel"
                   placeholder="0123 456 789"
-                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition"
+                  className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
+                    errors.phone
+                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
+                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                  }`}
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={(e) => updateField('phone', e.target.value)}
+                  onBlur={() => validateFieldOnBlur('phone')}
                 />
+                {errors.phone ? (
+                  <p className="text-sm text-red-600 mt-1.5">{errors.phone}</p>
+                ) : null}
               </div>
 
               {/* Địa chỉ */}
@@ -147,10 +245,18 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   placeholder="123 Đường ABC, Quận 1, TP.HCM"
-                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition"
+                  className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
+                    errors.address
+                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
+                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                  }`}
                   value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  onChange={(e) => updateField('address', e.target.value)}
+                  onBlur={() => validateFieldOnBlur('address')}
                 />
+                {errors.address ? (
+                  <p className="text-sm text-red-600 mt-1.5">{errors.address}</p>
+                ) : null}
               </div>
 
               <div>
@@ -179,7 +285,7 @@ export default function CheckoutPage() {
                         setForm({ ...form, paymentMethod: 'BANK_TRANSFER' })
                       }
                     />
-                    <span className="text-sm text-gray-800">Chuyển khoản ngân hàng</span>
+                    <span className="text-sm text-gray-800">Thanh toán ngân hàng</span>
                   </label>
                 </div>
               </div>
@@ -206,8 +312,13 @@ export default function CheckoutPage() {
                     <h3 className="font-medium text-gray-900 line-clamp-2">{item.name}</h3>
                     <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                     <p className="text-sm font-medium text-blue-600 mt-1">
-                      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                      {(getUnitPrice(item.price, item.salePrice) * item.quantity).toLocaleString('vi-VN')} đ
                     </p>
+                    {typeof item.salePrice === 'number' && item.salePrice < item.price ? (
+                      <p className="text-xs text-gray-400 line-through">
+                        {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ))}

@@ -26,6 +26,12 @@ const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0);
 
+const formatPaymentMethod = (method?: string) => {
+  if (method === 'COD') return 'COD';
+  if (method === 'BANK_TRANSFER') return 'Chuyển khoản';
+  return method || '—';
+};
+
 export default function SalesOrderManagement() {
   const { orders, isLoading, fetchOrders, updateOrderStatus } = useSalesStore();
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
@@ -78,7 +84,7 @@ export default function SalesOrderManagement() {
           <DataTableToolbar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Tìm theo mã đơn, tên khách, người nhận, số điện thoại..."
+            searchPlaceholder="Tìm theo mã đơn, khách hàng, số điện thoại..."
           />
 
           <div className="overflow-x-auto">
@@ -87,9 +93,9 @@ export default function SalesOrderManagement() {
                 <tr>
                   <th className="px-6 py-4">Mã đơn</th>
                   <th className="px-6 py-4">Khách hàng</th>
-                  <th className="px-6 py-4">Người nhận</th>
                   <th className="px-6 py-4">SĐT</th>
                   <th className="px-6 py-4">Ngày tạo</th>
+                  <th className="px-6 py-4">PT thanh toán</th>
                   <th className="px-6 py-4 text-right">Tổng tiền</th>
                   <th className="px-6 py-4 text-center">Trạng thái</th>
                 </tr>
@@ -117,11 +123,13 @@ export default function SalesOrderManagement() {
                         <td className="px-6 py-4 font-mono text-gray-900">
                           {o.id.slice(0, 8).toUpperCase()}
                         </td>
-                        <td className="px-6 py-4 font-medium text-gray-800">{o.customerName || 'Khách vãng lai'}</td>
-                        <td className="px-6 py-4 text-gray-700">{o.fullName}</td>
+                        <td className="px-6 py-4 font-medium text-gray-800">{o.fullName}</td>
                         <td className="px-6 py-4 text-gray-600">{o.phone}</td>
                         <td className="px-6 py-4 text-gray-500">
                           {new Date(o.createdAt).toLocaleDateString('vi-VN')}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {formatPaymentMethod(o.paymentMethod)}
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-gray-900">
                           {formatCurrency(o.totalAmount)}

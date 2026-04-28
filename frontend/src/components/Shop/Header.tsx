@@ -65,8 +65,24 @@ export default function Header() {
             <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
               N
             </div>
-            <span className="font-extrabold text-xl md:text-2xl text-gray-900 tracking-tight">
-              TechStore
+            <span className="font-black text-xl md:text-2xl tracking-tighter flex items-baseline relative group">
+              {/* Lớp bóng mờ phía sau tạo chiều sâu khi hover */}
+              <span 
+                className="absolute -inset-0.5 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-blue-900/20 select-none whitespace-nowrap" 
+                aria-hidden="true"
+              >
+                TechStore
+              </span>
+
+              {/* Phần "Tech" - Giữ kích thước cũ + Gradient CHUYỂN ĐỘNG */}
+              <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-500 via-indigo-600 to-blue-800 bg-[length:200%_auto] animate-gradient-flow transition-all group-hover:drop-shadow-[0_0_10px_rgba(37,99,235,0.8)]">
+                Tech
+              </span>
+
+              {/* Phần "Store" - Giữ kích thước cũ + Đen mờ & Hào quang */}
+              <span className="relative text-gray-950 ml-0.5 transition-all group-hover:drop-shadow-[0_0_8px_rgba(17,24,39,0.5)]">
+                Store
+              </span>
             </span>
           </Link>
 

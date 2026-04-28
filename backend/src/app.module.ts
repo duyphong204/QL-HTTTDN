@@ -11,6 +11,7 @@ import { LoggingMiddleware } from './middlware/logging/logging.middleware';
 import { OrderModule } from './modules/sales/orders/order.module';
 import { PaymentsModule } from './modules/sales/payments/payments.module';
 import { PromotionsModule } from './modules/sales/promotions/promotions.module';
+import { CartModule } from './modules/sales/cart/cart.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PromotionsModule } from './modules/sales/promotions/promotions.module';
     OrderModule,
     PaymentsModule,
     PromotionsModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

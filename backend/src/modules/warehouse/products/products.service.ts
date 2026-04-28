@@ -1,7 +1,13 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 import { Prisma } from '@prisma/client';
+import { enrichProductPricing } from 'src/common/utils/pricing.helper';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -20,94 +26,6 @@ const normalizeVietnamese = (value: string): string =>
 @Injectable()
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
-
-  private resolveActivePromotion(product: {
-    promotionLinks?: Array<{
-      promotion: {
-        id: string;
-        name: string;
-        type: 'PERCENT' | 'FIXED';
-        value: number;
-        isActive: boolean;
-        startAt: Date | null;
-        endAt: Date | null;
-      };
-    }>;
-  }) {
-    const now = new Date();
-    const link = (product.promotionLinks ?? []).find(({ promotion }) => {
-      if (!promotion.isActive) {
-        return false;
-      }
-
-      if (promotion.startAt && promotion.startAt > now) {
-        return false;
-      }
-
-      if (promotion.endAt && promotion.endAt < now) {
-        return false;
-      }
-
-      return true;
-    });
-
-    return link?.promotion;
-  }
-
-  private calculateSalePrice(
-    price: number,
-    promotion?: {
-      type: 'PERCENT' | 'FIXED';
-      value: number;
-    },
-  ) {
-    if (!promotion) {
-      return price;
-    }
-
-    if (promotion.type === 'PERCENT') {
-      const percent = Math.max(0, Math.min(100, promotion.value));
-      return Math.max(0, price * (1 - percent / 100));
-    }
-
-    return Math.max(0, price - promotion.value);
-  }
-
-  private enrichProductPricing<
-    T extends {
-      price: number;
-      promotionLinks?: Array<{
-        promotion: {
-          id: string;
-          name: string;
-          type: 'PERCENT' | 'FIXED';
-          value: number;
-          isActive: boolean;
-          startAt: Date | null;
-          endAt: Date | null;
-        };
-      }>;
-    } & Record<string, any>,
-  >(product: T) {
-    const promotion = this.resolveActivePromotion(product);
-    const salePrice = this.calculateSalePrice(product.price, promotion);
-    const isOnSale = !!promotion && salePrice < product.price;
-    const discountPercent =
-      isOnSale && product.price > 0
-        ? Math.round(((product.price - salePrice) / product.price) * 100)
-        : 0;
-
-    const { promotionLinks, ...rest } = product;
-
-    return {
-      ...rest,
-      isOnSale,
-      salePrice,
-      discountPercent,
-      promotionName: promotion?.name,
-      promotionId: promotion?.id,
-    };
-  }
 
   private isUploadFile(
     file: unknown,
@@ -203,7 +121,7 @@ export class ProductService {
       });
 
       const pricedProducts = allProducts.map((product) =>
-        this.enrichProductPricing(product),
+        enrichProductPricing(product),
       );
 
       const filteredProducts = pricedProducts.filter((product) =>
@@ -289,7 +207,7 @@ export class ProductService {
     ]);
 
     const data = [...inStockData, ...outOfStockData].map((product) =>
-      this.enrichProductPricing(product),
+      enrichProductPricing(product),
     );
 
     return {
@@ -317,7 +235,7 @@ export class ProductService {
       },
     });
     if (!product) throw new NotFoundException('Product not found');
-    return this.enrichProductPricing(product);
+    return enrichProductPricing(product);
   }
 
   async create(dto: CreateProductDto, file?: unknown) {
@@ -352,6 +270,70 @@ export class ProductService {
   async remove(id: string) {
     const product = await this.findOne(id);
 
+    const [
+      unpaidOrderCount,
+      paidOrderCount,
+      cartItemCount,
+      stockInDetailCount,
+      promotionLinkCount,
+    ] = await Promise.all([
+      this.prisma.orderDetail.count({
+        where: {
+          productId: id,
+          order: {
+            paymentStatus: { not: 'PAID' },
+          },
+        },
+      }),
+      this.prisma.orderDetail.count({
+        where: {
+          productId: id,
+          order: {
+            paymentStatus: 'PAID',
+          },
+        },
+      }),
+      this.prisma.cartItem.count({
+        where: { productId: id },
+      }),
+      this.prisma.stockInDetail.count({
+        where: { productId: id },
+      }),
+      this.prisma.promotionProduct.count({
+        where: { productId: id },
+      }),
+    ]);
+
+    if (unpaidOrderCount > 0) {
+      throw new BadRequestException(
+        'Sản phẩm đang có trong đơn hàng chưa thanh toán, không thể xóa. Hãy thanh toán hoặc hủy các đơn này trước.',
+      );
+    }
+
+    if (paidOrderCount > 0) {
+      throw new BadRequestException(
+        'Sản phẩm đã phát sinh lịch sử bán hàng, không thể xóa. Bạn chỉ nên ngừng kinh doanh hoặc ẩn sản phẩm này.',
+      );
+    }
+
+    if (cartItemCount > 0) {
+      throw new BadRequestException(
+        'Sản phẩm đang có trong giỏ hàng của khách, không thể xóa. Vui lòng chờ người dùng xóa khỏi giỏ trước.',
+      );
+    }
+
+    if (stockInDetailCount > 0) {
+      throw new BadRequestException(
+        'Sản phẩm đã có trong phiếu nhập kho, không thể xóa vì còn dữ liệu nhập hàng liên quan.',
+      );
+    }
+
+    if (promotionLinkCount > 0) {
+      throw new BadRequestException(
+        'Sản phẩm đang được gán vào chương trình khuyến mãi, hãy gỡ khuyến mãi trước khi xóa.',
+      );
+    }
+
     if (product.imageUrl) {
       try {
         await this.cloudinary.deleteImage(product.imageUrl);
@@ -362,7 +344,13 @@ export class ProductService {
       }
     }
 
-    return this.prisma.product.delete({ where: { id } });
+    try {
+      return await this.prisma.product.delete({ where: { id } });
+    } catch (error) {
+      throw new BadRequestException(
+        'Không thể xóa sản phẩm do còn dữ liệu liên quan trong đơn hàng, giỏ hàng, phiếu nhập hoặc khuyến mãi.',
+      );
+    }
   }
 
   async getWarehouseReport(month?: number, year?: number) {

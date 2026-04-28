@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -52,5 +53,10 @@ export class PromotionsController {
     @Body() dto: SetPromotionProductsDto,
   ) {
     return this.promotionsService.setProducts(id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.promotionsService.remove(id);
   }
 }

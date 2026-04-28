@@ -14,6 +14,7 @@ interface PromotionState {
   createPromotion: (data: CreatePromotionDto) => Promise<void>;
   updatePromotion: (id: string, data: UpdatePromotionDto) => Promise<void>;
   setPromotionProducts: (id: string, productIds: string[]) => Promise<void>;
+  deletePromotion: (id: string) => Promise<void>;
 }
 
 const toErrorMessage = (error: unknown): string =>
@@ -60,6 +61,16 @@ export const usePromotionStore = create<PromotionState>((set, get) => ({
     try {
       await promotionApi.setPromotionProducts(id, productIds);
       toast.success("Gan san pham vao chuong trinh thanh cong");
+      await get().fetchPromotions();
+    } catch (error) {
+      toast.error(toErrorMessage(error));
+      throw error;
+    }
+  },
+  deletePromotion: async (id) => {
+    try {
+      await promotionApi.deletePromotion(id);
+      toast.success("Xoa chuong trinh khuyen mai thanh cong");
       await get().fetchPromotions();
     } catch (error) {
       toast.error(toErrorMessage(error));

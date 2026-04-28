@@ -11,8 +11,8 @@ export interface Cart extends BaseEntity {
 export interface CartItem extends BaseEntity {
   cartId: string;
   productId: string;
-  product?: Product;
   quantity: number;
+  product: Product;
 }
 
 export interface AddToCartDto {
@@ -22,6 +22,10 @@ export interface AddToCartDto {
 
 export interface UpdateCartItemDto {
   quantity: number;
+}
+
+export interface SyncCartDto {
+  items: AddToCartDto[];
 }
 
 // Order
@@ -70,8 +74,8 @@ export interface VerifyPaymentReturnResponse {
   success: boolean;
   orderId: string;
   paymentStatus: "PAID" | "FAILED";
-  responseCode?: string;
-  transactionStatus?: string;
+  resultCode?: number;
+  transId?: string;
   message: string;
 }
 
