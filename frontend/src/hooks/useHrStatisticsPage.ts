@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useHrStatisticsStore } from '@/stores/hrStatistics.store'
-import { useSalaryStore } from '@/stores/Salary.store'
 import { employeeService, salaryService } from '@/services/hr.service'
 import { reportService } from '@/services/report.service'
 import { getErrorMessage } from '@/stores/store.helpers'
 import { getCurrentYear, getRecentYears, MONTH_OPTIONS } from '@/utils/date'
 import { formatCurrencyVnd } from '@/utils/format'
 import type { RoleReportResponse } from '@/types/report.types'
+import type { Salary } from '@/types/salary.types'
 
 const currentYear = getCurrentYear()
 
@@ -17,10 +17,8 @@ export const useHrStatisticsPage = () => {
   const setStatistics = useHrStatisticsStore((state) => state.setStatistics)
   const setLoadingStatistics = useHrStatisticsStore((state) => state.setLoading)
 
-  const salaries = useSalaryStore((state) => state.salaries)
-  const loadingSalaries = useSalaryStore((state) => state.isLoading)
-  const setSalaries = useSalaryStore((state) => state.setSalaries)
-  const setLoadingSalaries = useSalaryStore((state) => state.setLoading)
+  const [salaries, setSalaries] = useState<Salary[]>([])
+  const [loadingSalaries, setLoadingSalaries] = useState(false)
   const [reportData, setReportData] = useState<RoleReportResponse | null>(null)
   const [loadingReport, setLoadingReport] = useState(false)
 
@@ -54,7 +52,7 @@ export const useHrStatisticsPage = () => {
         setLoadingSalaries(false)
       }
     },
-    [setLoadingSalaries, setSalaries],
+    [],
   )
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLeaveDto } from './dto/leave.dto';
-import { Prisma, SalaryStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class LeaveRequestsService {
@@ -74,9 +74,9 @@ export class LeaveRequestsService {
   }) {
     const { status, type, employeeId, year } = query || {};
     const where: Prisma.LeaveRequestWhereInput = {
-      status: status as Prisma.EnumSalaryStatusFilter,
-      type,
-      employeeId,
+      ...(status ? { status } : {}),
+      ...(type ? { type } : {}),
+      ...(employeeId ? { employeeId } : {}),
     };
 
     if (year) {
@@ -111,7 +111,7 @@ export class LeaveRequestsService {
     }));
   }
 
-  async updateStatus(id: string, status: string, adminId: string) {
+  async updateStatus(id: string, status: string, adminId: string, rejectionReason?: string) {
     const leave = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });
@@ -148,7 +148,7 @@ export class LeaveRequestsService {
       return tx.leaveRequest.update({
         where: { id },
         data: {
-          status: status as unknown as SalaryStatus,
+          status,
           approvedById: adminId,
         },
       });

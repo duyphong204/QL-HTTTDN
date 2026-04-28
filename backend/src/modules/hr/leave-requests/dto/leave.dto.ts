@@ -7,7 +7,7 @@ export class CreateLeaveDto {
   @IsDateString()
   endDate!: string;
 
-  @IsIn(['SICK', 'ANNUAL', 'RESIGNATION'], {
+  @IsIn(['SICK', 'ANNUAL', 'MATERNITY', 'RESIGNATION'], {
     message: 'Loại nghỉ phép không hợp lệ',
   })
   type!: string;
@@ -20,4 +20,5 @@ export class CreateLeaveDto {
 export class UpdateLeaveStatusDto {
   @IsIn(['APPROVED', 'REJECTED'], { message: 'Trạng thái không hợp lệ' })
   status!: string;
+  rejectionReason?: string;
 }

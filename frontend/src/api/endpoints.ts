@@ -25,8 +25,7 @@ export const endpoints = {
   leaveRequests: {
     root: '/leave-requests',
     me: '/leave-requests/me',
-    approve: (id: string) => `/leave-requests/${id}/approve`,
-    reject: (id: string) => `/leave-requests/${id}/reject`,
+    status: (id: string) => `/leave-requests/${id}/status`,
     byId: (id: string) => `/leave-requests/${id}`,
   },
   salaries: {

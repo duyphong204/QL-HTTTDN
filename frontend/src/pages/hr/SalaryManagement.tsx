@@ -1,33 +1,42 @@
 // src/pages/hr/SalaryManagement.tsx
 import { useEffect, useMemo, useState } from 'react'
-import { DollarSign, Users, CheckCircle2, Calculator, Printer } from "lucide-react"
+import { DollarSign, Users, CheckCircle2, Calculator, Printer, Plus } from "lucide-react"
 import { DataTableToolbar } from "@/components/common/DataTableToolbar"
 import { TableLoadingRow } from "@/components/common/Loading"
 import { PaginationControls } from "@/components/common/PaginationControls"
-import { SALARY_STATUS_BADGE } from "@/utils/salary"
+import { AppModal } from "@/components/common/AppModal"
+import { DETAIL_TYPE_BADGE, SALARY_STATUS_BADGE } from "@/utils/salary"
 import { formatCurrencyVnd } from "@/utils/format"
-import { useSalaryStore } from '@/stores/Salary.store'
-import type { Salary } from '@/types/salary.types'
+import { useHrSalaryStore } from '@/stores/hrSalary.store'
+import { DetailType, type AddSalaryDetailDto, type Salary } from '@/types/salary.types'
 
 export default function SalaryManagement() {
   const {
     salaries,
-    isLoadingSalaries,
-    salariesFilters,
+    isLoading: isLoadingSalaries,
+    filters,
     calculateAllSalaries,
     approveSalary,
     markAsPaid,
     cancelSalary,
-    setSalariesFilters,
+    setFilters,
     fetchSalaries,
-  } = useSalaryStore()
+    addSalaryDetail,
+  } = useHrSalaryStore()
 
   const [searchTerm, setSearchTerm] = useState('')
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [detailSalaryId, setDetailSalaryId] = useState<string | null>(null)
+  const [detailForm, setDetailForm] = useState<AddSalaryDetailDto>({
+    type: DetailType.BONUS,
+    amount: 0,
+    description: '',
+  })
 
   // Auto fetch
   useEffect(() => {
     void fetchSalaries()
-  }, [fetchSalaries, salariesFilters])
+  }, [fetchSalaries, filters])
 
   // Stats
   const currentStats = useMemo(() => {
@@ -58,28 +67,28 @@ export default function SalaryManagement() {
   }, [salaries, searchTerm])
 
   const paginatedSalaries = useMemo(() => {
-    const start = (salariesFilters.page - 1) * salariesFilters.limit
-    return filteredSalaries.slice(start, start + salariesFilters.limit)
-  }, [filteredSalaries, salariesFilters.page, salariesFilters.limit])
+    const start = (filters.page - 1) * filters.limit
+    return filteredSalaries.slice(start, start + filters.limit)
+  }, [filteredSalaries, filters.page, filters.limit])
 
   const paginationMeta = useMemo(() => ({
-    page: salariesFilters.page,
-    limit: salariesFilters.limit,
+    page: filters.page,
+    limit: filters.limit,
     total: filteredSalaries.length,
-    totalPages: Math.max(1, Math.ceil(filteredSalaries.length / salariesFilters.limit)),
-  }), [filteredSalaries.length, salariesFilters.page, salariesFilters.limit])
+    totalPages: Math.max(1, Math.ceil(filteredSalaries.length / filters.limit)),
+  }), [filteredSalaries.length, filters.page, filters.limit])
 
   const handleMonthChange = (value: string) => {
-    setSalariesFilters({ month: value ? parseInt(value) : undefined, page: 1 })
+    setFilters({ month: value ? parseInt(value) : undefined, page: 1 })
   }
 
   const handleYearChange = (value: string) => {
-    setSalariesFilters({ year: parseInt(value) || undefined, page: 1 })
+    setFilters({ year: parseInt(value) || undefined, page: 1 })
   }
 
   const handleCalculateAll = async () => {
-    if (salariesFilters.month && salariesFilters.year) {
-      await calculateAllSalaries(salariesFilters.month, salariesFilters.year)
+    if (filters.month && filters.year) {
+      await calculateAllSalaries(filters.month, filters.year)
     }
   }
 
@@ -88,10 +97,28 @@ export default function SalaryManagement() {
   }
 
   const handlePageChange = (page: number) => {
-    setSalariesFilters({ page })
+    setFilters({ page })
+  }
+
+  const openDetailModal = (salaryId: string) => {
+    setDetailSalaryId(salaryId)
+    setDetailForm({ type: DetailType.BONUS, amount: 0, description: '' })
+    setDetailModalOpen(true)
+  }
+
+  const closeDetailModal = () => {
+    setDetailModalOpen(false)
+    setDetailSalaryId(null)
+  }
+
+  const submitDetail = async () => {
+    if (!detailSalaryId || detailForm.amount <= 0) return
+    await addSalaryDetail(detailSalaryId, detailForm)
+    closeDetailModal()
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       {/* Print styles */}
       <style>{`
@@ -113,7 +140,7 @@ export default function SalaryManagement() {
 
           <div className="flex flex-wrap items-center gap-2">
             <select
-              value={salariesFilters.month || ''}
+              value={filters.month || ''}
               onChange={(e) => handleMonthChange(e.target.value)}
               className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
@@ -124,7 +151,7 @@ export default function SalaryManagement() {
             </select>
 
             <select
-              value={salariesFilters.year || new Date().getFullYear()}
+              value={filters.year || new Date().getFullYear()}
               onChange={(e) => handleYearChange(e.target.value)}
               className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
@@ -176,6 +203,7 @@ export default function SalaryManagement() {
                   <th className="px-6 py-4 text-center">Ngày làm</th>
                   <th className="px-6 py-4 text-center">Thưởng</th>
                   <th className="px-6 py-4 text-center">Khấu trừ</th>
+                  <th className="px-6 py-4">Chi tiết</th>
                   <th className="px-6 py-4 text-center">Thực lĩnh</th>
                   <th className="px-6 py-4 text-center">Trạng thái</th>
                   <th className="px-6 py-4 text-center">Thao tác</th>
@@ -184,7 +212,7 @@ export default function SalaryManagement() {
 
               <tbody className="divide-y divide-gray-50">
                 {isLoadingSalaries ? (
-                  <TableLoadingRow colSpan={8} text="Đang tải dữ liệu..." />
+                  <TableLoadingRow colSpan={9} text="Đang tải dữ liệu..." />
                 ) : filteredSalaries.length === 0 ? (
                   <EmptyRow text="Không có dữ liệu bảng lương." />
                 ) : (
@@ -205,6 +233,28 @@ export default function SalaryManagement() {
                       <td className="px-6 py-4 text-center text-red-600 font-medium">
                         -{formatCurrencyVnd(s.totalDeduction || 0)}
                       </td>
+                      <td className="px-6 py-4">
+                        {s.details && s.details.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {s.details.map((detail) => {
+                              const badge = DETAIL_TYPE_BADGE[detail.type as keyof typeof DETAIL_TYPE_BADGE]
+                              const sign = badge?.isPositive ? '+' : '-'
+                              return (
+                                <span
+                                  key={detail.id}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${badge?.color ?? 'bg-slate-100 text-slate-700'}`}
+                                  title={detail.description || ''}
+                                >
+                                  {badge?.label ?? detail.type}
+                                  <span className="text-[11px] font-semibold">{sign}{formatCurrencyVnd(detail.amount)}</span>
+                                </span>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-center font-semibold text-gray-900">
                         {formatCurrencyVnd(s.netSalary || 0)}
                       </td>
@@ -217,6 +267,16 @@ export default function SalaryManagement() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="inline-flex items-center gap-2">
+                          {s.status !== 'CANCELLED' && (
+                            <button
+                              onClick={() => openDetailModal(s.id)}
+                              className="rounded-md bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                            >
+                              <span className="inline-flex items-center gap-1">
+                                <Plus size={12} /> Chi tiết
+                              </span>
+                            </button>
+                          )}
                           {s.status === 'PENDING' && (
                             <>
                               <button
@@ -263,7 +323,7 @@ export default function SalaryManagement() {
 
           <PaginationControls
             meta={paginationMeta}
-            currentPage={salariesFilters.page}
+            currentPage={filters.page}
             isLoading={isLoadingSalaries}
             totalLabel="Tổng nhân viên"
             onPageChange={handlePageChange}
@@ -274,7 +334,7 @@ export default function SalaryManagement() {
       {/* Print Section */}
       <div id="print-salary-management" className="p-8 text-black text-sm">
         <h2 className="text-xl font-bold text-center mb-2">
-          BẢNG LƯƠNG THÁNG {salariesFilters.month}/{salariesFilters.year}
+          BẢNG LƯƠNG THÁNG {filters.month}/{filters.year}
         </h2>
         <p className="text-center mb-6">Công ty QL_HTTTDN</p>
         <table className="w-full border border-black border-collapse">
@@ -305,6 +365,67 @@ export default function SalaryManagement() {
         </table>
       </div>
     </div>
+
+    <AppModal
+      isOpen={detailModalOpen}
+      onClose={closeDetailModal}
+      title="Thêm chi tiết lương"
+      maxWidthClassName="max-w-md"
+    >
+      <div className="p-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Loại</label>
+          <select
+            value={detailForm.type}
+            onChange={(e) => setDetailForm({ ...detailForm, type: e.target.value as DetailType })}
+            className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white"
+          >
+            {Object.values(DetailType).map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Số tiền</label>
+          <input
+            type="number"
+            min={1}
+            value={detailForm.amount}
+            onChange={(e) => setDetailForm({ ...detailForm, amount: Number(e.target.value) })}
+            className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+          <input
+            type="text"
+            value={detailForm.description ?? ''}
+            onChange={(e) => setDetailForm({ ...detailForm, description: e.target.value })}
+            className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onClick={closeDetailModal}
+            className="px-4 py-2 text-sm text-gray-600"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            onClick={submitDetail}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg"
+          >
+            Lưu
+          </button>
+        </div>
+      </div>
+    </AppModal>
+    </>
   )
 }
 
@@ -323,7 +444,7 @@ function StatCard({ title, value, icon }: { title: string; value: string | numbe
 function EmptyRow({ text }: { text: string }) {
   return (
     <tr>
-      <td colSpan={8} className="px-6 py-10 text-center text-gray-400">
+      <td colSpan={9} className="px-6 py-10 text-center text-gray-400">
         {text}
       </td>
     </tr>

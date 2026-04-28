@@ -17,7 +17,7 @@ interface LeaveRequestState {
 
   // Actions cho Quản lý
   fetchAllRequests: () => Promise<void>
-  approveRequest: (id: string, status: 'APPROVED' | 'REJECTED') => Promise<void>
+  approveRequest: (id: string, status: 'APPROVED' | 'REJECTED', rejectionReason?: string) => Promise<void>
 }
 
 export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
@@ -75,12 +75,12 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
     }
   },
 
-  approveRequest: async (id: string, status: 'APPROVED' | 'REJECTED') => {
+  approveRequest: async (id: string, status: 'APPROVED' | 'REJECTED', rejectionReason?: string) => {
     try {
-      await leaveRequestService.approveLeaveRequest(id, { status })
+      await leaveRequestService.updateLeaveStatus(id, { status, rejectionReason })
       set({
-        allLeaveRequests: get().allLeaveRequests.map((r) => 
-          r.id === id ? { ...r, status } : r
+        allLeaveRequests: get().allLeaveRequests.map((r) =>
+          r.id === id ? { ...r, status, ...(rejectionReason ? { rejectionReason } : {}) } : r
         ),
       })
       toast.success(status === 'APPROVED' ? 'Đã duyệt đơn' : 'Đã từ chối đơn')

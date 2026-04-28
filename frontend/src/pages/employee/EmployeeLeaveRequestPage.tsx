@@ -14,6 +14,7 @@ import { toast } from "sonner"
 const TYPE_LABEL: Record<string, string> = {
   ANNUAL: "Nghỉ phép",
   SICK: "Nghỉ bệnh",
+  MATERNITY: "Thai sản",
   RESIGNATION: "Đơn nghỉ việc",
 }
 

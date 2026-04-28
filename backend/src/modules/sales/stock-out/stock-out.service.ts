@@ -16,7 +16,8 @@ export class StockOutService {
   private async decrementInventory(
     tx: Prisma.TransactionClient,
     items: { productId: string; quantity: number }[],
-  ) {
+  ): Promise<Map<string, number>> {
+    const costPriceMap = new Map<string, number>();
     for (const item of items) {
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product || product.stockQuantity < item.quantity) {
@@ -24,12 +25,14 @@ export class StockOutService {
           `Sản phẩm ${product?.name || item.productId} không đủ tồn kho`,
         );
       }
+      costPriceMap.set(item.productId, product.costPrice);
 
       await tx.product.update({
         where: { id: item.productId },
         data: { stockQuantity: { decrement: item.quantity } },
       });
     }
+    return costPriceMap;
   }
 
   private async incrementInventory(
@@ -46,7 +49,7 @@ export class StockOutService {
 
   async create(dto: CreateStockOutDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      await this.decrementInventory(tx, dto.items);
+      const costPriceMap = await this.decrementInventory(tx, dto.items);
 
       const totalAmount = dto.items.reduce(
         (sum, item) => sum + item.quantity * item.price,
@@ -65,6 +68,7 @@ export class StockOutService {
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
+              costPrice: costPriceMap.get(item.productId) ?? 0,
             })),
           },
         },
@@ -118,7 +122,7 @@ export class StockOutService {
           price: item.price,
         }));
 
-      await this.decrementInventory(tx, nextItems);
+      const costPriceMap = await this.decrementInventory(tx, nextItems);
 
       const totalAmount = nextItems.reduce(
         (sum, item) => sum + item.quantity * item.price,
@@ -139,6 +143,7 @@ export class StockOutService {
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
+              costPrice: costPriceMap.get(item.productId) ?? 0,
             })),
           },
         },
@@ -176,27 +181,42 @@ export class StockOutService {
 
   async findAll(query: FindStockOutQueryDto) {
     const { status, type, fromDate, toDate } = query;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+    const skip = (page - 1) * limit;
 
-    return await this.prisma.stockOut.findMany({
-      where: {
-        ...(status && { status }),
-        ...(type && { type }),
-        ...(fromDate || toDate
-          ? {
-              createdAt: {
-                ...(fromDate && { gte: new Date(fromDate) }),
-                ...(toDate && { lte: new Date(toDate) }),
-              },
-            }
-          : {}),
-      },
-      include: {
-        details: { include: { product: true } },
-        order: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const where: Prisma.StockOutWhereInput = {
+      ...(status && { status }),
+      ...(type && { type }),
+      ...(fromDate || toDate
+        ? {
+            createdAt: {
+              ...(fromDate && { gte: new Date(fromDate) }),
+              ...(toDate && { lte: new Date(toDate) }),
+            },
+          }
+        : {}),
+    };
+
+    const [data, total] = await Promise.all([
+      this.prisma.stockOut.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          details: { include: { product: true } },
+          order: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.stockOut.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

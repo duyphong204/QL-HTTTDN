@@ -22,6 +22,8 @@ model User {
   orders           Order[]
   profile          Profile?
   logs             SystemLog[]
+  createdStockIns  StockIn[]  @relation("StockInCreatedBy")
+  approvedStockIns StockIn[]  @relation("StockInApprovedBy")
 }
 
 model Profile {
@@ -140,16 +142,18 @@ enum AttendanceStatus {
 }
 
 model LeaveRequest {
-  id           String   @id @default(uuid())
-  employeeId   String
-  startDate    DateTime
-  endDate      DateTime
-  type         String
-  reason       String
-  status       String   @default("PENDING")
-  createdAt    DateTime @default(now())
-  approvedById String?
-  employee     Employee @relation(fields: [employeeId], references: [id])
+  id              String   @id @default(uuid())
+  employeeId      String
+  startDate       DateTime
+  endDate         DateTime
+  type            String
+  reason          String
+  status          String   @default("PENDING")
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt @default(now())
+  approvedById    String?
+  employee        Employee @relation(fields: [employeeId], references: [id])
 }
 
 model Category {
@@ -198,6 +202,8 @@ model StockIn {
   status       StockInStatus   @default(PENDING)
   supplier     Supplier        @relation(fields: [supplierId], references: [id])
   details      StockInDetail[]
+  createdBy    User?           @relation("StockInCreatedBy", fields: [createdById], references: [id])
+  approvedBy   User?           @relation("StockInApprovedBy", fields: [approvedById], references: [id])
 }
 
 model StockInDetail {
@@ -263,6 +269,7 @@ model StockOutDetail {
   productId  String
   quantity   Int
   price      Float
+  costPrice  Float    @default(0)
   stockOut   StockOut @relation(fields: [stockOutId], references: [id])
   product    Product  @relation(fields: [productId], references: [id])
 }

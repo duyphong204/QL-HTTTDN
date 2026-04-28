@@ -46,16 +46,7 @@ export class LeaveRequestsController {
   async getMyRequests(@Request() req: any) {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
-  @Get('my')
-  @Roles(
-    Role.EMPLOYEE,
-    Role.HR_MANAGER,
-    Role.WAREHOUSE_MANAGER,
-    Role.SALES_MANAGER,
-  )
-  async getMyRequestsAlias(@Request() req: any) {
-    return this.leaveRequestsService.getMyRequests(req.user.id);
-  }
+
   @Patch(':id/status')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateStatus(
@@ -63,30 +54,36 @@ export class LeaveRequestsController {
     @Body() dto: UpdateLeaveStatusDto,
     @Request() req: any,
   ) {
-    return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id);
+    return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id, dto.rejectionReason);
   }
-  @Patch(':id/approve')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  approve(@Param('id') id: string, @Request() req: any) {
-    return this.leaveRequestsService.updateStatus(id, 'APPROVED', req.user.id);
-  }
-  @Patch(':id/reject')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  reject(@Param('id') id: string, @Request() req: any) {
-    return this.leaveRequestsService.updateStatus(id, 'REJECTED', req.user.id);
-  }
+
+  // @Get()
+  // @Roles(Role.ADMIN, Role.HR_MANAGER)
+  // findAll(
+  //   @Query()
+  //   query?: {
+  //     status?: string;
+  //     type?: string;
+  //     employeeId?: string;
+  //     year?: string;
+  //     page?: string;
+  //     limit?: string;
+  //   },
+  // ) {
+  //   return this.leaveRequestsService.findAll({
+  //     ...query,
+  //     page: query?.page ? Number(query.page) : undefined,
+  //     limit: query?.limit ? Number(query.limit) : undefined,
+  //   });
+  // }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll(
-    @Query()
-    query?: {
-      status?: string;
-      type?: string;
-      employeeId?: string;
-      year?: string;
-    },
-  ) {
-    return this.leaveRequestsService.findAll(query);
+  findAll(@Query() query: any) {
+    return this.leaveRequestsService.findAll({
+      ...query,
+      page: query?.page ? Number(query.page) : undefined,
+      limit: query?.limit ? Number(query.limit) : undefined,
+    });
   }
   @Delete(':id')
   @Roles(

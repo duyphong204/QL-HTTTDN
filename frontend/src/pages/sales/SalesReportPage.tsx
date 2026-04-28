@@ -108,8 +108,8 @@ export default function SalesReportPage() {
                             />
                             <RoleChartCard
                                 title="Số lượng sản phẩm đã xuất"
-                                chart={reportData?.charts?.quantityByProduct}
-                                type="bar"
+                                chart={reportData?.charts?.quantityTrend}
+                                type="line"
                             />
                             <RoleChartCard
                                 title="Doanh thu + lợi nhuận"

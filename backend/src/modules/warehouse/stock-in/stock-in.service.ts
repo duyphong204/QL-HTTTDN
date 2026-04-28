@@ -1,80 +1,62 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateStockInDto, UpdateStockInDto } from './dto/stock-in.dto';
-import { Prisma } from '@prisma/client';
-import { StockInStatus } from '@prisma/client';
+import { Prisma, StockInStatus } from '@prisma/client';
+
 @Injectable()
 export class StockInService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async applyStockIn(
+  private async applyStockChange(
     tx: Prisma.TransactionClient,
-    items: { productId: string; quantity: number; price: number }[],
+    productId: string,
+    quantityChange: number,
+    unitPrice: number,
   ) {
-    for (const item of items) {
-      const product = await tx.product.findUnique({ where: { id: item.productId } });
-      if (!product) {
-        throw new NotFoundException(`Sản phẩm ${item.productId} không tồn tại`);
-      }
+    const product = await tx.product.findUnique({ where: { id: productId } });
+    if (!product) throw new NotFoundException(`Sản phẩm ${productId} không tồn tại`);
 
-      const totalQuantity = product.stockQuantity + item.quantity;
-      const newCostPrice =
-        totalQuantity > 0
-          ? (product.stockQuantity * product.costPrice + item.quantity * item.price) /
-            totalQuantity
-          : item.price;
+    const newQuantity = product.stockQuantity + quantityChange;
 
-      await tx.product.update({
-        where: { id: item.productId },
-        data: {
-          stockQuantity: { increment: item.quantity },
-          costPrice: newCostPrice,
-        },
-      });
+    if (newQuantity < 0) {
+      throw new BadRequestException(
+        `Sản phẩm ${product.name} đã được xuất bán, không thể hoàn tác số lượng lớn hơn tồn kho hiện tại (Hiện có: ${product.stockQuantity})`
+      );
     }
-  }
 
-  private async revertStockIn(
-    tx: Prisma.TransactionClient,
-    items: { productId: string; quantity: number }[],
-  ) {
-    for (const item of items) {
-      const product = await tx.product.findUnique({ where: { id: item.productId } });
-      if (!product || product.stockQuantity < item.quantity) {
-        throw new NotFoundException(`Không thể hoàn tác tồn kho cho ${item.productId}`);
-      }
-
-      await tx.product.update({
-        where: { id: item.productId },
-        data: {
-          stockQuantity: { decrement: item.quantity },
-        },
-      });
+    let newCostPrice = product.costPrice;
+    if (quantityChange > 0) {
+      const currentTotalValue = product.stockQuantity * product.costPrice;
+      const incomingValue = quantityChange * unitPrice;
+      newCostPrice = (currentTotalValue + incomingValue) / newQuantity;
     }
+
+    await tx.product.update({
+      where: { id: productId },
+      data: { stockQuantity: newQuantity, costPrice: newCostPrice },
+    });
   }
 
   async createStockIn(dto: CreateStockInDto, userId: string) {
-    const { supplierId, details } = dto;
-
     return this.prisma.$transaction(async (tx) => {
-      await this.applyStockIn(tx, details);
+      const totalAmount = dto.details.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
-      const totalAmount = details.reduce(
-        (sum, item) => sum + item.quantity * item.price,
-        0,
-      );
+      for (const item of dto.details) {
+        await this.applyStockChange(tx, item.productId, item.quantity, item.price);
+      }
 
       return tx.stockIn.create({
         data: {
-          supplierId,
+          supplierId: dto.supplierId,
           totalAmount,
           createdById: userId,
           status: StockInStatus.COMPLETED,
           details: {
-            create: details.map((item) => ({
+            create: dto.details.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
@@ -88,43 +70,29 @@ export class StockInService {
 
   async updateStockIn(id: string, dto: UpdateStockInDto) {
     return this.prisma.$transaction(async (tx) => {
-      const stockIn = await tx.stockIn.findUnique({
+      const oldStockIn = await tx.stockIn.findUnique({
         where: { id },
         include: { details: true },
       });
+      if (!oldStockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
 
-      if (!stockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
+      for (const oldItem of oldStockIn.details) {
+        await this.applyStockChange(tx, oldItem.productId, -oldItem.quantity, oldItem.price);
+      }
 
-      await this.revertStockIn(
-        tx,
-        stockIn.details.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-      );
+      const nextDetails = dto.details || oldStockIn.details;
+      for (const newItem of nextDetails) {
+        await this.applyStockChange(tx, newItem.productId, newItem.quantity, newItem.price);
+      }
 
-      const nextDetails = dto.details ??
-        stockIn.details.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-        }));
-
-      await this.applyStockIn(tx, nextDetails);
-
-      const totalAmount = nextDetails.reduce(
-        (sum, item) => sum + item.quantity * item.price,
-        0,
-      );
+      const totalAmount = nextDetails.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
       await tx.stockInDetail.deleteMany({ where: { stockInId: id } });
-
       return tx.stockIn.update({
         where: { id },
         data: {
-          supplierId: dto.supplierId ?? stockIn.supplierId,
+          supplierId: dto.supplierId ?? oldStockIn.supplierId,
           totalAmount,
-          status: StockInStatus.COMPLETED,
           details: {
             create: nextDetails.map((item) => ({
               productId: item.productId,
@@ -144,28 +112,14 @@ export class StockInService {
         where: { id },
         include: { details: true },
       });
+      if (!stockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
 
-      if (!stockIn) {
-        throw new NotFoundException('Phiếu nhập không tồn tại');
+      for (const item of stockIn.details) {
+        await this.applyStockChange(tx, item.productId, -item.quantity, item.price);
       }
-
-      await this.revertStockIn(
-        tx,
-        stockIn.details.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-      );
 
       await tx.stockInDetail.deleteMany({ where: { stockInId: id } });
       return tx.stockIn.delete({ where: { id } });
-    });
-  }
-
-  async findAll() {
-    return this.prisma.stockIn.findMany({
-      include: { supplier: true, details: { include: { product: true } } },
-      orderBy: { date: 'desc' },
     });
   }
 
@@ -175,30 +129,34 @@ export class StockInService {
       include: {
         supplier: true,
         details: { include: { product: true } },
+        createdBy: { select: { profile: { select: { fullName: true } } } },
       },
     });
-
     if (!stockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
-
-    const [creator, approver] = await Promise.all([
-      stockIn.createdById
-        ? this.prisma.user.findUnique({
-            where: { id: stockIn.createdById },
-            include: { profile: true },
-          })
-        : null,
-      stockIn.approvedById
-        ? this.prisma.user.findUnique({
-            where: { id: stockIn.approvedById },
-            include: { profile: true },
-          })
-        : null,
-    ]);
 
     return {
       ...stockIn,
-      creatorName: creator?.profile?.fullName || 'N/A',
-      approverName: approver?.profile?.fullName || 'N/A',
+      creatorName: stockIn.createdBy?.profile?.fullName ?? 'N/A',
+      createdBy: undefined,
+    };
+  }
+
+  async findAll(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.prisma.stockIn.findMany({
+        skip,
+        take: limit,
+        include: { supplier: true, details: { include: { product: true } } },
+        orderBy: { date: 'desc' },
+      }),
+      this.prisma.stockIn.count(),
+    ]);
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     };
   }
 }

@@ -572,7 +572,8 @@ export class ReportService {
       rangeEnd = new Date(year, 11, 31, 23, 59, 59);
     }
 
-    const orders = await this.prisma.order.findMany({
+    const [orders, stockOuts] = await Promise.all([
+      this.prisma.order.findMany({
       where: {
         status: 'COMPLETED',
         createdAt: { gte: rangeStart, lte: rangeEnd },
@@ -590,9 +591,22 @@ export class ReportService {
           },
         },
       },
-    });
+      }),
+      this.prisma.stockOut.findMany({
+        where: {
+          status: 'COMPLETED',
+          type: 'SALE',
+          createdAt: { gte: rangeStart, lte: rangeEnd },
+        },
+        select: {
+          createdAt: true,
+          details: { select: { quantity: true } },
+        },
+      }),
+    ]);
 
     const revenueBuckets = Array.from({ length: labels.length }, () => ({ revenue: 0, profit: 0 }));
+    const quantityBuckets = Array.from({ length: labels.length }, () => 0);
     const topProducts = new Map<string, { name: string; quantity: number }>();
 
     let totalQuantity = 0;
@@ -633,6 +647,26 @@ export class ReportService {
       }
     }
 
+    for (const stockOut of stockOuts) {
+      let bucketIndex = 0;
+
+      if (period === 'month') {
+        bucketIndex = this.dayKey(stockOut.createdAt) - 1;
+      } else if (period === 'quarter') {
+        const qMonths = this.quarterMonths(quarter);
+        bucketIndex = qMonths.indexOf(this.monthKey(stockOut.createdAt));
+      } else {
+        bucketIndex = this.monthKey(stockOut.createdAt) - 1;
+      }
+
+      if (bucketIndex < 0 || bucketIndex >= quantityBuckets.length) {
+        continue;
+      }
+
+      const qty = stockOut.details.reduce((sum, item) => sum + item.quantity, 0);
+      quantityBuckets[bucketIndex] += qty;
+    }
+
     const topRows = [...topProducts.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 10);
 
     return {
@@ -651,16 +685,13 @@ export class ReportService {
             color: this.palette.profit,
           },
         ]),
-        quantityByProduct: this.toChart(
-          topRows.map((r) => r.name),
-          [
-            {
-              name: 'Số lượng đã xuất',
-              data: topRows.map((r) => r.quantity),
-              color: this.palette.quantity,
-            },
-          ],
-        ),
+        quantityTrend: this.toChart(labels, [
+          {
+            name: 'Số lượng đã xuất',
+            data: quantityBuckets,
+            color: this.palette.quantity,
+          },
+        ]),
         revenueProfitComposed: this.toChart(labels, [
           {
             name: 'Doanh thu',

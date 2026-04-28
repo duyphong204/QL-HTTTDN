@@ -10,6 +10,7 @@ import type {
     LeaveRequest,
     CreateLeaveRequestDto,
     ApproveLeaveRequestDto,
+    QueryLeaveRequestDto,
 } from "@/types/leave.types"
 import type {
     Salary,
@@ -60,8 +61,8 @@ export const employeeService = {
 };
 
 export const leaveRequestService = {
-    getLeaveRequests: async (): Promise<LeaveRequest[]> => {
-        return apiGet<LeaveRequest[]>(endpoints.leaveRequests.root);
+    getLeaveRequests: async (params?: QueryLeaveRequestDto): Promise<LeaveRequest[]> => {
+        return apiGet<LeaveRequest[]>(endpoints.leaveRequests.root, params);
     },
 
     getMyLeaveRequests: async (): Promise<LeaveRequest[]> => {
@@ -72,11 +73,8 @@ export const leaveRequestService = {
         return apiPost<LeaveRequest>(endpoints.leaveRequests.root, data);
     },
 
-    approveLeaveRequest: async (id: string, data: ApproveLeaveRequestDto): Promise<LeaveRequest> => {
-        const path = data.status === 'APPROVED'
-            ? endpoints.leaveRequests.approve(id)
-            : endpoints.leaveRequests.reject(id);
-        return apiPatch<LeaveRequest>(path);
+    updateLeaveStatus: async (id: string, data: ApproveLeaveRequestDto): Promise<LeaveRequest> => {
+        return apiPatch<LeaveRequest>(endpoints.leaveRequests.status(id), data);
     },
 
     deleteLeaveRequest: async (id: string): Promise<void> => {

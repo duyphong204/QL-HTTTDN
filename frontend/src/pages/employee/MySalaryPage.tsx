@@ -2,22 +2,22 @@
 import { useEffect, useMemo } from 'react'
 import { Printer } from "lucide-react"
 import { TableLoadingRow } from "@/components/common/Loading"
-import { SALARY_STATUS_BADGE, DETAIL_TYPE_BADGE } from "@/utils/salary"
+import { SALARY_STATUS_BADGE, DETAIL_TYPE_BADGE, WORKING_DAYS_DEFAULT } from "@/utils/salary"
 import { formatCurrencyVnd } from "@/utils/format"
 import type { SalaryDetail } from "@/types/salary.types"
-import { useSalaryStore } from '@/stores/Salary.store'
+import { useMySalaryStore } from '@/stores/Salary.store'
 import type { Salary } from '@/types/salary.types'
 
 export default function MySalaryPage() {
   const {
     mySalaries,
-    isLoadingSalary,
+    isLoading: isLoadingSalary,
     filterYear,
     setFilterYear,
     filterMonth,
     setFilterMonth,
     fetchMySalaries,
-  } = useSalaryStore()
+  } = useMySalaryStore()
 
   // Tính monthlySalary
   const salary = useMemo(() => {
@@ -30,12 +30,13 @@ export default function MySalaryPage() {
   const breakdown = useMemo(() => {
     if (!salary) return null
 
-    const dailyRate = (salary.baseSalary || 0) / (salary.workingDays || 26)
+    const dailyRate = (salary.baseSalary || 0) / (salary.workingDays || WORKING_DAYS_DEFAULT)
     const workedAmount = dailyRate * (salary.actualWorkDays || 0)
 
     return {
       baseSalary: salary.baseSalary || 0,
-      workingDays: salary.workingDays || 26,
+      workingDays: salary.workingDays || WORKING_DAYS_DEFAULT,
+
       actualWorkDays: salary.actualWorkDays || 0,
       dailyRate,
       workedAmount,
@@ -47,10 +48,11 @@ export default function MySalaryPage() {
     }
   }, [salary])
 
-  // Auto fetch khi filter thay đổi
+  // Auto fetch khi filter thay đổi (action từ Zustand đã ổn định, không cần đưa vào deps)
   useEffect(() => {
     void fetchMySalaries()
-  }, [fetchMySalaries, filterYear, filterMonth])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterYear, filterMonth])
 
   // Print functions
   const printMonthly = () => {
@@ -93,7 +95,7 @@ export default function MySalaryPage() {
               onChange={(e) => setFilterYear(e.target.value)}
               className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             >
-              {[2023, 2024, 2025, 2026].map(y => (
+              {Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - 1 + i).map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
@@ -156,6 +158,9 @@ export default function MySalaryPage() {
 
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
               <p className="font-semibold text-slate-900 mb-2">Cách tính lương</p>
+              <p className="mb-2 rounded-lg bg-white px-3 py-2 font-medium text-slate-800">
+                Thực lĩnh = ({formatCurrencyVnd(breakdown.baseSalary)} / {breakdown.workingDays}) x {breakdown.actualWorkDays} + {formatCurrencyVnd(breakdown.totalBonus)} - {formatCurrencyVnd(breakdown.totalDeduction)} = {formatCurrencyVnd(breakdown.netSalary)}
+              </p>
               <p>
                 Lương ngày = Lương cơ bản / Số ngày chuẩn = {formatCurrencyVnd(breakdown.baseSalary)} / {breakdown.workingDays} = {formatCurrencyVnd(breakdown.dailyRate)}
               </p>

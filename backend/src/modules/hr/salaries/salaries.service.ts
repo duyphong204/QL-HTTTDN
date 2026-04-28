@@ -71,10 +71,61 @@ export class SalariesService {
         date: { gte: startDate, lte: endDate },
         status: { in: ['PRESENT', 'LEAVE', 'LATE'] },
       },
+      select: {
+        date: true,
+        status: true,
+      },
     });
 
+    const approvedLeaveRequests = await this.prisma.leaveRequest.findMany({
+      where: {
+        employeeId,
+        status: 'APPROVED',
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+      select: {
+        startDate: true,
+        endDate: true,
+      },
+    });
+
+    const approvedLeaveDates = new Set<string>();
+    for (const leave of approvedLeaveRequests) {
+      const leaveStart = leave.startDate > startDate ? leave.startDate : startDate;
+      const leaveEnd = leave.endDate < endDate ? leave.endDate : endDate;
+
+      for (
+        const d = new Date(leaveStart.getFullYear(), leaveStart.getMonth(), leaveStart.getDate());
+        d <= leaveEnd;
+        d.setDate(d.getDate() + 1)
+      ) {
+        approvedLeaveDates.add(d.toISOString().split('T')[0]);
+      }
+    }
+
     const workingDays = 26;
-    const actualWorkDays = attendances.length;
+    const actualWorkDays = attendances.reduce((sum, attendance) => {
+      if (attendance.status === 'PRESENT' || attendance.status === 'LATE') {
+        return sum + 1;
+      }
+
+      if (attendance.status === 'LEAVE') {
+        const attendanceDate = new Date(
+          attendance.date.getFullYear(),
+          attendance.date.getMonth(),
+          attendance.date.getDate(),
+        )
+          .toISOString()
+          .split('T')[0];
+
+        if (approvedLeaveDates.has(attendanceDate)) {
+          return sum + 1;
+        }
+      }
+
+      return sum;
+    }, 0);
 
     const salary = await this.prisma.salary.upsert({
       where: { employeeId_month_year: { employeeId, month, year } },
@@ -102,23 +153,20 @@ export class SalariesService {
   }
 
   async calculateAllSalaries(month: number, year: number) {
+    const { endDate } = this.getMonthDateRange(month, year);
     const employees = await this.prisma.employee.findMany({
-      where: { resignDate: null },
+      where: {
+        OR: [{ resignDate: null }, { resignDate: { gt: endDate } }],
+      },
     });
-    const results: any[] = []; 
-    for (const emp of employees) {
-      try {
-        const res = await this.calculateSalary({
-          employeeId: emp.id,
-          month,
-          year,
-        });
-        if (res) results.push(res);
-      } catch (e) {
-        console.error(`Error calculating for ${emp.id}:`, e);
-      }
-    }
-    return { total: employees.length, success: results.length };
+    const results = await Promise.allSettled(
+      employees.map((emp) =>
+        this.calculateSalary({ employeeId: emp.id, month, year }),
+      ),
+    );
+    const success = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    return { total: employees.length, success, failed };
   }
 
   // =========================
@@ -161,7 +209,10 @@ export class SalariesService {
   async findOne(id: string, userId?: string) {
     const salary = await this.prisma.salary.findUnique({
       where: { id },
-      include: { employee: true, details: true },
+      include: {
+        details: true,
+        employee: { include: { user: { include: { profile: true } } } },
+      },
     });
     if (!salary) throw new NotFoundException('Salary not found');
     if (userId && salary.employee.userId !== userId)
@@ -172,7 +223,27 @@ export class SalariesService {
   // =========================
   // 3. TRẠNG THÁI & CHI TIẾT
   // =========================
+  private static readonly VALID_TRANSITIONS: Record<SalaryStatus, SalaryStatus[]> = {
+    [SalaryStatus.PENDING]: [SalaryStatus.APPROVED, SalaryStatus.CANCELLED],
+    [SalaryStatus.APPROVED]: [SalaryStatus.PAID, SalaryStatus.CANCELLED],
+    [SalaryStatus.PAID]: [],
+    [SalaryStatus.CANCELLED]: [],
+  };
+
   async updateStatus(id: string, status: SalaryStatus) {
+    const current = await this.prisma.salary.findUnique({
+      where: { id },
+      select: { status: true },
+    });
+    if (!current) throw new NotFoundException('Salary not found');
+
+    const allowed = SalariesService.VALID_TRANSITIONS[current.status] ?? [];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Không thể chuyển trạng thái từ ${current.status} sang ${status}`,
+      );
+    }
+
     return this.prisma.salary.update({
       where: { id },
       data: {
@@ -196,12 +267,33 @@ export class SalariesService {
   // 4. THỐNG KÊ (Dùng chung cho Report)
   // =========================
   async getStats(month?: number, year?: number) {
-    const stats = await this.prisma.salary.aggregate({
-      _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
-      _avg: { netSalary: true },
-      where: { month, year },
-    });
-    const list = await this.findAll({ month, year });
-    return { stats, data: list };
+    const [stats, data] = await Promise.all([
+      this.prisma.salary.aggregate({
+        _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
+        _avg: { netSalary: true },
+        where: { month, year },
+      }),
+      this.prisma.salary.findMany({
+        where: { month, year },
+        select: {
+          id: true,
+          month: true,
+          year: true,
+          baseSalary: true,
+          netSalary: true,
+          totalBonus: true,
+          totalDeduction: true,
+          status: true,
+          employee: {
+            select: {
+              code: true,
+              user: { select: { profile: { select: { fullName: true } } } },
+            },
+          },
+        },
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      }),
+    ]);
+    return { stats, data };
   }
 }
