@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-import { promotionApi } from "@/api/promotion.api";
+import { promotionApi } from "@/services/promotion.service";
 import type {
   CreatePromotionDto,
   Promotion,

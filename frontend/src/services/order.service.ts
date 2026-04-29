@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from "./base";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/client"
 import type {
   Order,
   CreateOrderDto,

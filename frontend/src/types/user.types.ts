@@ -26,7 +26,6 @@ export interface User {
 export interface CreateUserDto {
     email: string
     password: string
-    role: Role
     profile: {
         fullName: string
         phone?: string
@@ -38,7 +37,6 @@ export interface CreateUserDto {
 
 export interface UpdateUserDto {
     email?: string
-    role?: Role
     profile?: {
         fullName?: string
         phone?: string

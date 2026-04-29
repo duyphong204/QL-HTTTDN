@@ -1,140 +1,143 @@
 import { Link } from 'react-router-dom';
+import { LucideShieldCheck, LucideZap, LucideHeadset, LucideSmartphone, LucideHeadphones, LucideSparkles, LucideArrowRight } from 'lucide-react';
+
+const FEATURE_CARDS = [
+  {
+    icon: <LucideSmartphone className="w-6 h-6" />,
+    title: "Thiết bị chính hãng",
+    desc: "Điện thoại, laptop, smartwatch từ Apple, Samsung, Sony... nguồn gốc rõ ràng, đầy đủ VAT."
+  },
+  {
+    icon: <LucideHeadphones className="w-6 h-6" />,
+    title: "Phụ kiện đa dạng",
+    desc: "Sạc dự phòng, cáp sạc, âm thanh chất lượng cao từ các thương hiệu hàng đầu thế giới."
+  },
+  {
+    icon: <LucideSparkles className="w-6 h-6" />,
+    title: "Ưu đãi hấp dẫn",
+    desc: "Flash sale hàng ngày, combo tiết kiệm và freeship toàn quốc cho đơn hàng từ 500k."
+  }
+];
+
+const COMMITMENTS = [
+  { label: "100%", title: "Chính hãng", desc: "Sản phẩm nhập khẩu chính ngạch.", icon: <LucideShieldCheck className="w-5 h-5" /> },
+  { label: "30 Ngày", title: "Đổi trả", desc: "Lỗi là đổi, không hài lòng hoàn trả.", icon: <LucideZap className="w-5 h-5" /> },
+  { label: "24/7", title: "Hỗ trợ", desc: "Tư vấn kỹ thuật chuyên sâu.", icon: <LucideHeadset className="w-5 h-5" /> }
+];
+
+const SectionTitle = ({ children, subtitle }) => (
+  <div className="mb-12">
+    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
+      {children}
+    </h2>
+    {subtitle && <p className="text-slate-500 text-lg max-w-2xl leading-relaxed">{subtitle}</p>}
+  </div>
+);
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-24 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <img
-            src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80"
-            alt="Tech background"
-            className="w-full h-full object-cover"
-          />
+    <div className="min-h-screen bg-white">
+      <section className="relative py-20 md:py-32 bg-slate-50 overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider">
+              Chào mừng đến với TechStore
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 tracking-tight">
+              Công nghệ dẫn đầu <br /> 
+              <span className="text-blue-600">Trải nghiệm khác biệt</span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
+              Chúng tôi không chỉ cung cấp thiết bị, chúng tôi mang đến những giải pháp công nghệ tối ưu giúp nâng tầm cuộc sống của bạn mỗi ngày.
+            </p>
+            <Link to="/products" className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-xl font-bold transition-all hover:bg-blue-600 active:scale-95 shadow-lg">
+              Khám phá sản phẩm <LucideArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
         </div>
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-            Chào mừng đến với <span className="text-blue-400">TechStore</span>
-          </h1>
-          <p className="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">
-            Nơi công nghệ chính hãng gặp gỡ trải nghiệm mua sắm đẳng cấp
-          </p>
+        <div className="hidden lg:block absolute top-1/2 right-[-5%] -translate-y-1/2 w-1/2 h-[70%] rounded-3xl overflow-hidden shadow-2xl rotate-2">
+            <img 
+              src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80" 
+              className="w-full h-full object-cover"
+              alt="Tech"
+            />
         </div>
       </section>
 
-      {/* Giới thiệu */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-6 max-w-5xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Về TechStore
-            </h2>
-            <div className="w-24 h-1 bg-blue-600 mx-auto rounded-full"></div>
-          </div>
-
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-            <p>
-              TechStore là nền tảng thương mại điện tử chuyên cung cấp các sản phẩm công nghệ và phụ kiện chính hãng từ những thương hiệu hàng đầu thế giới như Apple, Samsung, Sony, Xiaomi, Anker, JBL, Baseus và nhiều thương hiệu uy tín khác.
-            </p>
-            <p>
-              Chúng tôi ra đời với sứ mệnh mang đến cho người dùng Việt Nam cơ hội sở hữu những thiết bị điện tử chất lượng cao với mức giá cạnh tranh nhất thị trường, đi kèm dịch vụ chăm sóc khách hàng tận tâm và quy trình mua sắm đơn giản, minh bạch.
-            </p>
-            <p>
-              Với hệ thống kho hàng hiện đại tại TP.HCM và mạng lưới vận chuyển nhanh chóng toàn quốc, TechStore cam kết giao hàng trong vòng 1-3 ngày làm việc, hỗ trợ đổi trả dễ dàng trong 30 ngày và bảo hành chính hãng đầy đủ.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Sản phẩm nổi bật */}
-      <section className="bg-white py-16 md:py-24">
+      <section className="py-24">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-12">
-            Chúng tôi mang đến những gì?
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-gray-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all">
-              <div className="text-blue-600 mb-4">
-                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Thiết bị chính hãng</h3>
-              <p className="text-gray-600">
-                Điện thoại, laptop, máy tính bảng, smartwatch, tai nghe, loa... từ các thương hiệu lớn, nguồn gốc rõ ràng, đầy đủ hóa đơn VAT.
-              </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="grid grid-cols-2 gap-4">
+               <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80" className="rounded-2xl shadow-sm" alt="img1" />
+               <div className="space-y-4 pt-8">
+                  <div className="p-8 bg-blue-600 rounded-2xl text-white">
+                    <div className="text-3xl font-bold mb-1">50K+</div>
+                    <div className="text-xs uppercase font-medium opacity-80">Thành viên</div>
+                  </div>
+                  <img src="https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80" className="rounded-2xl shadow-sm" alt="img2" />
+               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all">
-              <div className="text-blue-600 mb-4">
-                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
+            <div className="space-y-8">
+              <SectionTitle subtitle="TechStore ra đời năm 2025 với khao khát trở thành điểm đến tin cậy nhất cho các tín đồ công nghệ tại Việt Nam.">
+                Sứ mệnh & Tầm nhìn
+              </SectionTitle>
+              <div className="space-y-4 text-slate-600 leading-relaxed text-lg">
+                <p>Chúng tôi tập trung vào việc cung cấp các thiết bị điện tử chính hãng từ Apple, Samsung, Sony... với quy trình kiểm định chất lượng nghiêm ngặt.</p>
+                <p>Tối ưu hóa dịch vụ khách hàng và vận hành kho bãi để đảm bảo mỗi sản phẩm đến tay bạn là một niềm vui trọn vẹn.</p>
               </div>
-              <h3 className="text-xl font-bold mb-3">Phụ kiện đa dạng</h3>
-              <p className="text-gray-600">
-                Sạc dự phòng, cáp sạc, ốp lưng, kính cường lực, tai nghe không dây, chuột bàn phím... chất lượng cao, giá tốt.
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all">
-              <div className="text-blue-600 mb-4">
-                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Ưu đãi hấp dẫn</h3>
-              <p className="text-gray-600">
-                Flash sale hàng ngày, combo tiết kiệm, mã giảm giá độc quyền, freeship toàn quốc cho đơn từ 500k.
-              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Cam kết */}
-      <section className="py-16 md:py-24 bg-blue-50">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">
-            Cam kết của chúng tôi
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
-            <div>
-              <div className="text-5xl text-blue-600 mb-4">100%</div>
-              <p className="text-xl font-semibold">Chính hãng</p>
-              <p className="text-gray-600 mt-2">Sản phẩm nhập khẩu chính hãng, có tem bảo hành đầy đủ.</p>
-            </div>
-            <div>
-              <div className="text-5xl text-blue-600 mb-4">30 ngày</div>
-              <p className="text-xl font-semibold">Đổi trả miễn phí</p>
-              <p className="text-gray-600 mt-2">Không ưng ý? Đổi hoặc hoàn tiền dễ dàng.</p>
-            </div>
-            <div>
-              <div className="text-5xl text-blue-600 mb-4">Hỗ trợ 24/7</div>
-              <p className="text-xl font-semibold">Tư vấn tận tâm</p>
-              <p className="text-gray-600 mt-2">Chat, hotline, Zalo – luôn sẵn sàng hỗ trợ bạn.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center">
+      <section className="py-24 bg-slate-50">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Sẵn sàng trải nghiệm công nghệ đỉnh cao?
-          </h2>
-          <p className="text-xl mb-10 max-w-2xl mx-auto opacity-90">
-            Khám phá ngay hàng ngàn sản phẩm chất lượng tại TechStore
-          </p>
-          <Link
-            to="/products"
-            className="inline-block bg-white text-blue-700 font-bold text-lg px-10 py-5 rounded-full shadow-lg hover:bg-gray-100 transition transform hover:-translate-y-1"
-          >
-            Xem tất cả sản phẩm →
-          </Link>
+          <SectionTitle>Dịch vụ của chúng tôi</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {FEATURE_CARDS.map((card, i) => (
+              <div key={i} className="p-8 bg-white rounded-2xl border border-slate-100 transition-all hover:shadow-xl hover:-translate-y-1">
+                <div className="w-12 h-12 bg-slate-50 text-blue-600 rounded-xl flex items-center justify-center mb-6">
+                  {card.icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{card.title}</h3>
+                <p className="text-slate-500 leading-relaxed">{card.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24">
+        <div className="container mx-auto px-6">
+          <div className="bg-slate-900 rounded-3xl p-10 md:p-16 flex flex-col md:flex-row gap-12 justify-between items-center">
+            {COMMITMENTS.map((item, i) => (
+              <div key={i} className="text-center md:text-left flex flex-col md:flex-row items-center gap-6">
+                <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-blue-400">
+                  {item.icon}
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-white tracking-tight">{item.label}</div>
+                  <div className="text-blue-400 font-bold text-sm uppercase mb-1">{item.title}</div>
+                  <p className="text-slate-400 text-sm max-w-[180px]">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-6">
+        <div className="container mx-auto max-w-5xl">
+          <div className="bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Nâng cấp công nghệ ngay hôm nay</h2>
+              <p className="text-blue-100 mb-10 text-lg">Hàng ngàn ưu đãi đang chờ đón bạn tại TechStore.</p>
+              <Link to="/products" className="inline-flex items-center gap-2 bg-white text-blue-600 px-10 py-4 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-xl">
+                Bắt đầu mua sắm <LucideZap className="w-5 h-5 fill-current" />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>

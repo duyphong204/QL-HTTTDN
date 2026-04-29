@@ -11,7 +11,6 @@ export const endpoints = {
   users: {
     root: '/users',
     byId: (id: string) => `/users/${id}`,
-    role: (id: string) => `/users/${id}/role`,
   },
   admin: {
     dashboardReport: '/admin/dashboard-report',

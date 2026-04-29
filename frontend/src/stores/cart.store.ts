@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-import { cartApi } from "@/api/order.api";
+import { cartApi } from "@/services/order.service";
 import type { Product } from "@/types/warehouse.type";
 import type {
   Cart as ServerCart,

@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost, apiDelete } from "./base";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/client"
 import type {
   CreatePromotionDto,
   Promotion,

@@ -1,241 +1,212 @@
-import { useEffect, useCallback, useState } from 'react';
-import { Folder, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { useCategoryStore } from '@/stores/category.store';
-import { DataTableToolbar } from '@/components/common/DataTableToolbar';
-import { PaginationControls } from '@/components/common/PaginationControls';
-import { AppModal } from '@/components/common/AppModal';
-import { usePaginatedList } from '@/hooks/usePaginatedList';
-import type { Category } from '@/types/warehouse.type';
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, Tag, Layers } from "lucide-react";
+import { AppModal } from "@/components/common/AppModal";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { TableLoadingRow } from "@/components/common/Loading";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+import { useCategoryStore } from "@/stores/category.store";
+import { useEntityModal } from "@/hooks/useEntityModal";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { useClientTable } from "@/hooks/useClientTable";
+import type { Category } from "@/types/product.types";
 
 export default function CategoryManagement() {
+  // 1. Store State & Actions
+  const { categories, isLoading, fetchCategories, createCategory, updateCategory, deleteCategory } =
+    useCategoryStore();
+
+  // 2. Local State cho Form
+  const [name, setName] = useState("");
+
+  // 3. UI Hooks
   const {
-    categories,
-    meta,
-    isLoading,
-    filters,
-    fetchCategories,
-    setFilters,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-  } = useCategoryStore();
+    modalOpen,
+    editingEntity: editingCategory,
+    openCreateModal: baseOpenCreateModal,
+    openEditModal: baseOpenEditModal,
+    closeModal,
+  } = useEntityModal<Category>();
+  
+  const { confirmAndRun } = useConfirmAction();
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [name, setName] = useState('');
-
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchCategories,
-    debounceMs: 500,
-    searchKey: 'search',
+  // 4. Client-side Table Logic (Phân trang & Tìm kiếm tại client)
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
+    data: categories,
+    pageSize: 10,
+    searchFn: (item, query) => item.name.toLowerCase().includes(query.toLowerCase()),
   });
 
-  const resetForm = () => {
-    setName('');
-    setEditingCategory(null);
-  };
-
-  const closeModal = () => {
-    resetForm();
-    setModalOpen(false);
-  };
-
-  const openCreateModal = () => {
-    resetForm();
-    setModalOpen(true);
-  };
-
-  const openEditModal = useCallback((category: Category) => {
-    setEditingCategory(category);
-    setName(category.name);
-    setModalOpen(true);
-  }, []);
-
-  const handleSave = async () => {
-    if (!name.trim()) {
-      return;
-    }
-
-    if (editingCategory) {
-      await updateCategory(editingCategory.id, { name });
-    } else {
-      await createCategory({ name });
-    }
-    closeModal();
-  };
-
-  const handleDelete = async (id: string, categoryName: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa danh mục: ${categoryName}?`)) {
-      await deleteCategory(id);
-    }
-  };
-
+  // Initial Fetch
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+
+  // 5. Handlers
+  const openCreateModal = () => {
+    setName("");
+    baseOpenCreateModal();
+  };
+
+  const openEditModal = (category: Category) => {
+    setName(category.name);
+    baseOpenEditModal(category);
+  };
+
+  const handleFormSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const normalizedName = name.trim();
+    if (!normalizedName) return;
+
+    if (editingCategory) {
+      await updateCategory(editingCategory.id, normalizedName);
+    } else {
+      await createCategory(normalizedName);
+    }
+
+    closeModal();
+    setName("");
+  };
+
+  const handleDelete = async (id: string, categoryName: string) => {
+    await confirmAndRun({
+      message: `Bạn có chắc muốn xoá danh mục "${categoryName}"?`,
+      action: () => deleteCategory(id),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <Folder className="text-blue-600" size={26} /> Quản lý Danh mục sản phẩm
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Tạo, chỉnh sửa và quản lý danh mục sản phẩm
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-100">
+              <Layers size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Danh mục sản phẩm</h1>
+              <p className="text-sm text-gray-500 mt-1">Quản lý các nhóm ngành hàng trong hệ thống</p>
+            </div>
           </div>
-
-          <button
+          <Button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm h-11"
           >
-            <Plus size={18} />
-            Thêm Danh mục
-          </button>
+            <Plus size={18} /> Thêm danh mục
+          </Button>
         </div>
 
         {/* Table Container */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
           <DataTableToolbar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Tìm kiếm theo tên danh mục..."
-          >
-            <select
-              value={`${filters.sortBy}:${filters.sortOrder}`}
-              onChange={(e) => {
-                const [sortBy, sortOrder] = e.target.value.split(':') as [string, 'asc' | 'desc'];
-                updateFilters({ sortBy, sortOrder, page: 1 });
-              }}
-              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="name:asc">Tên A-Z</option>
-              <option value="name:desc">Tên Z-A</option>
-            </select>
-          </DataTableToolbar>
+            searchPlaceholder="Tìm theo tên danh mục..."
+          />
 
-          <div className="relative">
-            {isLoading && (
-              <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600" size={32} />
-              </div>
-            )}
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left whitespace-nowrap">
-                <thead className="bg-gray-50/50 text-gray-600 font-semibold border-b border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-white text-gray-700 font-semibold border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">Thông tin danh mục</th>
+                  <th className="px-6 py-4 text-center">Số lượng sản phẩm</th>
+                  <th className="px-6 py-4 text-center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {isLoading ? (
+                  <TableLoadingRow colSpan={3} text="Đang tải dữ liệu..." />
+                ) : pagedData.length === 0 ? (
                   <tr>
-                    <th className="px-6 py-4">Tên danh mục</th>
-                    <th className="px-6 py-4">Ngày tạo</th>
-                    <th className="px-6 py-4 text-center">Thao tác</th>
+                    <td colSpan={3} className="px-6 py-10 text-center text-gray-400">
+                      Không tìm thấy danh mục nào.
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-50">
-                  {categories.length === 0 && !isLoading ? (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-16 text-center text-gray-400 font-medium">
-                        {searchTerm ? 'Không tìm thấy danh mục nào.' : 'Chưa có danh mục nào'}
+                ) : (
+                  pagedData.map((cat) => (
+                    <tr key={cat.id} className="hover:bg-gray-50/70 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <Tag size={18} className="text-gray-400" />
+                          </div>
+                          <span className="font-medium text-gray-800">{cat.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600 border border-blue-200">
+                          {(cat as any)._count?.products || 0} sản phẩm
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditModal(cat)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Sửa"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(cat.id, cat.name)}
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ) : (
-                    categories.map((category) => (
-                      <tr key={category.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                              <Folder size={18} className="text-blue-600" />
-                            </div>
-                            <span className="font-medium text-gray-900">{category.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {new Date(category.createdAt).toLocaleDateString('vi-VN')}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openEditModal(category)}
-                              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                              title="Sửa"
-                            >
-                              <Pencil size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(category.id, category.name)}
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                              title="Xóa"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
 
           <PaginationControls
             meta={meta}
-            currentPage={filters.page}
-            totalLabel="Danh mục"
+            currentPage={page}
+            onPageChange={setPage}
             isLoading={isLoading}
-            onPageChange={goToPage}
           />
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Form Modal */}
       <AppModal
         isOpen={modalOpen}
         onClose={closeModal}
-        title={editingCategory ? 'Chỉnh sửa danh mục' : 'Tạo danh mục mới'}
-        maxWidthClassName="sm:max-w-[425px]"
+        title={editingCategory ? "Cập nhật danh mục" : "Thêm mới danh mục"}
+        subtitle="Vui lòng nhập tên danh mục duy nhất để phân loại sản phẩm"
       >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tên danh mục
-            </label>
-            <input
+        <form onSubmit={handleFormSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">Tên danh mục *</label>
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ví dụ: Điện thoại, Laptop, Phụ kiện..."
-              className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSave();
-                }
-              }}
+              placeholder="VD: Gia dụng, Điện tử..."
+              className="h-11 focus:ring-blue-500/20"
               autoFocus
+              required
             />
           </div>
-
-          <div className="flex gap-2 justify-end pt-2">
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium rounded-lg transition-all"
-            >
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="ghost" onClick={closeModal}>
               Hủy
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!name.trim()}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium px-6 py-2 rounded-lg transition-all active:scale-95"
+            </Button>
+            <Button
+              type="submit"
+              className="bg-blue-600 px-8 hover:bg-blue-700 h-11 text-white"
+              disabled={isLoading}
             >
-              <Plus size={18} />
-              {editingCategory ? 'Cập nhật' : 'Tạo'}
-            </button>
+              {editingCategory ? "Cập nhật" : "Lưu dữ liệu"}
+            </Button>
           </div>
-        </div>
+        </form>
       </AppModal>
     </div>
   );

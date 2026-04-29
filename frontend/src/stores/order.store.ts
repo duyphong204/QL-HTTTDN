@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { orderApi } from "@/api/order.api";
+import { orderApi } from "@/services/order.service";
 import { toast } from "sonner";
 import type {
   CreateOrderDto,

@@ -13,17 +13,15 @@ import { DetailType, type AddSalaryDetailDto, type Salary } from '@/types/salary
 export default function SalaryManagement() {
   const {
     salaries,
-    isLoading: isLoadingSalaries,
-    filters,
-    calculateAllSalaries,
-    approveSalary,
-    markAsPaid,
-    cancelSalary,
-    setFilters,
-    fetchSalaries,
-    addSalaryDetail,
+    fetch,
+    calculateAll,
+    approve,
+    pay,
+    month,
+    year,
+    setFilter,
   } = useHrSalaryStore()
-
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [detailSalaryId, setDetailSalaryId] = useState<string | null>(null)
