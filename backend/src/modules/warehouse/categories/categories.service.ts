@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Injectable,
-  ConflictException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 
@@ -20,34 +22,58 @@ export class CategoryService {
   }
 
   async findAll() {
-    return this.prisma.category.findMany({
-      include: { _count: { select: { products: true } } },
-      orderBy: { name: 'asc' },
-    });
+    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
-    await this.findOne(id);
-    return this.prisma.category.update({ where: { id }, data: dto });
+    const existingCategory = await this.prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!existingCategory) {
+      throw new NotFoundException('Không tìm thấy danh mục');
+    }
+
+    return this.prisma.category.update({
+      where: { id },
+      data: dto,
+    });
   }
 
   async remove(id: string) {
-    const category = await this.prisma.category.findUnique({
+    const existingCategory = await this.prisma.category.findUnique({
       where: { id },
-      include: { products: true },
     });
 
-    if (!category) throw new NotFoundException('Không tìm thấy danh mục');
-    if (category.products.length > 0) {
-      throw new ConflictException('Không thể xóa danh mục đang có sản phẩm');
+    if (!existingCategory) {
+      throw new NotFoundException('Không tìm thấy danh mục');
     }
 
-    return this.prisma.category.delete({ where: { id } });
-  }
+    const productCount = await this.prisma.product.count({
+      where: { categoryId: id },
+    });
 
-  private async findOne(id: string) {
-    const category = await this.prisma.category.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException('Không tìm thấy danh mục');
-    return category;
+    if (productCount > 0) {
+      throw new BadRequestException(
+        `Không thể xóa danh mục vì đang có ${productCount} sản phẩm sử dụng danh mục này. Vui lòng chuyển sản phẩm sang danh mục khác hoặc xóa sản phẩm trước.`,
+      );
+    }
+
+    try {
+      return await this.prisma.category.delete({ where: { id } });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new BadRequestException(
+          'Không thể xóa danh mục do còn dữ liệu liên quan trong hệ thống.',
+        );
+      }
+
+      throw new BadRequestException(
+        'Xóa danh mục thất bại do lỗi dữ liệu. Vui lòng thử lại sau.',
+      );
+    }
   }
 }

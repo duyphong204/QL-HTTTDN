@@ -35,7 +35,10 @@ export class ReportService {
   }
 
   private monthLabels(year: number): string[] {
-    return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
+    return Array.from(
+      { length: 12 },
+      (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`,
+    );
   }
 
   private quarterMonths(quarter: number): number[] {
@@ -43,7 +46,10 @@ export class ReportService {
     return [start, start + 1, start + 2];
   }
 
-  private toChart(labels: string[], datasets: RechartsSeriesResponse['datasets']): RechartsSeriesResponse {
+  private toChart(
+    labels: string[],
+    datasets: RechartsSeriesResponse['datasets'],
+  ): RechartsSeriesResponse {
     return { labels, datasets };
   }
 
@@ -51,12 +57,21 @@ export class ReportService {
     const year = this.getYear(params.year);
     const month = params.month;
 
-    const periodStart = month ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+    const periodStart = month
+      ? new Date(year, month - 1, 1)
+      : new Date(year, 0, 1);
     const periodEnd = month
       ? new Date(year, month, 0, 23, 59, 59)
       : new Date(year, 11, 31, 23, 59, 59);
 
-    const [completedOrders, products, employees, salaries, logs] = await Promise.all([
+    const [
+      completedOrders,
+      completedStockOuts,
+      products,
+      employees,
+      salaries,
+      logs,
+    ] = await Promise.all([
       this.prisma.order.findMany({
         where: {
           status: 'COMPLETED',
@@ -72,7 +87,24 @@ export class ReportService {
               price: true,
               costPrice: true,
               productId: true,
-              product: { select: { name: true, category: { select: { name: true } } } },
+              product: {
+                select: { name: true, category: { select: { name: true } } },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.stockOut.findMany({
+        where: {
+          status: 'COMPLETED',
+          type: 'SALE',
+          createdAt: { gte: periodStart, lte: periodEnd },
+        },
+        select: {
+          createdAt: true,
+          details: {
+            select: {
+              quantity: true,
             },
           },
         },
@@ -105,13 +137,22 @@ export class ReportService {
     let totalProfit = 0;
     let totalItemsSold = 0;
 
-    const revenueByMonth = new Map<number, { revenue: number; profit: number }>();
-    const productAgg = new Map<string, { name: string; quantity: number; revenue: number }>();
+    const revenueByMonth = new Map<
+      number,
+      { revenue: number; profit: number }
+    >();
+    const productAgg = new Map<
+      string,
+      { name: string; quantity: number; revenue: number }
+    >();
     const revenueByCategory = new Map<string, number>();
 
     for (const order of completedOrders) {
       const monthBucket = this.monthKey(order.createdAt);
-      const monthRow = revenueByMonth.get(monthBucket) || { revenue: 0, profit: 0 };
+      const monthRow = revenueByMonth.get(monthBucket) || {
+        revenue: 0,
+        profit: 0,
+      };
       monthRow.revenue += this.toNumber(order.totalAmount);
       revenueByMonth.set(monthBucket, monthRow);
 
@@ -119,7 +160,9 @@ export class ReportService {
 
       for (const detail of order.details) {
         const lineRevenue = detail.quantity * this.toNumber(detail.price);
-        const lineProfit = detail.quantity * (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
+        const lineProfit =
+          detail.quantity *
+          (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
 
         totalItemsSold += detail.quantity;
         totalProfit += lineProfit;
@@ -137,10 +180,19 @@ export class ReportService {
         productAgg.set(key, existing);
 
         const categoryName = detail.product?.category?.name || 'Khác';
-        revenueByCategory.set(categoryName, (revenueByCategory.get(categoryName) || 0) + lineRevenue);
+        revenueByCategory.set(
+          categoryName,
+          (revenueByCategory.get(categoryName) || 0) + lineRevenue,
+        );
       }
 
       revenueByMonth.set(monthBucket, monthRow);
+    }
+
+    for (const stockOut of completedStockOuts) {
+      for (const detail of stockOut.details) {
+        totalItemsSold += detail.quantity;
+      }
     }
 
     const labels = month
@@ -184,7 +236,9 @@ export class ReportService {
       ],
     );
 
-    const categoryRows = [...revenueByCategory.entries()].sort((a, b) => b[1] - a[1]);
+    const categoryRows = [...revenueByCategory.entries()].sort(
+      (a, b) => b[1] - a[1],
+    );
 
     const categoryPie = this.toChart(
       categoryRows.map(([name]) => name),
@@ -217,7 +271,11 @@ export class ReportService {
       },
       charts: {
         trend: this.toChart(labels, [
-          { name: 'Doanh thu', data: revenueTrend, color: this.palette.revenue },
+          {
+            name: 'Doanh thu',
+            data: revenueTrend,
+            color: this.palette.revenue,
+          },
           { name: 'Lợi nhuận', data: profitTrend, color: this.palette.profit },
         ]),
         topProducts: topProductChart,
@@ -239,7 +297,9 @@ export class ReportService {
         where: {
           date: {
             gte: month ? new Date(year, month - 1, 1) : new Date(year, 0, 1),
-            lte: month ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59),
+            lte: month
+              ? new Date(year, month, 0, 23, 59, 59)
+              : new Date(year, 11, 31, 23, 59, 59),
           },
         },
         _sum: { totalAmount: true },
@@ -284,34 +344,35 @@ export class ReportService {
     const year = this.getYear(params.year);
     const month = params.month || new Date().getMonth() + 1;
 
-    const [monthSalaries, allSalariesInYear, employees, leaves] = await Promise.all([
-      this.prisma.salary.findMany({
-        where: { month, year },
-        select: {
-          netSalary: true,
-          totalBonus: true,
-          totalDeduction: true,
-          employee: { select: { department: true } },
-        },
-      }),
-      this.prisma.salary.findMany({
-        where: { year },
-        select: { month: true, netSalary: true, totalBonus: true },
-      }),
-      this.prisma.employee.findMany({
-        select: { joinDate: true, resignDate: true },
-      }),
-      this.prisma.leaveRequest.findMany({
-        where: {
-          startDate: {
-            gte: new Date(year, 0, 1),
-            lte: new Date(year, 11, 31, 23, 59, 59),
+    const [monthSalaries, allSalariesInYear, employees, leaves] =
+      await Promise.all([
+        this.prisma.salary.findMany({
+          where: { month, year },
+          select: {
+            netSalary: true,
+            totalBonus: true,
+            totalDeduction: true,
+            employee: { select: { department: true } },
           },
-          status: 'APPROVED',
-        },
-        select: { type: true },
-      }),
-    ]);
+        }),
+        this.prisma.salary.findMany({
+          where: { year },
+          select: { month: true, netSalary: true, totalBonus: true },
+        }),
+        this.prisma.employee.findMany({
+          select: { joinDate: true, resignDate: true },
+        }),
+        this.prisma.leaveRequest.findMany({
+          where: {
+            startDate: {
+              gte: new Date(year, 0, 1),
+              lte: new Date(year, 11, 31, 23, 59, 59),
+            },
+            status: 'APPROVED',
+          },
+          select: { type: true },
+        }),
+      ]);
 
     const byDepartment = new Map<string, number>();
     let totalSalary = 0;
@@ -319,12 +380,18 @@ export class ReportService {
 
     for (const row of monthSalaries) {
       const dept = row.employee?.department || 'Chưa phân phòng ban';
-      byDepartment.set(dept, (byDepartment.get(dept) || 0) + this.toNumber(row.netSalary));
+      byDepartment.set(
+        dept,
+        (byDepartment.get(dept) || 0) + this.toNumber(row.netSalary),
+      );
       totalSalary += this.toNumber(row.netSalary);
       totalBonus += this.toNumber(row.totalBonus);
     }
 
-    const salaryByMonth = Array.from({ length: 12 }, () => ({ salary: 0, bonus: 0 }));
+    const salaryByMonth = Array.from({ length: 12 }, () => ({
+      salary: 0,
+      bonus: 0,
+    }));
     for (const row of allSalariesInYear) {
       salaryByMonth[row.month - 1].salary += this.toNumber(row.netSalary);
       salaryByMonth[row.month - 1].bonus += this.toNumber(row.totalBonus);
@@ -332,7 +399,11 @@ export class ReportService {
 
     const activeHeadcountByMonth = Array.from({ length: 12 }, (_, idx) => {
       const checkpoint = new Date(year, idx + 1, 0, 23, 59, 59);
-      return employees.filter((e) => e.joinDate <= checkpoint && (!e.resignDate || e.resignDate > checkpoint)).length;
+      return employees.filter(
+        (e) =>
+          e.joinDate <= checkpoint &&
+          (!e.resignDate || e.resignDate > checkpoint),
+      ).length;
     });
 
     const leaveByType = new Map<string, number>();
@@ -351,16 +422,13 @@ export class ReportService {
       ],
     );
 
-    const headcountGrowth = this.toChart(
-      this.monthLabels(year),
-      [
-        {
-          name: 'Tăng trưởng nhân sự',
-          data: activeHeadcountByMonth,
-          color: this.palette.revenue,
-        },
-      ],
-    );
+    const headcountGrowth = this.toChart(this.monthLabels(year), [
+      {
+        name: 'Tăng trưởng nhân sự',
+        data: activeHeadcountByMonth,
+        color: this.palette.revenue,
+      },
+    ]);
 
     const leaveRatio = this.toChart(
       [...leaveByType.keys()],
@@ -373,21 +441,18 @@ export class ReportService {
       ],
     );
 
-    const monthlySalarySummary = this.toChart(
-      this.monthLabels(year),
-      [
-        {
-          name: 'Lương thực trả',
-          data: salaryByMonth.map((m) => m.salary),
-          color: this.palette.salary,
-        },
-        {
-          name: 'Thưởng',
-          data: salaryByMonth.map((m) => m.bonus),
-          color: this.palette.bonus,
-        },
-      ],
-    );
+    const monthlySalarySummary = this.toChart(this.monthLabels(year), [
+      {
+        name: 'Lương thực trả',
+        data: salaryByMonth.map((m) => m.salary),
+        color: this.palette.salary,
+      },
+      {
+        name: 'Thưởng',
+        data: salaryByMonth.map((m) => m.bonus),
+        color: this.palette.bonus,
+      },
+    ]);
 
     return {
       period: { year, month },
@@ -411,7 +476,9 @@ export class ReportService {
     const year = this.getYear(params.year);
     const month = params.month;
 
-    const periodStart = month ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+    const periodStart = month
+      ? new Date(year, month - 1, 1)
+      : new Date(year, 0, 1);
     const periodEnd = month
       ? new Date(year, month, 0, 23, 59, 59)
       : new Date(year, 11, 31, 23, 59, 59);
@@ -465,7 +532,10 @@ export class ReportService {
         alert: p.stockQuantity <= 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
       }));
 
-    const movementByMonth = Array.from({ length: 12 }, () => ({ inbound: 0, outbound: 0 }));
+    const movementByMonth = Array.from({ length: 12 }, () => ({
+      inbound: 0,
+      outbound: 0,
+    }));
 
     let totalImportValue = 0;
     let totalInboundQty = 0;
@@ -490,7 +560,10 @@ export class ReportService {
       period: { year, month },
       summary: {
         totalStockIns: stockIns.length,
-        totalStockQuantity: products.reduce((sum, p) => sum + p.stockQuantity, 0),
+        totalStockQuantity: products.reduce(
+          (sum, p) => sum + p.stockQuantity,
+          0,
+        ),
         totalProductTypes: products.length,
         totalImportValue,
         totalInboundQty,
@@ -508,21 +581,18 @@ export class ReportService {
             },
           ],
         ),
-        movementTrend: this.toChart(
-          this.monthLabels(year),
-          [
-            {
-              name: 'Nhập kho',
-              data: movementByMonth.map((m) => m.inbound),
-              color: this.palette.inbound,
-            },
-            {
-              name: 'Xuất kho',
-              data: movementByMonth.map((m) => m.outbound),
-              color: this.palette.outbound,
-            },
-          ],
-        ),
+        movementTrend: this.toChart(this.monthLabels(year), [
+          {
+            name: 'Nhập kho',
+            data: movementByMonth.map((m) => m.inbound),
+            color: this.palette.inbound,
+          },
+          {
+            name: 'Xuất kho',
+            data: movementByMonth.map((m) => m.outbound),
+            color: this.palette.outbound,
+          },
+        ]),
       },
       lowStockProducts,
     };
@@ -558,7 +628,11 @@ export class ReportService {
 
     if (period === 'month') {
       const daysInMonth = new Date(year, month, 0).getDate();
-      labels = Array.from({ length: daysInMonth }, (_, i) => `${year}-${String(month).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
+      labels = Array.from(
+        { length: daysInMonth },
+        (_, i) =>
+          `${year}-${String(month).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`,
+      );
       rangeStart = new Date(year, month - 1, 1);
       rangeEnd = new Date(year, month, 0, 23, 59, 59);
     } else if (period === 'quarter') {
@@ -574,23 +648,23 @@ export class ReportService {
 
     const [orders, stockOuts] = await Promise.all([
       this.prisma.order.findMany({
-      where: {
-        status: 'COMPLETED',
-        createdAt: { gte: rangeStart, lte: rangeEnd },
-      },
-      select: {
-        createdAt: true,
-        totalAmount: true,
-        details: {
-          select: {
-            quantity: true,
-            price: true,
-            costPrice: true,
-            productId: true,
-            product: { select: { name: true } },
+        where: {
+          status: 'COMPLETED',
+          createdAt: { gte: rangeStart, lte: rangeEnd },
+        },
+        select: {
+          createdAt: true,
+          totalAmount: true,
+          details: {
+            select: {
+              quantity: true,
+              price: true,
+              costPrice: true,
+              productId: true,
+              product: { select: { name: true } },
+            },
           },
         },
-      },
       }),
       this.prisma.stockOut.findMany({
         where: {
@@ -605,7 +679,10 @@ export class ReportService {
       }),
     ]);
 
-    const revenueBuckets = Array.from({ length: labels.length }, () => ({ revenue: 0, profit: 0 }));
+    const revenueBuckets = Array.from({ length: labels.length }, () => ({
+      revenue: 0,
+      profit: 0,
+    }));
     const quantityBuckets = Array.from({ length: labels.length }, () => 0);
     const topProducts = new Map<string, { name: string; quantity: number }>();
 
@@ -633,7 +710,9 @@ export class ReportService {
       totalRevenue += this.toNumber(order.totalAmount);
 
       for (const detail of order.details) {
-        const detailProfit = detail.quantity * (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
+        const detailProfit =
+          detail.quantity *
+          (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
         revenueBuckets[bucketIndex].profit += detailProfit;
         totalProfit += detailProfit;
         totalQuantity += detail.quantity;
@@ -659,18 +738,51 @@ export class ReportService {
         bucketIndex = this.monthKey(stockOut.createdAt) - 1;
       }
 
+      if (bucketIndex < 0 || bucketIndex >= revenueBuckets.length) {
+        continue;
+      }
+
+      const qty = stockOut.details.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
+      totalQuantity += qty;
+    }
+
+    for (const stockOut of stockOuts) {
+      let bucketIndex = 0;
+
+      if (period === 'month') {
+        bucketIndex = this.dayKey(stockOut.createdAt) - 1;
+      } else if (period === 'quarter') {
+        const qMonths = this.quarterMonths(quarter);
+        bucketIndex = qMonths.indexOf(this.monthKey(stockOut.createdAt));
+      } else {
+        bucketIndex = this.monthKey(stockOut.createdAt) - 1;
+      }
+
       if (bucketIndex < 0 || bucketIndex >= quantityBuckets.length) {
         continue;
       }
 
-      const qty = stockOut.details.reduce((sum, item) => sum + item.quantity, 0);
+      const qty = stockOut.details.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
       quantityBuckets[bucketIndex] += qty;
     }
 
-    const topRows = [...topProducts.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 10);
+    const topRows = [...topProducts.values()]
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
 
     return {
-      period: { year, period, month: period === 'month' ? month : undefined, quarter: period === 'quarter' ? quarter : undefined },
+      period: {
+        year,
+        period,
+        month: period === 'month' ? month : undefined,
+        quarter: period === 'quarter' ? quarter : undefined,
+      },
       summary: {
         totalOrders: orders.length,
         totalQuantity,
@@ -708,7 +820,10 @@ export class ReportService {
     };
   }
 
-  async getEmployeeSalaryReport(userId: string, params: ReportQueryParams = {}) {
+  async getEmployeeSalaryReport(
+    userId: string,
+    params: ReportQueryParams = {},
+  ) {
     const year = this.getYear(params.year);
     const month = params.month;
 
@@ -729,9 +844,13 @@ export class ReportService {
       },
     });
 
-    const labels = salaries.map((s) => `${s.year}-${String(s.month).padStart(2, '0')}`);
+    const labels = salaries.map(
+      (s) => `${s.year}-${String(s.month).padStart(2, '0')}`,
+    );
 
-    const baseSalaryData = salaries.map((s) => this.toNumber(s.employee?.baseSalary));
+    const baseSalaryData = salaries.map((s) =>
+      this.toNumber(s.employee?.baseSalary),
+    );
     const bonusData = salaries.map((s) => this.toNumber(s.totalBonus));
     const deductionData = salaries.map((s) => this.toNumber(s.totalDeduction));
     const netData = salaries.map((s) => this.toNumber(s.netSalary));
@@ -748,9 +867,17 @@ export class ReportService {
       summary,
       charts: {
         salaryBreakdown: this.toChart(labels, [
-          { name: 'Lương cơ bản', data: baseSalaryData, color: this.palette.salary },
+          {
+            name: 'Lương cơ bản',
+            data: baseSalaryData,
+            color: this.palette.salary,
+          },
           { name: 'Thưởng', data: bonusData, color: this.palette.bonus },
-          { name: 'Khấu trừ', data: deductionData, color: this.palette.deduction },
+          {
+            name: 'Khấu trừ',
+            data: deductionData,
+            color: this.palette.deduction,
+          },
           { name: 'Thực lĩnh', data: netData, color: this.palette.revenue },
         ]),
       },

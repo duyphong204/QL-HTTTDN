@@ -65,7 +65,10 @@ export default function EmployeeLeaveRequestPage() {
       return
     }
     try {
-      await createRequest(form)
+      await createRequest({
+        ...form,
+        type: form.type as "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION",
+      })
       setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" })
       setDialogOpen(false)
     } catch { /* Error handled in store */ }

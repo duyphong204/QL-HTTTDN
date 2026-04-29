@@ -1,112 +1,148 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
-import { endpoints } from "@/api/endpoints";
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_CONFIG } from "./constants";
+
 let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null): void => {
-    accessToken = token;
+  accessToken = token;
 };
 
-export const axiosInstance = axios.create({
-    baseURL: BASE_URL,
-    timeout: 10000,
-    withCredentials: true,
-    headers: { "Content-Type": "application/json" },
-});
-
-// REQUEST INTERCEPTOR
-axiosInstance.interceptors.request.use(
-    (config) => {
-        if (config.data instanceof FormData && config.headers) {
-            delete config.headers["Content-Type"];
-        }
-        if (accessToken && config.headers) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// RESPONSE INTERCEPTOR
-interface FailedQueueItem {
-    resolve: (value: string | null) => void;
-    reject: (error: unknown) => void;
+export const getAccessToken = (): string | null => {
+  return accessToken;
+};
+export interface ApiErrorResponse {
+  statusCode: number;
+  message: string | string[];
+  code?: string;
+  productId?: string;
+  timestamp?: string;
 }
 
-let isRefreshing = false;
-let failedQueue: FailedQueueItem[] = [];
+export const axiosInstance = axios.create({
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  withCredentials: true,
+  headers: {
+    Accept: "application/json",
+  },
+});
 
-const processQueue = (error: unknown, token: string | null = null) => {
-    failedQueue.forEach((prom) => {
-        error ? prom.reject(error) : prom.resolve(token);
-    });
-    failedQueue = [];
+axiosInstance.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    // Let browser set multipart boundaries for FormData uploads.
+    if (config.data instanceof FormData) {
+      if (config.headers && typeof (config.headers as any).set === "function") {
+        (config.headers as any).set("Content-Type", undefined);
+      } else if (config.headers) {
+        delete (config.headers as Record<string, string>)["Content-Type"];
+        delete (config.headers as Record<string, string>)["content-type"];
+      }
+    }
+
+    if (accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
 };
 
 axiosInstance.interceptors.response.use(
-    (response) => {
-        const payload = response.data as any;
-        // Chỉ unwrap nếu dữ liệu đúng cấu trúc Envelope và chưa bị unwrap trước đó
-        if (payload && payload.success && 'data' in payload) {
-            return {
-                ...response,
-                data: payload.meta ? { data: payload.data, meta: payload.meta } : payload.data
-            };
-        }
-        return response;
-    },
-    async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            // Tránh lặp vô hạn tại các trang login/refresh
-            if (originalRequest.url?.includes(endpoints.auth.refresh) || originalRequest.url?.includes(endpoints.auth.login)) {
-                return Promise.reject(error);
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes("/auth/refresh") &&
+      !originalRequest.url?.includes("/auth/login")
+    ) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
             }
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
 
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                .then((token) => {
-                    originalRequest.headers.Authorization = `Bearer ${token}`;
-                    return axiosInstance(originalRequest);
-                })
-                .catch((err) => Promise.reject(err));
-            }
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-            originalRequest._retry = true;
-            isRefreshing = true;
+      try {
+        const response = await axios.post(
+          `${API_CONFIG.BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
 
-            try {
-                // Sửa lỗi baseURL ở đây
-                const refreshResponse = await axios.post(
-                    `${BASE_URL}${endpoints.auth.refresh}`,
-                    {},
-                    { withCredentials: true }
-                );
+        // Unwrap response from TransformInterceptor wrapper
+        const wrappedData = response.data;
+        const unwrappedData =
+          wrappedData &&
+          typeof wrappedData === "object" &&
+          "data" in wrappedData &&
+          "success" in wrappedData
+            ? wrappedData.data
+            : wrappedData;
 
-                const data = refreshResponse.data;
-                const newToken = data?.data?.accessToken || data?.accessToken;
+        const newToken = unwrappedData.accessToken;
+        setAccessToken(newToken);
 
-                if (!newToken) throw new Error("No token received");
+        processQueue(null, newToken);
 
-                setAccessToken(newToken);
-                processQueue(null, newToken);
-                
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-                return axiosInstance(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, null);
-                setAccessToken(null);
-                // window.location.href = "/login"; // Cân nhắc dùng navigate của router thay vì reload trang
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
         }
 
-        return Promise.reject(error);
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        setAccessToken(null);
+        // ❌ Không redirect tất cả users sang login
+        // ProtectedRoute sẽ xử lý redirect cho protected pages
+        // Guests có thể tiếp tục xem shop
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
+    const apiError = error.response?.data as ApiErrorResponse;
+    if (apiError?.message) {
+      const message = Array.isArray(apiError.message)
+        ? apiError.message.join(", ")
+        : apiError.message;
+      const enrichedError = new Error(message);
+      (enrichedError as Error & { code?: string; productId?: string }).code =
+        apiError.code;
+      (
+        enrichedError as Error & { code?: string; productId?: string }
+      ).productId = apiError.productId;
+      return Promise.reject(enrichedError);
+    }
+
+    return Promise.reject(error);
+  },
 );

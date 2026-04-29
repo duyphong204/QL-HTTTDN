@@ -7,10 +7,13 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { HRModule } from './modules/hr/hr.module';
 import { LoggingMiddleware } from './middlware/logging/logging.middleware';
-import { OrderModule } from './modules/sales/orders/order.module';
-import { StockOutModule } from './modules/sales/stock-out/stock-out.module';
 import { ReportModule } from './modules/report/report.module';
-
+import { OrderModule } from './modules/sales/orders/order.module';
+import { PaymentsModule } from './modules/sales/payments/payments.module';
+import { PromotionsModule } from './modules/sales/promotions/promotions.module';
+import { CartModule } from './modules/sales/cart/cart.module';
+import { StockOutModule } from './modules/sales/stock-out/stock-out.module';
+import { StockInModule } from './modules/warehouse/stock-in/stock-in.module';
 @Module({
   imports: [
     WarehouseModule,
@@ -18,9 +21,13 @@ import { ReportModule } from './modules/report/report.module';
     AuthModule,
     UsersModule,
     HRModule,
-    OrderModule,
-    StockOutModule,
     ReportModule,
+    OrderModule,
+    PaymentsModule,
+    PromotionsModule,
+    CartModule,
+    StockOutModule,
+    StockInModule,
   ],
   controllers: [AppController],
   providers: [AppService],

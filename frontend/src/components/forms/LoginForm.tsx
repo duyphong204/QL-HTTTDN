@@ -14,6 +14,12 @@ import { useAuthStore } from "@/stores/auth.store"
 import { type LoginValues } from "@/types/auth.types"
 import authBg from "@/assets/auth-bg.png";
 import { useNavigate } from "react-router-dom"
+
+const getRedirectPathByRole = (role?: string) => {
+  if (role === "CUSTOMER") return "/";
+  return "/admin/dashboard";
+};
+
 export function LoginForm({
   className,
   ...props
@@ -30,7 +36,8 @@ export function LoginForm({
   const onSubmit = async (data: LoginValues) => {
     try {
       await login(data);
-      navigate("/", { replace: true });
+      const role = useAuthStore.getState().user?.role;
+      navigate(getRedirectPathByRole(role), { replace: true });
     }
     catch (error) {
       console.log(error)

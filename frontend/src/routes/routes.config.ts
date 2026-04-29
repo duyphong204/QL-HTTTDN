@@ -1,196 +1,198 @@
 import type { Role } from "@/types/auth.types";
 import type { LucideIcon } from "lucide-react";
 import {
-    Users, Package, LayoutDashboard, Building,
-    FileText, ShoppingCart, BarChart3,
+  Users,
+  Package,
+  LayoutDashboard,
+  Building,
+  FileText,
+  ShoppingCart,
+  BarChart3,
+  Tag,
+  Folder,
 } from "lucide-react";
 export type PortalId = "admin" | "hr" | "warehouse" | "sales" | "employee";
 
 export interface RouteConfig {
-    path: string;
-    title: string;
-    icon: LucideIcon;
-    roles: Role[];
-    portals: PortalId[];
-    inSidebar: boolean;
+  path: string;
+  title: string;
+  icon: LucideIcon;
+  roles: Role[];
+  inSidebar: boolean;
+  portals?: PortalId[];
 }
 
-export const ROUTE_CONFIGS: RouteConfig[] = [
-    {
-        path: "/admin/dashboard",
-        title: "Tổng quan",
-        icon: LayoutDashboard,
-        roles: ["ADMIN"],
-        portals: ["admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/admin/users",
-        title: "Quản lý User",
-        icon: Users,
-        roles: ["ADMIN"],
-        portals: ["admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/admin/report",
-        title: "Báo cáo tổng hợp",
-        icon: BarChart3,
-        roles: ["ADMIN"],
-        portals: ["admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/admin/products",
-        title: "Sản phẩm",
-        icon: Package,
-        roles: ["ADMIN"],
-        portals: ["admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/admin/suppliers",
-        title: "Nhà cung cấp",
-        icon: Building,
-        roles: ["ADMIN"],
-        portals: ["admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/hr/employees",
-        title: "Quản lý Nhân sự",
-        icon: Users,
-        roles: ["HR_MANAGER","ADMIN"],
-        portals: ["hr","admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/hr/leave-requests",
-        title: "Duyệt đơn nghỉ",
-        icon: FileText,
-        roles: ["HR_MANAGER"],
-        portals: ["hr","admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/hr/salaries",
-        title: "Quản lý Lương",
-        icon: FileText,
-        roles: ["HR_MANAGER"],
-        portals: ["hr","admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/hr/statistics",
-        title: "Thống kê Nhân sự",
-        icon: BarChart3,
-        roles: ["HR_MANAGER"],
-        portals: ["hr","admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/warehouse/reports",
-        title: "Báo cáo kho",
-        icon: BarChart3,
-        roles: ["WAREHOUSE_MANAGER"],
-        portals: ["warehouse","admin"],
-        inSidebar: true,
-    },
-    {
-        path: "/warehouse/products",
-        title: "Sản phẩm",
-        icon: Package,
-        roles: ["WAREHOUSE_MANAGER"],
-        portals: ["warehouse"],
-        inSidebar: true,
-    },
-    {
-        path: "/warehouse/suppliers",
-        title: "Nhà cung cấp",
-        icon: Building,
-        roles: ["WAREHOUSE_MANAGER",],
-        portals: ["warehouse"],
-        inSidebar: true,
-    },
-    {
-        path: "/warehouse/import-slips",
-        title: "Phiếu nhập",
-        icon: Package,
-        roles: ["WAREHOUSE_MANAGER"],
-        portals: ["warehouse"],
-        inSidebar: true,
-    },
-    {
-        path: "/warehouse/categories",
-        title: "Danh mục sản phẩm",
-        icon: Package,
-        roles: ["WAREHOUSE_MANAGER"],
-        portals: ["warehouse"],
-        inSidebar: true,
-    },
-    {
-        path: "/sales/export-slips",
-        title: "Phiếu xuất",
-        icon: ShoppingCart,
-        roles: ["SALES_MANAGER"],
-        portals: ["sales"],
-        inSidebar: true,
-    },
-    {
-        path: "/sales/reports",
-        title: "Báo cáo",
-        icon: BarChart3,
-        roles: ["SALES_MANAGER"],
-        portals: ["sales"],
-        inSidebar: true,
-    },
-    {
-        path: "/employee/leave-request",
-        title: "Xin nghỉ phép",
-        icon: FileText,
-        roles: ["EMPLOYEE", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-        portals: ["employee", "warehouse", "sales"],
-        inSidebar: true,
-    },
-    {
-        path: "/employee/profile",
-        title: "Hồ sơ cá nhân",
-        icon: FileText,
-        roles: ["EMPLOYEE", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-        portals: ["employee", "hr", "warehouse", "sales"],
-        inSidebar: true,
-    },
-    {
-        path: "/employee/salary",
-        title: "Bảng lương của tôi",
-        icon: FileText,
-        roles: ["EMPLOYEE", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
-        portals: ["employee", "hr", "warehouse", "sales"],
-        inSidebar: true,
-    },
-];
-
-/** Vai trò → cổng layout mặc định */
 export const roleToPortal = (role: Role): PortalId => {
-    switch (role) {
-        case "ADMIN":
-            return "admin";
-        case "HR_MANAGER":
-            return "hr";
-        case "WAREHOUSE_MANAGER":
-            return "warehouse";
-        case "SALES_MANAGER":
-            return "sales";
-        case "EMPLOYEE":
-        default:
-            return "employee";
-    }
+  switch (role) {
+    case "ADMIN":
+      return "admin";
+    case "HR_MANAGER":
+      return "hr";
+    case "WAREHOUSE_MANAGER":
+      return "warehouse";
+    case "SALES_MANAGER":
+      return "sales";
+    default:
+      return "employee";
+  }
 };
 
-export const rolesFor = (path: string): Role[] => {
-    const set = new Set<Role>();
-    for (const r of ROUTE_CONFIGS) {
-        if (r.path === path) r.roles.forEach((role) => set.add(role));
-    }
-    return [...set];
-};
+export const ROUTE_CONFIGS: RouteConfig[] = [
+  {
+    path: "/admin/dashboard",
+    title: "Tổng quan",
+    icon: LayoutDashboard,
+    roles: ["ADMIN", "HR_MANAGER", "WAREHOUSE_MANAGER", "SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/admin/users",
+    title: "Quản lý User",
+    icon: Users,
+    roles: ["ADMIN"],
+    inSidebar: true,
+  },
+  {
+    path: "/hr/employees",
+    title: "Quản lý Nhân sự",
+    icon: Users,
+    roles: ["ADMIN", "HR_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/hr/leave-requests",
+    title: "Duyệt đơn nghỉ",
+    icon: FileText,
+    roles: ["ADMIN", "HR_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/hr/salaries",
+    title: "Quản lý Lương",
+    icon: FileText,
+    roles: ["HR_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/admin/promotions",
+    title: "Khuyen mai",
+    icon: Tag,
+    roles: ["ADMIN"],
+    inSidebar: true,
+  },
+  {
+    path: "/warehouse/categories",
+    title: "Danh mục sản phẩm",
+    icon: Folder,
+    roles: ["ADMIN", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/warehouse/products",
+    title: "Sản phẩm",
+    icon: Package,
+    roles: ["ADMIN", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/warehouse/suppliers",
+    title: "Nhà cung cấp",
+    icon: Building,
+    roles: ["ADMIN", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/warehouse/import-slips",
+    title: "Phiếu nhập",
+    icon: Package,
+    roles: ["ADMIN", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/sales/orders",
+    title: "Đơn hàng",
+    icon: ShoppingCart,
+    roles: ["ADMIN", "SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/sales/export-slips",
+    title: "Phiếu xuất",
+    icon: FileText,
+    roles: ["ADMIN", "SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/sales/reports",
+    title: "Báo cáo",
+    icon: BarChart3,
+    roles: ["ADMIN", "SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/employee/leave-request",
+    title: "Xin nghỉ phép",
+    icon: FileText,
+    roles: ["EMPLOYEE"],
+    inSidebar: true,
+  },
+  {
+    path: "/employee/profile",
+    title: "Hồ sơ cá nhân",
+    icon: FileText,
+    roles: ["EMPLOYEE", "HR_MANAGER", "SALES_MANAGER", "WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/employee/salary",
+    title: "Bảng lương của tôi",
+    icon: FileText,
+    roles: ["ADMIN", "EMPLOYEE"],
+    inSidebar: true,
+  },
+];
+// CUSTOMER / STOREFRONT ROUTES
+export const customerRoutes = [
+  {
+    path: "/",
+    element: "ShopHome",
+  },
+  {
+    path: "/products",
+    element: "ProductList",
+  },
+  {
+    path: "/products/:id",
+    element: "ProductDetail",
+  },
+  {
+    path: "/cart",
+    element: "CartPage",
+  },
+  {
+    path: "/checkout",
+    element: "CheckoutPage",
+  },
+  {
+    path: "/orders",
+    element: "CustomerOrders",
+  },
+  {
+    path: "/profile",
+    element: "Profile",
+  },
+  {
+    path: "/order-success",
+    element: "OrderSuccess",
+  },
+  {
+    path: "/about",
+    element: "About",
+  },
+  {
+    path: "/contact",
+    element: "Contact",
+  },
+];
+export const rolesFor = (path: string): Role[] =>
+  ROUTE_CONFIGS.find((r) => r.path === path)?.roles ?? [];

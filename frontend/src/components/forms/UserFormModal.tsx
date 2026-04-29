@@ -1,14 +1,11 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { User } from "@/types/user.types";
-import type { Role } from "@/types/auth.types";
-import { ALL_ROLE_OPTIONS } from "@/utils/role";
 import { AppModal } from "@/components/common/AppModal";
 
 type UserFormValues = {
   email: string;
   password?: string;
-  role: Role;
   profile: {
     fullName: string;
   };
@@ -38,7 +35,6 @@ export function UserFormModal({
     defaultValues: {
       email: "",
       password: "",
-      role: "CUSTOMER",
       profile: { fullName: "" },
     },
   });
@@ -49,7 +45,6 @@ export function UserFormModal({
     if (editingUser) {
       reset({
         email: editingUser.email,
-        role: editingUser.role,
         profile: { fullName: editingUser.profile?.fullName || "" },
       });
       return;
@@ -58,7 +53,6 @@ export function UserFormModal({
     reset({
       email: "",
       password: "",
-      role: "CUSTOMER",
       profile: { fullName: "" },
     });
   }, [isOpen, editingUser, reset]);
@@ -117,23 +111,17 @@ export function UserFormModal({
           )}
         </div>
 
-        {/* Vai trò - Khóa khi Edit */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Vai trò</label>
-          <select 
-            disabled={isEditMode}
-            className={`w-full h-11 px-3 text-sm border rounded-lg ${
-              isEditMode ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-200" : "bg-gray-50 border-gray-200"
-            }`}
-            {...register("role")}
-          >
-            {ALL_ROLE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {isEditMode && <p className="mt-1 text-[11px] text-gray-400">* Không thể thay đổi vai trò khi đang cập nhật</p>}
+          <input
+            type="text"
+            readOnly
+            value="Khách hàng"
+            className="w-full h-11 px-3 text-sm bg-gray-100 border border-gray-200 rounded-lg text-gray-500 cursor-not-allowed"
+          />
+          <p className="mt-1 text-[11px] text-gray-400">
+            Màn này chỉ tạo và quản lý tài khoản khách hàng.
+          </p>
         </div>
 
         <button

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -117,6 +118,12 @@ export class UsersService {
       throw new ConflictException('Email đã tồn tại');
     }
 
+    if (dto.role !== Role.CUSTOMER) {
+      throw new BadRequestException(
+        'Màn quản lý User chỉ tạo tài khoản CUSTOMER',
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
@@ -140,6 +147,12 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto) {
     const currentUser = await this.findUserOrThrow(id);
 
+    if (currentUser.role !== Role.CUSTOMER) {
+      throw new BadRequestException(
+        'Màn quản lý User chỉ chỉnh sửa tài khoản CUSTOMER',
+      );
+    }
+
     // Kiểm tra trùng email nếu có thay đổi email
     if (dto.email && dto.email !== currentUser.email) {
       const duplicated = await this.prisma.user.findFirst({
@@ -152,7 +165,7 @@ export class UsersService {
       where: { id },
       data: {
         email: dto.email,
-        role: dto.role,
+        role: Role.CUSTOMER,
         profile: dto.profile ? { update: { ...dto.profile } } : undefined,
       },
       include: this.defaultInclude,

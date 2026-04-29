@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Package } from 'lucide-react';
 import { getCloudinaryThumbnailUrl } from '@/utils/cloudinary';
 import { ProductFormModal } from '@/components/forms/ProductFormModal';
@@ -11,6 +11,42 @@ import { useEntityModal } from '@/hooks/useEntityModal';
 import { useConfirmAction } from '@/hooks/useConfirmAction';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import type { Product, CreateProductDto, UpdateProductDto } from '@/types/product.types';
+
+function ProductThumbnail({ imageUrl, name }: { imageUrl?: string; name: string }) {
+  const [hasError, setHasError] = useState(false);
+  const transformedUrl = getCloudinaryThumbnailUrl(imageUrl, 80, 80);
+  const [src, setSrc] = useState<string>(transformedUrl);
+
+  useEffect(() => {
+    setHasError(false);
+    setSrc(getCloudinaryThumbnailUrl(imageUrl, 80, 80));
+  }, [imageUrl]);
+
+  if (!imageUrl || hasError) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
+        <Package size={18} className="text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="w-10 h-10 rounded-lg object-contain bg-gray-50 border border-gray-200"
+      loading="lazy"
+      onError={() => {
+        // If transformed URL fails, retry with original image URL before falling back.
+        if (src !== imageUrl) {
+          setSrc(imageUrl);
+          return;
+        }
+        setHasError(true);
+      }}
+    />
+  );
+}
 
 export default function ProductManagement() {
   // 1. Store State & Actions
@@ -133,17 +169,7 @@ export default function ProductManagement() {
                   <tr key={product.id} className="hover:bg-gray-50/70 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {product.imageUrl ? (
-                          <img
-                            src={getCloudinaryThumbnailUrl(product.imageUrl)}
-                            alt={product.name}
-                            className="w-10 h-10 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <Package size={18} className="text-gray-400" />
-                          </div>
-                        )}
+                        <ProductThumbnail imageUrl={product.imageUrl} name={product.name} />
                         <span className="font-medium text-gray-800">{product.name}</span>
                       </div>
                     </td>

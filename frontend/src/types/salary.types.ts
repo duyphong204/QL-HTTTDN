@@ -1,21 +1,21 @@
 import type { BaseEntity } from "./common.types";
 
 export const SalaryStatus = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  PAID: 'PAID',
-  CANCELLED: 'CANCELLED',
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  PAID: "PAID",
+  CANCELLED: "CANCELLED",
 } as const;
 
 export type SalaryStatus = (typeof SalaryStatus)[keyof typeof SalaryStatus];
 
 export const DetailType = {
-  BONUS: 'BONUS',
-  OT: 'OT',
-  ALLOWANCE: 'ALLOWANCE',
-  DEDUCTION: 'DEDUCTION',
-  INSURANCE: 'INSURANCE',
-  TAX: 'TAX',
+  BONUS: "BONUS",
+  OT: "OT",
+  ALLOWANCE: "ALLOWANCE",
+  DEDUCTION: "DEDUCTION",
+  INSURANCE: "INSURANCE",
+  TAX: "TAX",
 } as const;
 
 export type DetailType = (typeof DetailType)[keyof typeof DetailType];
@@ -80,6 +80,8 @@ export interface QuerySalaryParams {
   page?: number;
   limit?: number;
 }
+
+export type QuerySalaryDto = QuerySalaryParams;
 
 export interface SalaryListResponse {
   data: Salary[];

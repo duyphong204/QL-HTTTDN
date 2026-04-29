@@ -1,36 +1,72 @@
 import {
+  ArrayMinSize,
+  IsIn,
   IsString,
   IsArray,
   ValidateNested,
-  IsNumber,
+  IsInt,
+  IsNotEmpty,
   Min,
+  Matches,
+  MinLength,
+  IsOptional,
+  IsUUID,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 class OrderItemDto {
-  @IsString({ message: 'ID sản phẩm phải là chuỗi' })
-  productId!: string;
+  @IsUUID('4', { message: 'productId khong hop le' })
+  @IsString()
+  productId: string;
 
-  @IsNumber({}, { message: 'Số lượng phải là số' })
-  @Min(1, { message: 'Số lượng phải ít nhất 1' })
-  quantity!: number;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity: number;
 }
 
 export class CreateOrderDto {
-  @IsString({ message: 'Họ tên phải là chuỗi' })
-  fullName!: string;
-
-  @IsString({ message: 'Số điện thoại phải là chuỗi' })
-  phone!: string;
-
-  @IsString({ message: 'Địa chỉ phải là chuỗi' })
-  address!: string;
-
-  @IsArray({ message: 'Danh sách sản phẩm phải là mảng' })
-  @ValidateNested({
-    each: true,
-    message: 'Mỗi sản phẩm trong đơn hàng không hợp lệ',
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value,
+  )
+  @IsNotEmpty({ message: 'fullName khong duoc de trong' })
+  @IsString()
+  @MinLength(2, { message: 'fullName phai co it nhat 2 ky tu' })
+  @Matches(/^[A-Za-zÀ-ỹ\s]+$/, {
+    message: 'fullName chi duoc chua chu cai va khoang trang',
   })
+  fullName: string;
+
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.replace(/[\s.-]/g, '') : value,
+  )
+  @IsNotEmpty({ message: 'phone khong duoc de trong' })
+  @IsString()
+  @Matches(/^(0[3|5|7|8|9])[0-9]{8}$/, {
+    message: 'phone khong hop le',
+  })
+  phone: string;
+
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value,
+  )
+  @IsNotEmpty({ message: 'address khong duoc de trong' })
+  @IsString()
+  @MinLength(8, { message: 'address phai co it nhat 8 ky tu' })
+  address: string;
+
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toUpperCase().trim() : value,
+  )
+  @IsOptional()
+  @IsIn(['COD', 'BANK_TRANSFER'], {
+    message: 'paymentMethod chi ho tro COD hoac BANK_TRANSFER',
+  })
+  paymentMethod?: 'COD' | 'BANK_TRANSFER';
+
+  @IsArray()
+  @ArrayMinSize(1, { message: 'items phai co it nhat 1 san pham' })
+  @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];
 }

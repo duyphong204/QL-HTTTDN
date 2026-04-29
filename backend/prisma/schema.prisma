@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Cleaned single-schema: canonical models and enums
+
 model User {
   id               String      @id @default(uuid())
   email            String      @unique
@@ -22,8 +24,8 @@ model User {
   orders           Order[]
   profile          Profile?
   logs             SystemLog[]
-  createdStockIns  StockIn[]  @relation("StockInCreatedBy")
-  approvedStockIns StockIn[]  @relation("StockInApprovedBy")
+  createdStockIns  StockIn[]   @relation("StockInCreatedBy")
+  approvedStockIns StockIn[]   @relation("StockInApprovedBy")
 }
 
 model Profile {
@@ -50,7 +52,7 @@ model Employee {
   jobHistories  JobHistory[]
   leaveRequests LeaveRequest[]
   salaries      Salary[]
-  attendances  Attendance[]
+  attendances   Attendance[]
 }
 
 model JobHistory {
@@ -65,33 +67,33 @@ model JobHistory {
 }
 
 model Salary {
-  id            String   @id @default(uuid())
-  employeeId    String
-  month         Int
-  year          Int
+  id         String @id @default(uuid())
+  employeeId String
+  month      Int
+  year       Int
 
-  baseSalary    Float    @default(0)
+  baseSalary Float @default(0)
 
-  workingDays   Int      @default(26)
-  actualWorkDays Int     @default(0)
+  workingDays    Int @default(26)
+  actualWorkDays Int @default(0)
 
-  grossSalary   Float    @default(0)
-  totalBonus    Float    @default(0)
-  totalDeduction Float   @default(0)
+  grossSalary    Float @default(0)
+  totalBonus     Float @default(0)
+  totalDeduction Float @default(0)
 
-  netSalary     Float   @default(0)
+  netSalary Float @default(0)
 
-  status        SalaryStatus @default(PENDING)
-  note          String?
+  status SalaryStatus @default(PENDING)
+  note   String?
 
-  createdAt     DateTime @default(now())  
-  updatedAt     DateTime @updatedAt @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
-  employee      Employee @relation(fields: [employeeId], references: [id])
-  details       SalaryDetail[]
+  employee Employee       @relation(fields: [employeeId], references: [id])
+  details  SalaryDetail[]
 
   paidAt DateTime?
-  
+
   @@unique([employeeId, month, year])
   @@index([month, year])
   @@index([employeeId])
@@ -102,30 +104,30 @@ model SalaryDetail {
   salaryId    String
   type        DetailType
   amount      Float
-  description String?    // Ví dụ: "Thưởng dự án A", "Trừ BHXH 10.5%"
+  description String?
   salary      Salary     @relation(fields: [salaryId], references: [id], onDelete: Cascade)
 }
 
 model Attendance {
-  id         String   @id @default(uuid())
+  id         String           @id @default(uuid())
   employeeId String
   date       DateTime
   checkIn    DateTime?
   checkOut   DateTime?
-  status     AttendanceStatus @default(PRESENT) // PRESENT, ABSENT, LEAVE, LATE
+  status     AttendanceStatus @default(PRESENT)
 
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  @@unique([employeeId, date])   // Một ngày chỉ chấm công một lần
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
 }
 
 enum DetailType {
-  BONUS        // +
-  OT           // +
-  ALLOWANCE    // +
-
-  DEDUCTION    // -
-  INSURANCE    // -
-  TAX          // -
+  BONUS
+  OT
+  ALLOWANCE
+  DEDUCTION
+  INSURANCE
+  TAX
 }
 
 enum SalaryStatus {
@@ -134,6 +136,7 @@ enum SalaryStatus {
   PAID
   CANCELLED
 }
+
 enum AttendanceStatus {
   PRESENT
   ABSENT
@@ -151,7 +154,7 @@ model LeaveRequest {
   status          String   @default("PENDING")
   rejectionReason String?
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
   approvedById    String?
   employee        Employee @relation(fields: [employeeId], references: [id])
 }
@@ -173,22 +176,23 @@ model Supplier {
 }
 
 model Product {
-  id             String          @id @default(uuid())
-  name           String
-  description    String?
-  price          Float
-  costPrice      Float
-  stockQuantity  Int             @default(0)
-  categoryId     String
-  supplierId     String
-  minStock       Int             @default(10)
-  imageUrl       String?
-  deletedAt      DateTime?
-  cartItems      CartItem[]
-  orderDetails   OrderDetail[]
-  category       Category        @relation(fields: [categoryId], references: [id])
-  supplier       Supplier        @relation(fields: [supplierId], references: [id])
-  stockInDetails StockInDetail[]
+  id              String             @id @default(uuid())
+  name            String
+  description     String?
+  price           Float
+  costPrice       Float
+  stockQuantity   Int                @default(0)
+  categoryId      String
+  supplierId      String
+  minStock        Int                @default(10)
+  imageUrl        String?
+  deletedAt       DateTime?
+  cartItems       CartItem[]
+  orderDetails    OrderDetail[]
+  promotionLinks  PromotionProduct[]
+  category        Category           @relation(fields: [categoryId], references: [id])
+  supplier        Supplier           @relation(fields: [supplierId], references: [id])
+  stockInDetails  StockInDetail[]
   stockOutDetails StockOutDetail[]
 }
 
@@ -319,4 +323,33 @@ enum Role {
   SALES_MANAGER
   EMPLOYEE
   CUSTOMER
+}
+
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+
+model Promotion {
+  id        String        @id @default(uuid())
+  name      String
+  type      PromotionType
+  value     Float
+  startAt   DateTime?
+  endAt     DateTime?
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  products PromotionProduct[]
+}
+
+model PromotionProduct {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+  productId   String    @unique
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([promotionId, productId])
 }

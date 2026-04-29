@@ -1,4 +1,4 @@
-import { X, Clock, Phone, Mail, Calendar, CreditCard, MapPin } from "lucide-react"
+import { Clock, Phone, Mail, Calendar, CreditCard, MapPin } from "lucide-react"
 import type { Employee } from "@/types/employee.types"
 import { AppModal } from "@/components/common/AppModal"
 import { PageLoading } from "@/components/common/Loading"

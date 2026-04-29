@@ -29,14 +29,13 @@ import { ValidationPipe } from '@nestjs/common';
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
-
   // ==================== EMPLOYEE SELF SERVICE ====================
   @Get('me')
   @Roles(
     Role.EMPLOYEE,
     Role.HR_MANAGER,
-    Role.WAREHOUSE_MANAGER,
     Role.SALES_MANAGER,
+    Role.WAREHOUSE_MANAGER,
   )
   getMe(@Request() req: any) {
     return this.employeesService.getProfile(req.user.id);
@@ -82,6 +81,12 @@ export class EmployeesController {
   @Patch(':id')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
+    return this.employeesService.updateEmployee(id, dto);
+  }
+
+  @Patch(':id/position')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  updatePosition(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     return this.employeesService.updateEmployee(id, dto);
   }
 

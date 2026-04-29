@@ -28,7 +28,7 @@ const PortalShell = ({ portal }: PortalShellProps) => {
         (r) =>
             r.inSidebar &&
             user &&
-            r.portals.includes(portal) &&
+            (r.portals?.includes(portal) ?? true) &&
             r.roles.includes(user.role)
     );
 

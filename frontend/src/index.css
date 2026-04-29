@@ -45,6 +45,10 @@
 
 
 @layer base {
+    html {
+        scroll-behavior: auto;
+    }
+
     :root {
         /* Base colors - soft pastels */
         --background: 0 0% 100%;
