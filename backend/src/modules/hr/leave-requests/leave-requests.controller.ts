@@ -54,7 +54,12 @@ export class LeaveRequestsController {
     @Body() dto: UpdateLeaveStatusDto,
     @Request() req: any,
   ) {
-    return this.leaveRequestsService.updateStatus(id, dto.status, req.user.id, dto.rejectionReason);
+    return this.leaveRequestsService.updateStatus(
+      id,
+      dto.status,
+      req.user.id,
+      dto.rejectionReason,
+    );
   }
 
   // @Get()

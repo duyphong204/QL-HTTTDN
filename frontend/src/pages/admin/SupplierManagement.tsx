@@ -26,16 +26,23 @@ export default function SupplierManagement() {
   } = useSupplierStore();
 
   // 2. UI Hooks
-  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<Supplier>();
+  const {
+    modalOpen,
+    editingEntity,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  } = useEntityModal<Supplier>();
   const { confirmAndRun } = useConfirmAction();
 
   // 3. Search & Pagination Logic
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchSuppliers,
-    debounceMs: 500,
-  });
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } =
+    usePaginatedList({
+      filters,
+      setFilters,
+      fetchData: fetchSuppliers,
+      debounceMs: 500,
+    });
 
   // Initial Fetch
   useEffect(() => {
@@ -65,8 +72,12 @@ export default function SupplierManagement() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý Nhà cung cấp</h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý thông tin nhà cung cấp hàng hóa</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý Nhà cung cấp
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Quản lý thông tin nhà cung cấp hàng hóa
+            </p>
           </div>
 
           <button
@@ -88,7 +99,10 @@ export default function SupplierManagement() {
             <select
               value={`${filters.sortBy}:${filters.sortOrder}`}
               onChange={(e) => {
-                const [sortBy, sortOrder] = e.target.value.split(":") as [string, "asc" | "desc"];
+                const [sortBy, sortOrder] = e.target.value.split(":") as [
+                  string,
+                  "asc" | "desc",
+                ];
                 updateFilters({ sortBy, sortOrder });
               }}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -118,17 +132,31 @@ export default function SupplierManagement() {
                 <tbody className="divide-y divide-gray-50">
                   {suppliers.length === 0 && !isLoading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-20 text-center text-gray-400 font-medium">
+                      <td
+                        colSpan={5}
+                        className="px-6 py-20 text-center text-gray-400 font-medium"
+                      >
                         Không tìm thấy nhà cung cấp nào.
                       </td>
                     </tr>
                   ) : (
                     suppliers.map((supplier) => (
-                      <tr key={supplier.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-6 py-4 font-semibold text-gray-900">{supplier.name}</td>
-                        <td className="px-6 py-4 text-gray-600">{supplier.phone || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600">{supplier.email || "—"}</td>
-                        <td className="px-6 py-4 text-gray-600 max-w-50 truncate">{supplier.address || "—"}</td>
+                      <tr
+                        key={supplier.id}
+                        className="hover:bg-blue-50/30 transition-colors group"
+                      >
+                        <td className="px-6 py-4 font-semibold text-gray-900">
+                          {supplier.name}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {supplier.phone || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {supplier.email || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600 max-w-50 truncate">
+                          {supplier.address || "—"}
+                        </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                             <button
@@ -138,7 +166,9 @@ export default function SupplierManagement() {
                               <Pencil size={18} />
                             </button>
                             <button
-                              onClick={() => handleDelete(supplier.id, supplier.name)}
+                              onClick={() =>
+                                handleDelete(supplier.id, supplier.name)
+                              }
                               className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             >
                               <Trash2 size={18} />

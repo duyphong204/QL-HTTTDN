@@ -1,5 +1,11 @@
-import { useParams, Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Package, Truck, ShieldCheck } from 'lucide-react';
+import { useParams, Link } from "react-router-dom";
+import {
+  CheckCircle,
+  ArrowRight,
+  Package,
+  Truck,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function OrderSuccess() {
   const { id } = useParams();
@@ -27,7 +33,8 @@ export default function OrderSuccess() {
               Mã đơn hàng của anh: <span className="text-blue-600">#{id}</span>
             </p>
             <p className="mt-2 text-gray-600">
-              Chúng tôi đã nhận được đơn hàng. Đơn đang chờ admin xác nhận trước khi giao.
+              Chúng tôi đã nhận được đơn hàng. Đơn đang chờ admin xác nhận trước
+              khi giao.
             </p>
           </div>
 
@@ -42,13 +49,17 @@ export default function OrderSuccess() {
             <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
               <ShieldCheck size={32} className="mx-auto text-green-600 mb-3" />
               <h3 className="font-medium text-gray-900">An toàn & Bảo mật</h3>
-              <p className="text-sm text-gray-600 mt-1">Thanh toán SSL mã hóa</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Thanh toán SSL mã hóa
+              </p>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-6 text-center border border-gray-200">
               <Package size={32} className="mx-auto text-purple-600 mb-3" />
               <h3 className="font-medium text-gray-900">Theo dõi đơn hàng</h3>
-              <p className="text-sm text-gray-600 mt-1">Sẽ gửi email cập nhật</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Sẽ gửi email cập nhật
+              </p>
             </div>
           </div>
 

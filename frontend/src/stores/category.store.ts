@@ -46,7 +46,9 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
     try {
       const updated = await categoryService.update(id, name);
       set({
-        categories: get().categories.map((cat) => (cat.id === id ? updated : cat)),
+        categories: get().categories.map((cat) =>
+          cat.id === id ? updated : cat,
+        ),
       });
       toast.success("Cập nhật danh mục thành công");
     } catch (error: unknown) {

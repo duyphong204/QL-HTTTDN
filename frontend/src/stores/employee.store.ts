@@ -1,7 +1,7 @@
-import { create } from "zustand"
-import { toast } from "sonner"
-import { employeeService } from "@/services/hr.service"
-import { getErrorMessage } from "@/stores/store.helpers"
+import { create } from "zustand";
+import { toast } from "sonner";
+import { employeeService } from "@/services/hr.service";
+import { getErrorMessage } from "@/stores/store.helpers";
 
 interface ProfileFormData {
   fullName?: string;
@@ -49,7 +49,9 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
       isEditing: true,
       formData: {
         fullName: profile?.fullName || "",
-        dateOfBirth: profile?.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : "",
+        dateOfBirth: profile?.dateOfBirth
+          ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
+          : "",
         phone: profile?.phone || "",
         address: profile?.address || "",
         avatar: profile?.avatar || "",
@@ -59,9 +61,10 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
 
   handleCancel: () => set({ isEditing: false }),
 
-  setFormData: (data) => set((state) => ({
-    formData: { ...state.formData, ...data },
-  })),
+  setFormData: (data) =>
+    set((state) => ({
+      formData: { ...state.formData, ...data },
+    })),
 
   updateMyProfile: async (data) => {
     set({ isLoadingProfile: true });
@@ -76,4 +79,4 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
       set({ isLoadingProfile: false });
     }
   },
-}))
+}));

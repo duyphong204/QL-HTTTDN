@@ -74,7 +74,8 @@ export const useOrderStore = create<OrderState>((set) => ({
     try {
       return await orderApi.retryOrderPayment(orderId);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Lỗi tạo lại link thanh toán";
+      const message =
+        err instanceof Error ? err.message : "Lỗi tạo lại link thanh toán";
       throw new Error(message);
     }
   },

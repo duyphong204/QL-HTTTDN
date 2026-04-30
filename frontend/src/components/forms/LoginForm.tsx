@@ -1,19 +1,19 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { useForm } from "react-hook-form"
-import { useAuthStore } from "@/stores/auth.store"
-import { type LoginValues } from "@/types/auth.types"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { useAuthStore } from "@/stores/auth.store";
+import { type LoginValues } from "@/types/auth.types";
 import authBg from "@/assets/auth-bg.png";
-import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 
 const getRedirectPathByRole = (role?: string) => {
   if (role === "CUSTOMER") return "/";
@@ -28,21 +28,20 @@ export function LoginForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginValues>()
+  } = useForm<LoginValues>();
 
-  const navigate = useNavigate()
-  const { login, isLoading } = useAuthStore()
+  const navigate = useNavigate();
+  const { login, isLoading } = useAuthStore();
 
   const onSubmit = async (data: LoginValues) => {
     try {
       await login(data);
       const role = useAuthStore.getState().user?.role;
       navigate(getRedirectPathByRole(role), { replace: true });
+    } catch (error) {
+      console.log(error);
     }
-    catch (error) {
-      console.log(error)
-    }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -70,9 +69,7 @@ export function LoginForm({
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-500">
-                    {errors.email.message}
-                  </p>
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
                 )}
               </Field>
 
@@ -104,14 +101,18 @@ export function LoginForm({
                 </Button>
               </Field>
 
-              <FieldSeparator>
-                Hoặc tiếp tục với
-              </FieldSeparator>
+              <FieldSeparator>Hoặc tiếp tục với</FieldSeparator>
 
               <Field className="grid grid-cols-3 gap-4">
-                <Button variant="outline" type="button">Apple</Button>
-                <Button variant="outline" type="button">Google</Button>
-                <Button variant="outline" type="button">Meta</Button>
+                <Button variant="outline" type="button">
+                  Apple
+                </Button>
+                <Button variant="outline" type="button">
+                  Google
+                </Button>
+                <Button variant="outline" type="button">
+                  Meta
+                </Button>
               </Field>
 
               <FieldDescription className="text-center">
@@ -131,10 +132,9 @@ export function LoginForm({
       </Card>
 
       <FieldDescription className="px-6 text-center">
-        Bằng cách tiếp tục, bạn đồng ý với{" "}
-        <a href="#">Điều khoản dịch vụ</a> và{" "}
+        Bằng cách tiếp tục, bạn đồng ý với <a href="#">Điều khoản dịch vụ</a> và{" "}
         <a href="#">Chính sách bảo mật</a>.
       </FieldDescription>
     </div>
-  )
+  );
 }

@@ -1,11 +1,17 @@
-import { 
-  BarChart3, Building2, Users, ShoppingCart, 
-  Printer, AlertTriangle, TrendingUp, 
-  UserCheck, Package 
-} from 'lucide-react'
-import { useAdminReportPage } from '@/hooks/useAdminReportPage'
-import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
-import { InlineLoading, PageLoading } from '@/components/common/Loading'
+import {
+  BarChart3,
+  Building2,
+  Users,
+  ShoppingCart,
+  Printer,
+  AlertTriangle,
+  TrendingUp,
+  UserCheck,
+  Package,
+} from "lucide-react";
+import { useAdminReportPage } from "@/hooks/useAdminReportPage";
+import { RoleChartCard } from "@/components/common/reports/RoleChartCard";
+import { InlineLoading, PageLoading } from "@/components/common/Loading";
 
 // --- MAIN PAGE COMPONENT ---
 export default function AdminReportPage() {
@@ -25,12 +31,11 @@ export default function AdminReportPage() {
     setYear,
     setMonth,
     handlePrint,
-  } = useAdminReportPage()
+  } = useAdminReportPage();
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:bg-white print:p-0">
       <div className="mx-auto max-w-7xl space-y-8">
-        
         {/* HEADER SECTION */}
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
@@ -52,7 +57,9 @@ export default function AdminReportPage() {
               >
                 <option value="">Cả năm</option>
                 {months.map((m) => (
-                  <option key={m} value={m}>Tháng {m}</option>
+                  <option key={m} value={m}>
+                    Tháng {m}
+                  </option>
                 ))}
               </select>
 
@@ -62,7 +69,9 @@ export default function AdminReportPage() {
                 className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500 cursor-pointer"
               >
                 {years.map((y) => (
-                  <option key={y} value={y}>Năm {y}</option>
+                  <option key={y} value={y}>
+                    Năm {y}
+                  </option>
                 ))}
               </select>
             </div>
@@ -78,7 +87,10 @@ export default function AdminReportPage() {
 
         {/* CONTENT SECTION */}
         {isLoading ? (
-          <PageLoading text="Đang tải dữ liệu báo cáo..." className="min-h-100" />
+          <PageLoading
+            text="Đang tải dữ liệu báo cáo..."
+            className="min-h-100"
+          />
         ) : report ? (
           <div className="space-y-6">
             <div className="inline-flex items-center rounded-full bg-blue-50 px-4 py-1.5 text-sm text-blue-700">
@@ -116,18 +128,18 @@ export default function AdminReportPage() {
 
             {/* DETAILED STATS */}
             <div className="grid gap-4 md:grid-cols-3">
-              <DetailCard 
-                title="Kinh doanh" 
+              <DetailCard
+                title="Kinh doanh"
                 icon={<TrendingUp size={18} className="text-emerald-600" />}
                 items={detailStats.sales}
               />
-              <DetailCard 
-                title="Nhân sự" 
+              <DetailCard
+                title="Nhân sự"
                 icon={<UserCheck size={18} className="text-blue-600" />}
                 items={detailStats.hr}
               />
-              <DetailCard 
-                title="Kho" 
+              <DetailCard
+                title="Kho"
                 icon={<Package size={18} className="text-indigo-600" />}
                 items={detailStats.warehouse}
               />
@@ -167,26 +179,46 @@ export default function AdminReportPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // --- SUB-COMPONENTS ---
 
-function StatCard({ title, value, icon, bgColor }: { title: string; value: string; icon: React.ReactNode, bgColor: string }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  bgColor,
+}: {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  bgColor: string;
+}) {
   return (
     <div className="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <span className="text-sm font-medium text-slate-500">{title}</span>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${bgColor}`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ${bgColor}`}
+        >
           {icon}
         </div>
       </div>
       <div className="text-2xl font-bold text-slate-900">{value}</div>
     </div>
-  )
+  );
 }
 
-function DetailCard({ title, icon, items }: { title: string, icon: React.ReactNode, items: {label: string, value: string, highlight?: boolean}[] }) {
+function DetailCard({
+  title,
+  icon,
+  items,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: { label: string; value: string; highlight?: boolean }[];
+}) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -197,14 +229,16 @@ function DetailCard({ title, icon, items }: { title: string, icon: React.ReactNo
         {items.map((item, idx) => (
           <div key={idx} className="flex justify-between text-sm">
             <span className="text-slate-500">{item.label}</span>
-            <span className={`font-semibold ${item.highlight ? 'text-emerald-600' : 'text-slate-900'}`}>
+            <span
+              className={`font-semibold ${item.highlight ? "text-emerald-600" : "text-slate-900"}`}
+            >
               {item.value}
             </span>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function LowStockTable({ products = [] }: { products?: any[] }) {
@@ -222,27 +256,41 @@ function LowStockTable({ products = [] }: { products?: any[] }) {
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <th className="px-6 py-4 font-semibold">Tên sản phẩm</th>
-              <th className="px-6 py-4 text-center font-semibold">Tồn kho hiện tại</th>
-              <th className="px-6 py-4 text-center font-semibold">Tồn tối thiểu</th>
+              <th className="px-6 py-4 text-center font-semibold">
+                Tồn kho hiện tại
+              </th>
+              <th className="px-6 py-4 text-center font-semibold">
+                Tồn tối thiểu
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {products.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-10 text-center text-slate-400">
+                <td
+                  colSpan={3}
+                  className="px-6 py-10 text-center text-slate-400"
+                >
                   Tuyệt vời! Không có sản phẩm nào đang cảnh báo tồn kho.
                 </td>
               </tr>
             ) : (
               products.map((product) => (
-                <tr key={product.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-800">{product.name}</td>
+                <tr
+                  key={product.id}
+                  className="transition-colors hover:bg-slate-50"
+                >
+                  <td className="px-6 py-4 font-medium text-slate-800">
+                    {product.name}
+                  </td>
                   <td className="px-6 py-4 text-center">
                     <span className="inline-flex rounded-full bg-red-50 px-3 py-1 font-bold text-red-600">
                       {product.stockQuantity}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center text-slate-500">{product.minStock}</td>
+                  <td className="px-6 py-4 text-center text-slate-500">
+                    {product.minStock}
+                  </td>
                 </tr>
               ))
             )}
@@ -250,5 +298,5 @@ function LowStockTable({ products = [] }: { products?: any[] }) {
         </table>
       </div>
     </div>
-  )
+  );
 }

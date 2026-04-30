@@ -1,23 +1,23 @@
-import { Plus, Trash2, Eye, Pencil } from 'lucide-react'
-import { DataTableToolbar } from '@/components/common/DataTableToolbar'
-import { TableLoadingRow } from '@/components/common/Loading'
-import { PaginationControls } from '@/components/common/PaginationControls'
-import { AppModal } from '@/components/common/AppModal'
-import { useImportSlipPage } from '@/hooks/useImportSlipPage'
-import { cn } from '@/lib/utils'
-import { formatNumberWithDong } from '@/utils/format'
+import { Plus, Trash2, Eye, Pencil } from "lucide-react";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { TableLoadingRow } from "@/components/common/Loading";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { AppModal } from "@/components/common/AppModal";
+import { useImportSlipPage } from "@/hooks/useImportSlipPage";
+import { cn } from "@/lib/utils";
+import { formatNumberWithDong } from "@/utils/format";
 
 const statusLabel: Record<string, string> = {
-  PENDING: 'Chờ xử lý',
-  COMPLETED: 'Hoàn tất',
-  CANCELLED: 'Đã hủy',
-}
+  PENDING: "Chờ xử lý",
+  COMPLETED: "Hoàn tất",
+  CANCELLED: "Đã hủy",
+};
 
 const statusStyle: Record<string, string> = {
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-100',
-  COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  CANCELLED: 'bg-red-50 text-red-700 border-red-100',
-}
+  PENDING: "bg-amber-50 text-amber-700 border-amber-100",
+  COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  CANCELLED: "bg-red-50 text-red-700 border-red-100",
+};
 
 export default function ImportSlipManagement() {
   const {
@@ -42,15 +42,19 @@ export default function ImportSlipManagement() {
     updateDetail,
     submitForm,
     removeSlip,
-  } = useImportSlipPage()
+  } = useImportSlipPage();
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý nhập kho</h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý phiếu nhập theo CRUD: thêm, sửa, xóa, xem chi tiết</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý nhập kho
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Quản lý phiếu nhập theo CRUD: thêm, sửa, xóa, xem chi tiết
+            </p>
           </div>
           <button
             onClick={openCreateModal}
@@ -82,54 +86,85 @@ export default function ImportSlipManagement() {
               <tbody className="divide-y divide-gray-50">
                 {isLoading && table.pagedData.length === 0 ? (
                   <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
-                ) : table.pagedData.map((slip) => (
-                  <tr key={slip.id} className="hover:bg-gray-50/70 transition-colors group">
-                    <td className="px-6 py-4 font-mono text-blue-600 font-medium">#{slip.id.slice(0, 8).toUpperCase()}</td>
-                    <td className="px-6 py-4 text-gray-700 font-medium">{slip.supplier?.name || '—'}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(slip.date).toLocaleDateString('vi-VN')}</td>
-                    <td className="px-6 py-4">
-                      <span className={cn('px-2.5 py-0.5 rounded-full text-xs font-medium border', statusStyle[slip.status] ?? 'bg-gray-50 text-gray-700 border-gray-100')}>
-                        {statusLabel[slip.status] ?? slip.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatNumberWithDong(slip.totalAmount)}</td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => openDetailModal(slip.id)}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                ) : (
+                  table.pagedData.map((slip) => (
+                    <tr
+                      key={slip.id}
+                      className="hover:bg-gray-50/70 transition-colors group"
+                    >
+                      <td className="px-6 py-4 font-mono text-blue-600 font-medium">
+                        #{slip.id.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 text-gray-700 font-medium">
+                        {slip.supplier?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(slip.date).toLocaleDateString("vi-VN")}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={cn(
+                            "px-2.5 py-0.5 rounded-full text-xs font-medium border",
+                            statusStyle[slip.status] ??
+                              "bg-gray-50 text-gray-700 border-gray-100",
+                          )}
                         >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(slip)}
-                          className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button
-                          onClick={() => removeSlip(slip.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {statusLabel[slip.status] ?? slip.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-gray-900">
+                        {formatNumberWithDong(slip.totalAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openDetailModal(slip.id)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(slip)}
+                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button
+                            onClick={() => removeSlip(slip.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
-          <PaginationControls meta={table.meta} currentPage={table.page} isLoading={isLoading} onPageChange={table.setPage} />
+          <PaginationControls
+            meta={table.meta}
+            currentPage={table.page}
+            isLoading={isLoading}
+            onPageChange={table.setPage}
+          />
         </div>
       </div>
 
-      <AppModal isOpen={formOpen} onClose={closeFormModal} title={editingId ? 'Cập nhật phiếu nhập kho' : 'Lập phiếu nhập kho'} maxWidthClassName="max-w-2xl">
+      <AppModal
+        isOpen={formOpen}
+        onClose={closeFormModal}
+        title={editingId ? "Cập nhật phiếu nhập kho" : "Lập phiếu nhập kho"}
+        maxWidthClassName="max-w-2xl"
+      >
         <form onSubmit={submitForm} className="p-6 space-y-6">
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Nhà cung cấp *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Nhà cung cấp *
+              </label>
               <select
                 value={supplierId}
                 onChange={(e) => setSupplierId(e.target.value)}
@@ -137,13 +172,19 @@ export default function ImportSlipManagement() {
                 className="w-full h-11 px-4 border border-gray-200 rounded-xl bg-gray-50/30"
               >
                 <option value="">Chọn nhà cung cấp</option>
-                {suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">Sản phẩm nhập</label>
+                <label className="text-sm font-semibold text-gray-700">
+                  Sản phẩm nhập
+                </label>
                 <button
                   type="button"
                   onClick={addDetail}
@@ -158,25 +199,35 @@ export default function ImportSlipManagement() {
                   <div key={i} className="flex gap-3 items-start">
                     <select
                       value={detail.productId}
-                      onChange={(e) => updateDetail(i, 'productId', e.target.value)}
+                      onChange={(e) =>
+                        updateDetail(i, "productId", e.target.value)
+                      }
                       required
                       className="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg"
                     >
                       <option value="">Chọn SP...</option>
-                      {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
                     </select>
                     <input
                       type="number"
                       min={1}
                       value={detail.quantity}
-                      onChange={(e) => updateDetail(i, 'quantity', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateDetail(i, "quantity", Number(e.target.value))
+                      }
                       className="w-20 h-10 px-2 text-sm border border-gray-200 rounded-lg text-center"
                     />
                     <input
                       type="number"
                       min={0}
                       value={detail.price}
-                      onChange={(e) => updateDetail(i, 'price', Number(e.target.value))}
+                      onChange={(e) =>
+                        updateDetail(i, "price", Number(e.target.value))
+                      }
                       className="w-32 h-10 px-2 text-sm border border-gray-200 rounded-lg text-right"
                     />
                     {details.length > 1 && (
@@ -195,14 +246,27 @@ export default function ImportSlipManagement() {
           </div>
 
           <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl">
-            <span className="text-sm font-medium text-blue-900">Tổng giá trị:</span>
-            <span className="text-xl font-bold text-blue-600">{formatNumberWithDong(totalAmount)}</span>
+            <span className="text-sm font-medium text-blue-900">
+              Tổng giá trị:
+            </span>
+            <span className="text-xl font-bold text-blue-600">
+              {formatNumberWithDong(totalAmount)}
+            </span>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <button type="button" onClick={closeFormModal} className="px-6 py-2.5 text-sm font-medium text-gray-600">Huỷ</button>
-            <button type="submit" className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">
-              {editingId ? 'Lưu thay đổi' : 'Tạo phiếu'}
+            <button
+              type="button"
+              onClick={closeFormModal}
+              className="px-6 py-2.5 text-sm font-medium text-gray-600"
+            >
+              Huỷ
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+            >
+              {editingId ? "Lưu thay đổi" : "Tạo phiếu"}
             </button>
           </div>
         </form>
@@ -219,19 +283,28 @@ export default function ImportSlipManagement() {
             <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
               <div>
                 <div className="text-gray-500">Người lập</div>
-                <div className="font-semibold text-gray-900">{selectedStockIn.creatorName || 'N/A'}</div>
+                <div className="font-semibold text-gray-900">
+                  {selectedStockIn.creatorName || "N/A"}
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Trạng thái</div>
-                <div className="font-semibold text-gray-900">{statusLabel[selectedStockIn.status] ?? selectedStockIn.status}</div>
+                <div className="font-semibold text-gray-900">
+                  {statusLabel[selectedStockIn.status] ??
+                    selectedStockIn.status}
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Ngày tạo</div>
-                <div className="font-semibold text-gray-900">{new Date(selectedStockIn.date).toLocaleString('vi-VN')}</div>
+                <div className="font-semibold text-gray-900">
+                  {new Date(selectedStockIn.date).toLocaleString("vi-VN")}
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Nhà cung cấp</div>
-                <div className="font-semibold text-gray-900">{selectedStockIn.supplier?.name || 'N/A'}</div>
+                <div className="font-semibold text-gray-900">
+                  {selectedStockIn.supplier?.name || "N/A"}
+                </div>
               </div>
             </div>
 
@@ -239,37 +312,63 @@ export default function ImportSlipManagement() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium">Sản phẩm</th>
+                    <th className="px-4 py-3 text-left font-medium">
+                      Sản phẩm
+                    </th>
                     <th className="px-4 py-3 text-center font-medium">SL</th>
-                    <th className="px-4 py-3 text-right font-medium">Đơn giá</th>
-                    <th className="px-4 py-3 text-right font-medium">Thành tiền</th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      Đơn giá
+                    </th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      Thành tiền
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {selectedStockIn.details?.map((detail) => (
                     <tr key={detail.id}>
-                      <td className="px-4 py-3 font-medium text-gray-700">{detail.product?.name}</td>
-                      <td className="px-4 py-3 text-center text-gray-600">{detail.quantity}</td>
-                      <td className="px-4 py-3 text-right text-gray-600">{formatNumberWithDong(detail.price)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-900">{formatNumberWithDong(detail.quantity * detail.price)}</td>
+                      <td className="px-4 py-3 font-medium text-gray-700">
+                        {detail.product?.name}
+                      </td>
+                      <td className="px-4 py-3 text-center text-gray-600">
+                        {detail.quantity}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-600">
+                        {formatNumberWithDong(detail.price)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-gray-900">
+                        {formatNumberWithDong(detail.quantity * detail.price)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-blue-50/30">
                   <tr>
-                    <td colSpan={3} className="px-4 py-4 font-bold text-gray-700">Tổng cộng</td>
-                    <td className="px-4 py-4 text-right font-black text-blue-600 text-lg">{formatNumberWithDong(selectedStockIn.totalAmount)}</td>
+                    <td
+                      colSpan={3}
+                      className="px-4 py-4 font-bold text-gray-700"
+                    >
+                      Tổng cộng
+                    </td>
+                    <td className="px-4 py-4 text-right font-black text-blue-600 text-lg">
+                      {formatNumberWithDong(selectedStockIn.totalAmount)}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
             <div className="flex justify-end">
-              <button onClick={closeDetailModal} className="px-6 py-2 text-sm font-medium text-gray-500 border rounded-xl hover:bg-gray-50">Đóng</button>
+              <button
+                onClick={closeDetailModal}
+                className="px-6 py-2 text-sm font-medium text-gray-500 border rounded-xl hover:bg-gray-50"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         )}
       </AppModal>
     </div>
-  )
+  );
 }

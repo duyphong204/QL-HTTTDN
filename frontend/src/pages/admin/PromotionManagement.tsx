@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Tag, Plus, Pencil, Trash2, Power } from 'lucide-react';
-import { usePromotionStore } from '@/stores/promotion.store';
-import type { Promotion } from '@/types/promotion.type';
-import { PromotionFormModal } from '@/components/forms/PromotionFormModal';
-import { DataTableToolbar } from '@/components/common/DataTableToolbar';
+import { useEffect, useMemo, useState } from "react";
+import { Tag, Plus, Pencil, Trash2, Power } from "lucide-react";
+import { usePromotionStore } from "@/stores/promotion.store";
+import type { Promotion } from "@/types/promotion.type";
+import { PromotionFormModal } from "@/components/forms/PromotionFormModal";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 
 export default function PromotionManagement() {
   const {
@@ -17,8 +17,10 @@ export default function PromotionManagement() {
   } = usePromotionStore();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(
+    null,
+  );
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchPromotions();
@@ -31,9 +33,8 @@ export default function PromotionManagement() {
 
   const filteredPromotions = useMemo(() => {
     if (!searchTerm.trim()) return promotions;
-    return promotions.filter(
-      (promotion) =>
-        promotion.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    return promotions.filter((promotion) =>
+      promotion.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [promotions, searchTerm]);
 
@@ -92,7 +93,8 @@ export default function PromotionManagement() {
 
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-white border border-gray-200 px-4 py-2.5 text-sm text-gray-700">
-              Đang hoạt động: <span className="font-semibold text-blue-700">{activeCount}</span>
+              Đang hoạt động:{" "}
+              <span className="font-semibold text-blue-700">{activeCount}</span>
             </div>
             <button
               onClick={openCreateModal}
@@ -128,38 +130,55 @@ export default function PromotionManagement() {
                 <tbody className="divide-y divide-gray-50">
                   {isLoading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                      <td
+                        colSpan={6}
+                        className="px-6 py-10 text-center text-gray-400"
+                      >
                         Đang tải dữ liệu...
                       </td>
                     </tr>
                   ) : filteredPromotions.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
-                        {searchTerm ? 'Không tìm thấy chương trình nào phù hợp.' : 'Chưa có chương trình nào.'}
+                      <td
+                        colSpan={6}
+                        className="px-6 py-10 text-center text-gray-400"
+                      >
+                        {searchTerm
+                          ? "Không tìm thấy chương trình nào phù hợp."
+                          : "Chưa có chương trình nào."}
                       </td>
                     </tr>
                   ) : (
                     filteredPromotions.map((promotion) => (
-                      <tr key={promotion.id} className="transition-colors hover:bg-gray-50/70">
-                        <td className="px-6 py-4 font-semibold text-gray-900">{promotion.name}</td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {promotion.type === 'PERCENT' ? 'Phần trăm (%)' : 'Số tiền (đ)'}
+                      <tr
+                        key={promotion.id}
+                        className="transition-colors hover:bg-gray-50/70"
+                      >
+                        <td className="px-6 py-4 font-semibold text-gray-900">
+                          {promotion.name}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {promotion.type === 'PERCENT'
+                          {promotion.type === "PERCENT"
+                            ? "Phần trăm (%)"
+                            : "Số tiền (đ)"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {promotion.type === "PERCENT"
                             ? `${promotion.value}%`
-                            : `${promotion.value.toLocaleString('vi-VN')} đ`}
+                            : `${promotion.value.toLocaleString("vi-VN")} đ`}
                         </td>
-                        <td className="px-6 py-4 text-gray-600">{promotion.products.length} sản phẩm</td>
+                        <td className="px-6 py-4 text-gray-600">
+                          {promotion.products.length} sản phẩm
+                        </td>
                         <td className="px-6 py-4">
                           <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                               promotion.isActive
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600"
                             }`}
                           >
-                            {promotion.isActive ? 'Đang bật' : 'Tắt'}
+                            {promotion.isActive ? "Đang bật" : "Tắt"}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -178,12 +197,14 @@ export default function PromotionManagement() {
                                 })
                               }
                               className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
-                              title={promotion.isActive ? 'Tắt' : 'Bật'}
+                              title={promotion.isActive ? "Tắt" : "Bật"}
                             >
                               <Power size={18} />
                             </button>
                             <button
-                              onClick={() => handleDelete(promotion.id, promotion.name)}
+                              onClick={() =>
+                                handleDelete(promotion.id, promotion.name)
+                              }
                               className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Xóa"
                             >

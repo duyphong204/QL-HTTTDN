@@ -1,9 +1,9 @@
-import { useCartStore } from '@/stores/cart.store';
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ArrowLeft, MapPin, ShieldCheck, Lock } from 'lucide-react';
-import { useOrderStore } from '@/stores/order.store';
+import { useCartStore } from "@/stores/cart.store";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
+import { ArrowLeft, MapPin, ShieldCheck, Lock } from "lucide-react";
+import { useOrderStore } from "@/stores/order.store";
 
 type CheckoutErrors = {
   fullName?: string;
@@ -11,19 +11,18 @@ type CheckoutErrors = {
   address?: string;
 };
 
-const normalizePhone = (value: string): string =>
-  value.replace(/[\s.-]/g, '');
+const normalizePhone = (value: string): string => value.replace(/[\s.-]/g, "");
 
 const validateFullName = (value: string): string | undefined => {
   const trimmed = value.trim();
   if (!trimmed) {
-    return 'Vui lòng nhập họ tên người nhận';
+    return "Vui lòng nhập họ tên người nhận";
   }
   if (trimmed.length < 2) {
-    return 'Họ tên phải có ít nhất 2 ký tự';
+    return "Họ tên phải có ít nhất 2 ký tự";
   }
   if (!/^[A-Za-zÀ-ỹ\s]+$/.test(trimmed)) {
-    return 'Họ tên chỉ được chứa chữ cái và khoảng trắng';
+    return "Họ tên chỉ được chứa chữ cái và khoảng trắng";
   }
   return undefined;
 };
@@ -31,10 +30,10 @@ const validateFullName = (value: string): string | undefined => {
 const validatePhone = (value: string): string | undefined => {
   const normalized = normalizePhone(value.trim());
   if (!normalized) {
-    return 'Vui lòng nhập số điện thoại';
+    return "Vui lòng nhập số điện thoại";
   }
   if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(normalized)) {
-    return 'Số điện thoại không hợp lệ (ví dụ: 09xxxxxxxx)';
+    return "Số điện thoại không hợp lệ (ví dụ: 09xxxxxxxx)";
   }
   return undefined;
 };
@@ -42,10 +41,10 @@ const validatePhone = (value: string): string | undefined => {
 const validateAddress = (value: string): string | undefined => {
   const trimmed = value.trim();
   if (!trimmed) {
-    return 'Vui lòng nhập địa chỉ giao hàng';
+    return "Vui lòng nhập địa chỉ giao hàng";
   }
   if (trimmed.length < 8) {
-    return 'Địa chỉ phải có ít nhất 8 ký tự';
+    return "Địa chỉ phải có ít nhất 8 ký tự";
   }
   return undefined;
 };
@@ -56,17 +55,17 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    fullName: '',
-    phone: '',
-    address: '',
-    paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER',
+    fullName: "",
+    phone: "",
+    address: "",
+    paymentMethod: "COD" as "COD" | "BANK_TRANSFER",
   });
   const [errors, setErrors] = useState<CheckoutErrors>({});
 
   const [loading, setLoading] = useState(false);
 
   const getUnitPrice = (price: number, salePrice?: number) =>
-    typeof salePrice === 'number' ? salePrice : price;
+    typeof salePrice === "number" ? salePrice : price;
 
   const subtotal = items.reduce(
     (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
@@ -91,12 +90,15 @@ export default function CheckoutPage() {
   };
 
   const validateFieldOnBlur = (field: keyof CheckoutErrors) => {
-    if (field === 'fullName') {
-      setErrors((prev) => ({ ...prev, fullName: validateFullName(form.fullName) }));
+    if (field === "fullName") {
+      setErrors((prev) => ({
+        ...prev,
+        fullName: validateFullName(form.fullName),
+      }));
       return;
     }
 
-    if (field === 'phone') {
+    if (field === "phone") {
       setErrors((prev) => ({ ...prev, phone: validatePhone(form.phone) }));
       return;
     }
@@ -106,12 +108,12 @@ export default function CheckoutPage() {
 
   const handleSubmit = async () => {
     if (!items.length) {
-      toast.error('Giỏ hàng trống');
+      toast.error("Giỏ hàng trống");
       return;
     }
 
     if (!validateForm()) {
-      toast.error('Vui lòng kiểm tra lại thông tin nhận hàng');
+      toast.error("Vui lòng kiểm tra lại thông tin nhận hàng");
       return;
     }
 
@@ -132,21 +134,24 @@ export default function CheckoutPage() {
       const res = await createOrder(payload);
 
       if (res.requiresPayment && res.paymentUrl) {
-        toast.success('Đang chuyển sang cổng thanh toán MoMo...');
+        toast.success("Đang chuyển sang cổng thanh toán MoMo...");
         window.location.href = res.paymentUrl;
         return;
       }
 
       await clearCart();
-      toast.success('Đặt hàng thành công 🎉');
+      toast.success("Đặt hàng thành công 🎉");
       navigate(`/order-success/${res.order.id}`);
     } catch (err: unknown) {
       const typedError = err as Error & { code?: string; productId?: string };
-      const message = typedError instanceof Error ? typedError.message : 'Lỗi đặt hàng';
+      const message =
+        typedError instanceof Error ? typedError.message : "Lỗi đặt hàng";
 
-      if (typedError.code === 'PRODUCT_NOT_FOUND' && typedError.productId) {
+      if (typedError.code === "PRODUCT_NOT_FOUND" && typedError.productId) {
         removeFromCart(typedError.productId);
-        toast.error('Một sản phẩm trong giỏ đã bị xóa khỏi hệ thống. Đã cập nhật lại giỏ hàng.');
+        toast.error(
+          "Một sản phẩm trong giỏ đã bị xóa khỏi hệ thống. Đã cập nhật lại giỏ hàng.",
+        );
         return;
       }
 
@@ -156,7 +161,9 @@ export default function CheckoutPage() {
 
       if (match?.[1]) {
         removeFromCart(match[1]);
-        toast.error('Một sản phẩm trong giỏ đã bị xóa khỏi hệ thống. Đã cập nhật lại giỏ hàng.');
+        toast.error(
+          "Một sản phẩm trong giỏ đã bị xóa khỏi hệ thống. Đã cập nhật lại giỏ hàng.",
+        );
         return;
       }
 
@@ -203,15 +210,17 @@ export default function CheckoutPage() {
                   placeholder="Nguyễn Hoàng Phú"
                   className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
                     errors.fullName
-                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
-                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                      ? "border-red-300 focus:ring-red-500/20 focus:border-red-400"
+                      : "border-gray-300 focus:ring-blue-500/30 focus:border-blue-400"
                   }`}
                   value={form.fullName}
-                  onChange={(e) => updateField('fullName', e.target.value)}
-                  onBlur={() => validateFieldOnBlur('fullName')}
+                  onChange={(e) => updateField("fullName", e.target.value)}
+                  onBlur={() => validateFieldOnBlur("fullName")}
                 />
                 {errors.fullName ? (
-                  <p className="text-sm text-red-600 mt-1.5">{errors.fullName}</p>
+                  <p className="text-sm text-red-600 mt-1.5">
+                    {errors.fullName}
+                  </p>
                 ) : null}
               </div>
 
@@ -225,12 +234,12 @@ export default function CheckoutPage() {
                   placeholder="0123 456 789"
                   className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
                     errors.phone
-                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
-                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                      ? "border-red-300 focus:ring-red-500/20 focus:border-red-400"
+                      : "border-gray-300 focus:ring-blue-500/30 focus:border-blue-400"
                   }`}
                   value={form.phone}
-                  onChange={(e) => updateField('phone', e.target.value)}
-                  onBlur={() => validateFieldOnBlur('phone')}
+                  onChange={(e) => updateField("phone", e.target.value)}
+                  onBlur={() => validateFieldOnBlur("phone")}
                 />
                 {errors.phone ? (
                   <p className="text-sm text-red-600 mt-1.5">{errors.phone}</p>
@@ -247,15 +256,17 @@ export default function CheckoutPage() {
                   placeholder="123 Đường ABC, Quận 1, TP.HCM"
                   className={`w-full px-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition ${
                     errors.address
-                      ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
-                      : 'border-gray-300 focus:ring-blue-500/30 focus:border-blue-400'
+                      ? "border-red-300 focus:ring-red-500/20 focus:border-red-400"
+                      : "border-gray-300 focus:ring-blue-500/30 focus:border-blue-400"
                   }`}
                   value={form.address}
-                  onChange={(e) => updateField('address', e.target.value)}
-                  onBlur={() => validateFieldOnBlur('address')}
+                  onChange={(e) => updateField("address", e.target.value)}
+                  onBlur={() => validateFieldOnBlur("address")}
                 />
                 {errors.address ? (
-                  <p className="text-sm text-red-600 mt-1.5">{errors.address}</p>
+                  <p className="text-sm text-red-600 mt-1.5">
+                    {errors.address}
+                  </p>
                 ) : null}
               </div>
 
@@ -269,10 +280,14 @@ export default function CheckoutPage() {
                       type="radio"
                       name="paymentMethod"
                       value="COD"
-                      checked={form.paymentMethod === 'COD'}
-                      onChange={() => setForm({ ...form, paymentMethod: 'COD' })}
+                      checked={form.paymentMethod === "COD"}
+                      onChange={() =>
+                        setForm({ ...form, paymentMethod: "COD" })
+                      }
                     />
-                    <span className="text-sm text-gray-800">Thanh toán khi nhận hàng (COD)</span>
+                    <span className="text-sm text-gray-800">
+                      Thanh toán khi nhận hàng (COD)
+                    </span>
                   </label>
 
                   <label className="flex items-center gap-3 border border-gray-300 rounded-xl px-4 py-3 cursor-pointer hover:border-blue-400 transition">
@@ -280,12 +295,14 @@ export default function CheckoutPage() {
                       type="radio"
                       name="paymentMethod"
                       value="BANK_TRANSFER"
-                      checked={form.paymentMethod === 'BANK_TRANSFER'}
+                      checked={form.paymentMethod === "BANK_TRANSFER"}
                       onChange={() =>
-                        setForm({ ...form, paymentMethod: 'BANK_TRANSFER' })
+                        setForm({ ...form, paymentMethod: "BANK_TRANSFER" })
                       }
                     />
-                    <span className="text-sm text-gray-800">Thanh toán ngân hàng</span>
+                    <span className="text-sm text-gray-800">
+                      Thanh toán ngân hàng
+                    </span>
                   </label>
                 </div>
               </div>
@@ -296,27 +313,37 @@ export default function CheckoutPage() {
         {/* ==================== RIGHT: ORDER SUMMARY ==================== */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Order Summary
+            </h2>
 
             <div className="space-y-6 mb-8">
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4">
                   <div className="w-16 h-16 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                     <img
-                      src={item.imageUrl || 'https://via.placeholder.com/150'}
+                      src={item.imageUrl || "https://via.placeholder.com/150"}
                       alt={item.name}
                       className="w-full h-full object-contain"
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 line-clamp-2">{item.name}</h3>
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
-                    <p className="text-sm font-medium text-blue-600 mt-1">
-                      {(getUnitPrice(item.price, item.salePrice) * item.quantity).toLocaleString('vi-VN')} đ
+                    <h3 className="font-medium text-gray-900 line-clamp-2">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Qty: {item.quantity}
                     </p>
-                    {typeof item.salePrice === 'number' && item.salePrice < item.price ? (
+                    <p className="text-sm font-medium text-blue-600 mt-1">
+                      {(
+                        getUnitPrice(item.price, item.salePrice) * item.quantity
+                      ).toLocaleString("vi-VN")}{" "}
+                      đ
+                    </p>
+                    {typeof item.salePrice === "number" &&
+                    item.salePrice < item.price ? (
                       <p className="text-xs text-gray-400 line-through">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                        {(item.price * item.quantity).toLocaleString("vi-VN")} đ
                       </p>
                     ) : null}
                   </div>
@@ -327,7 +354,7 @@ export default function CheckoutPage() {
             <div className="space-y-4 pt-6 border-t border-gray-200">
               <div className="flex justify-between text-gray-700">
                 <span>Subtotal</span>
-                <span>{subtotal.toLocaleString('vi-VN')} đ</span>
+                <span>{subtotal.toLocaleString("vi-VN")} đ</span>
               </div>
               <div className="flex justify-between text-gray-700">
                 <span>Shipping</span>
@@ -335,7 +362,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-2xl font-bold text-gray-900 pt-4 border-t border-gray-200">
                 <span>Total</span>
-                <span>{total.toLocaleString('vi-VN')} đ</span>
+                <span>{total.toLocaleString("vi-VN")} đ</span>
               </div>
             </div>
 
@@ -344,11 +371,13 @@ export default function CheckoutPage() {
               onClick={handleSubmit}
               disabled={loading}
               className={`mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition disabled:opacity-70 ${
-                loading ? 'animate-pulse' : ''
+                loading ? "animate-pulse" : ""
               }`}
             >
               <Lock size={18} />
-              {loading ? 'Đang xử lý...' : `Place Order - ${total.toLocaleString('vi-VN')} đ`}
+              {loading
+                ? "Đang xử lý..."
+                : `Place Order - ${total.toLocaleString("vi-VN")} đ`}
             </button>
 
             {/* Secure badge */}

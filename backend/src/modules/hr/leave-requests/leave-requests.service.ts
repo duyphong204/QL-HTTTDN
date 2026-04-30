@@ -111,7 +111,12 @@ export class LeaveRequestsService {
     }));
   }
 
-  async updateStatus(id: string, status: string, adminId: string, rejectionReason?: string) {
+  async updateStatus(
+    id: string,
+    status: string,
+    adminId: string,
+    rejectionReason?: string,
+  ) {
     const leave = await this.prisma.leaveRequest.findUnique({
       where: { id },
     });

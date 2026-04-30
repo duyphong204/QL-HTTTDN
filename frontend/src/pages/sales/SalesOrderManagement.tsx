@@ -1,64 +1,75 @@
-import { useEffect, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
-import { useSalesStore } from '@/stores/sales.store';
-import { DataTableToolbar } from '@/components/common/DataTableToolbar';
-import { PaginationControls } from '@/components/common/PaginationControls';
-import { useClientTable } from '@/hooks/useClientTable';
+import { useEffect, useState } from "react";
+import { ShoppingCart } from "lucide-react";
+import { useSalesStore } from "@/stores/sales.store";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { useClientTable } from "@/hooks/useClientTable";
 
-type AdminOrderStatus = 'PENDING' | 'APPROVED' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
+type AdminOrderStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "SHIPPING"
+  | "COMPLETED"
+  | "CANCELLED";
 
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
-  PENDING: 'Chờ xác nhận',
-  APPROVED: 'Đã xác nhận',
-  SHIPPING: 'Đang giao',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
+  PENDING: "Chờ xác nhận",
+  APPROVED: "Đã xác nhận",
+  SHIPPING: "Đang giao",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
 const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-700',
-  APPROVED: 'bg-blue-100 text-blue-700',
-  SHIPPING: 'bg-indigo-100 text-indigo-700',
-  COMPLETED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
+  PENDING: "bg-amber-100 text-amber-700",
+  APPROVED: "bg-blue-100 text-blue-700",
+  SHIPPING: "bg-indigo-100 text-indigo-700",
+  COMPLETED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-700",
 };
 
 const formatCurrency = (n: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n || 0);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    n || 0,
+  );
 
 const formatPaymentMethod = (method?: string) => {
-  if (method === 'COD') return 'COD';
-  if (method === 'BANK_TRANSFER') return 'Chuyển khoản';
-  return method || '—';
+  if (method === "COD") return "COD";
+  if (method === "BANK_TRANSFER") return "Chuyển khoản";
+  return method || "—";
 };
 
 export default function SalesOrderManagement() {
   const { orders, isLoading, fetchOrders, updateOrderStatus } = useSalesStore();
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: orders,
-    pageSize: 10,
-    searchFn: (order, keyword) => {
-      const orderCode = order.id.slice(0, 8).toLowerCase();
-      const customerName = (order.customerName || '').toLowerCase();
-      const receiverName = (order.fullName || '').toLowerCase();
-      const phone = (order.phone || '').toLowerCase();
-      return (
-        orderCode.includes(keyword) ||
-        customerName.includes(keyword) ||
-        receiverName.includes(keyword) ||
-        phone.includes(keyword)
-      );
-    },
-  });
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } =
+    useClientTable({
+      data: orders,
+      pageSize: 10,
+      searchFn: (order, keyword) => {
+        const orderCode = order.id.slice(0, 8).toLowerCase();
+        const customerName = (order.customerName || "").toLowerCase();
+        const receiverName = (order.fullName || "").toLowerCase();
+        const phone = (order.phone || "").toLowerCase();
+        return (
+          orderCode.includes(keyword) ||
+          customerName.includes(keyword) ||
+          receiverName.includes(keyword) ||
+          phone.includes(keyword)
+        );
+      },
+    });
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleStatusChange = async (orderId: string, nextStatus: AdminOrderStatus) => {
-    if (nextStatus === 'PENDING') {
+  const handleStatusChange = async (
+    orderId: string,
+    nextStatus: AdminOrderStatus,
+  ) => {
+    if (nextStatus === "PENDING") {
       return;
     }
 
@@ -77,9 +88,12 @@ export default function SalesOrderManagement() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart className="text-blue-600" size={28} /> Quản lý đơn hàng
+            <ShoppingCart className="text-blue-600" size={28} /> Quản lý đơn
+            hàng
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Xác nhận và cập nhật trạng thái đơn hàng từ khách</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Xác nhận và cập nhật trạng thái đơn hàng từ khách
+          </p>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
@@ -105,30 +119,44 @@ export default function SalesOrderManagement() {
               <tbody className="divide-y divide-gray-50">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
                       Đang tải...
                     </td>
                   </tr>
                 ) : pagedData.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+                    <td
+                      colSpan={7}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
                       Chưa có đơn hàng nào.
                     </td>
                   </tr>
                 ) : (
                   pagedData.map((o) => {
-                    const status = String(o.status).toUpperCase() as AdminOrderStatus;
-                    const badgeClass = STATUS_BADGE_CLASS[status] ?? 'bg-gray-100 text-gray-700';
+                    const status = String(
+                      o.status,
+                    ).toUpperCase() as AdminOrderStatus;
+                    const badgeClass =
+                      STATUS_BADGE_CLASS[status] ?? "bg-gray-100 text-gray-700";
 
                     return (
-                      <tr key={o.id} className="hover:bg-gray-50/70 transition-colors">
+                      <tr
+                        key={o.id}
+                        className="hover:bg-gray-50/70 transition-colors"
+                      >
                         <td className="px-6 py-4 font-mono text-gray-900">
                           {o.id.slice(0, 8).toUpperCase()}
                         </td>
-                        <td className="px-6 py-4 font-medium text-gray-800">{o.fullName}</td>
+                        <td className="px-6 py-4 font-medium text-gray-800">
+                          {o.fullName}
+                        </td>
                         <td className="px-6 py-4 text-gray-600">{o.phone}</td>
                         <td className="px-6 py-4 text-gray-500">
-                          {new Date(o.createdAt).toLocaleDateString('vi-VN')}
+                          {new Date(o.createdAt).toLocaleDateString("vi-VN")}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
                           {formatPaymentMethod(o.paymentMethod)}
@@ -138,17 +166,24 @@ export default function SalesOrderManagement() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex flex-col items-center gap-2">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+                            <span
+                              className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}
+                            >
                               {STATUS_LABEL[status] ?? status}
                             </span>
                             <select
                               value={status}
                               disabled={
                                 updatingOrderId === o.id ||
-                                status === 'COMPLETED' ||
-                                status === 'CANCELLED'
+                                status === "COMPLETED" ||
+                                status === "CANCELLED"
                               }
-                              onChange={(e) => handleStatusChange(o.id, e.target.value as AdminOrderStatus)}
+                              onChange={(e) =>
+                                handleStatusChange(
+                                  o.id,
+                                  e.target.value as AdminOrderStatus,
+                                )
+                              }
                               className="h-8 px-2 text-xs border border-gray-200 rounded-md bg-white focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                             >
                               <option value="PENDING">Chờ xác nhận</option>

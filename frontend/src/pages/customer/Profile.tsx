@@ -1,25 +1,29 @@
-import { useAuthStore } from '@/stores/auth.store';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Mail, Package, ShieldCheck, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
-import { useOrderStore, type OrderHistoryItem, type OrderHistoryOrder } from '@/stores/order.store';
+import { useAuthStore } from "@/stores/auth.store";
+import { useNavigate } from "react-router-dom";
+import { LogOut, User, Mail, Package, ShieldCheck, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useOrderStore,
+  type OrderHistoryItem,
+  type OrderHistoryOrder,
+} from "@/stores/order.store";
 
 type OrderStatusTab =
-  | 'ALL'
-  | 'PENDING'
-  | 'APPROVED'
-  | 'SHIPPING'
-  | 'COMPLETED'
-  | 'CANCELLED';
+  | "ALL"
+  | "PENDING"
+  | "APPROVED"
+  | "SHIPPING"
+  | "COMPLETED"
+  | "CANCELLED";
 
 const STATUS_LABEL_MAP: Record<OrderStatusTab, string> = {
-  ALL: 'Tất cả',
-  PENDING: 'Chờ xác nhận',
-  APPROVED: 'Đã xác nhận',
-  SHIPPING: 'Đang giao',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
+  ALL: "Tất cả",
+  PENDING: "Chờ xác nhận",
+  APPROVED: "Đã xác nhận",
+  SHIPPING: "Đang giao",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
 const INITIAL_VISIBLE_ORDERS = 10;
@@ -28,7 +32,7 @@ export default function Profile() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { orders, fetchMyOrders, loading } = useOrderStore();
-  const [activeTab, setActiveTab] = useState<OrderStatusTab>('ALL');
+  const [activeTab, setActiveTab] = useState<OrderStatusTab>("ALL");
   const [showAllOrders, setShowAllOrders] = useState(false);
 
   useEffect(() => {
@@ -38,7 +42,9 @@ export default function Profile() {
   const statusCounts = useMemo(() => {
     return orders.reduce(
       (acc, order) => {
-        const status = String(order.status || '').toUpperCase() as OrderStatusTab;
+        const status = String(
+          order.status || "",
+        ).toUpperCase() as OrderStatusTab;
         if (status in acc) {
           acc[status] += 1;
         }
@@ -57,12 +63,12 @@ export default function Profile() {
   }, [orders]);
 
   const displayedOrders = useMemo(() => {
-    if (activeTab === 'ALL') {
+    if (activeTab === "ALL") {
       return orders;
     }
 
     return orders.filter(
-      (order) => String(order.status || '').toUpperCase() === activeTab,
+      (order) => String(order.status || "").toUpperCase() === activeTab,
     );
   }, [activeTab, orders]);
 
@@ -75,23 +81,25 @@ export default function Profile() {
   }, [displayedOrders, showAllOrders]);
 
   const tabs: OrderStatusTab[] = [
-    'ALL',
-    'PENDING',
-    'APPROVED',
-    'SHIPPING',
-    'COMPLETED',
-    'CANCELLED',
+    "ALL",
+    "PENDING",
+    "APPROVED",
+    "SHIPPING",
+    "COMPLETED",
+    "CANCELLED",
   ];
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg text-gray-600 animate-pulse">Đang tải thông tin...</div>
+        <div className="text-lg text-gray-600 animate-pulse">
+          Đang tải thông tin...
+        </div>
       </div>
     );
   }
@@ -104,7 +112,9 @@ export default function Profile() {
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
             Tài khoản của bạn
           </h1>
-          <p className="text-gray-600 mt-2">Quản lý thông tin cá nhân và đơn hàng</p>
+          <p className="text-gray-600 mt-2">
+            Quản lý thông tin cá nhân và đơn hàng
+          </p>
         </div>
 
         <button
@@ -125,7 +135,7 @@ export default function Profile() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                {user.profile?.fullName || user.email || 'Người dùng'}
+                {user.profile?.fullName || user.email || "Người dùng"}
               </h2>
               <p className="text-gray-500 text-sm flex items-center gap-1.5 mt-1">
                 <Mail size={16} />
@@ -148,13 +158,14 @@ export default function Profile() {
               <Clock size={24} className="text-blue-600 mt-1" />
               <div>
                 <h3 className="font-medium text-gray-900">Thành viên từ</h3>
-                <p className="text-sm text-gray-600 mt-1">Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-
 
       {/* Lịch sử đơn hàng */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[560px] flex flex-col">
@@ -180,7 +191,9 @@ export default function Profile() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-10 text-gray-600 min-h-[320px] flex flex-col items-center justify-center">
-              <p className="font-medium text-gray-700 text-lg">Bạn chưa có đơn hàng nào</p>
+              <p className="font-medium text-gray-700 text-lg">
+                Bạn chưa có đơn hàng nào
+              </p>
               <Link
                 to="/products"
                 className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-xl transition shadow-sm hover:shadow"
@@ -201,8 +214,8 @@ export default function Profile() {
                     }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
                       activeTab === tab
-                        ? 'bg-blue-100 border-blue-300 text-blue-800'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        ? "bg-blue-100 border-blue-300 text-blue-800"
+                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     {STATUS_LABEL_MAP[tab]} ({statusCounts[tab]})
@@ -212,71 +225,84 @@ export default function Profile() {
 
               {displayedOrders.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 border border-dashed border-gray-300 rounded-xl">
-                  Không có đơn nào ở trạng thái {STATUS_LABEL_MAP[activeTab].toLowerCase()}.
+                  Không có đơn nào ở trạng thái{" "}
+                  {STATUS_LABEL_MAP[activeTab].toLowerCase()}.
                 </div>
-              ) : visibleOrders.map((order: OrderHistoryOrder) => {
-                const items: OrderHistoryItem[] = Array.isArray(order.items)
-                  ? order.items
-                  : [];
-                const status = String(order.status || '').toUpperCase();
+              ) : (
+                visibleOrders.map((order: OrderHistoryOrder) => {
+                  const items: OrderHistoryItem[] = Array.isArray(order.items)
+                    ? order.items
+                    : [];
+                  const status = String(order.status || "").toUpperCase();
 
-                return (
-                  <div
-                    key={order.id}
-                    onClick={() => navigate(`/orders/${order.id}`)}
-                    className="group bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors transition-shadow hover:shadow-md cursor-pointer"
-                  >
-                    {/* Header đơn hàng */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-gray-600">Mã đơn:</span>
-                        <span className="font-semibold text-gray-900">
-                          #{order.id.slice(0, 8).toUpperCase()}
+                  return (
+                    <div
+                      key={order.id}
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                      className="group bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors transition-shadow hover:shadow-md cursor-pointer"
+                    >
+                      {/* Header đơn hàng */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-gray-600">
+                            Mã đơn:
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            #{order.id.slice(0, 8).toUpperCase()}
+                          </span>
+                        </div>
+
+                        <span className="text-lg font-bold text-blue-600">
+                          {order.totalAmount.toLocaleString("vi-VN")} đ
                         </span>
                       </div>
 
-                      <span className="text-lg font-bold text-blue-600">
-                        {order.totalAmount.toLocaleString('vi-VN')} đ
-                      </span>
-                    </div>
+                      {/* Ngày + Trạng thái */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                        <div className="text-gray-600">
+                          {new Date(order.createdAt).toLocaleString("vi-VN", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })}
+                        </div>
 
-                    {/* Ngày + Trạng thái */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-                      <div className="text-gray-600">
-                        {new Date(order.createdAt).toLocaleString('vi-VN', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        })}
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                            status === "COMPLETED"
+                              ? "bg-green-100 text-green-700"
+                              : status === "SHIPPING"
+                                ? "bg-blue-100 text-blue-700"
+                                : status === "APPROVED" || status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : status === "CANCELLED"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {STATUS_LABEL_MAP[status as OrderStatusTab] || status}
+                        </span>
                       </div>
 
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                        status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                        status === 'SHIPPING' ? 'bg-blue-100 text-blue-700' :
-                        status === 'APPROVED' || status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                        status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {STATUS_LABEL_MAP[status as OrderStatusTab] || status}
-                      </span>
+                      {/* Preview sản phẩm - giữ nguyên như anh đang dùng */}
+                      <div className="mt-4 text-sm text-gray-600">
+                        {items.slice(0, 2).map((item: OrderHistoryItem) => (
+                          <div key={item.id} className="flex justify-between">
+                            <span className="line-clamp-1">
+                              {item.productName}
+                            </span>
+                            <span>x{item.quantity}</span>
+                          </div>
+                        ))}
+                        {items.length > 2 && (
+                          <div className="text-gray-500 mt-1">
+                            + {items.length - 2} sản phẩm khác
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Preview sản phẩm - giữ nguyên như anh đang dùng */}
-                    <div className="mt-4 text-sm text-gray-600">
-                      {items.slice(0, 2).map((item: OrderHistoryItem) => (
-                        <div key={item.id} className="flex justify-between">
-                          <span className="line-clamp-1">{item.productName}</span>
-                          <span>x{item.quantity}</span>
-                        </div>
-                      ))}
-                      {items.length > 2 && (
-                        <div className="text-gray-500 mt-1">
-                          + {items.length - 2} sản phẩm khác
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
 
               {displayedOrders.length > INITIAL_VISIBLE_ORDERS && (
                 <div className="flex justify-center pt-2">
@@ -286,7 +312,7 @@ export default function Profile() {
                     className="px-5 py-2 rounded-lg border border-blue-200 text-blue-700 font-medium hover:bg-blue-50 transition"
                   >
                     {showAllOrders
-                      ? 'Thu gọn danh sách'
+                      ? "Thu gọn danh sách"
                       : `Xem thêm ${displayedOrders.length - INITIAL_VISIBLE_ORDERS} đơn hàng`}
                   </button>
                 </div>

@@ -13,10 +13,10 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
-import type { RechartsChartData } from '@/types/report.types';
+} from "recharts";
+import type { RechartsChartData } from "@/types/report.types";
 
-type ChartType = 'line' | 'bar' | 'pie' | 'composed';
+type ChartType = "line" | "bar" | "pie" | "composed";
 
 interface RoleChartCardProps {
   title?: string;
@@ -27,19 +27,19 @@ interface RoleChartCardProps {
 
 // Palette mới: Tương phản cao, dễ phân biệt cho Pie Chart
 const PIE_COLORS = [
-  '#2563eb',   // Xanh dương đậm
-  '#ea580c',   // Cam đậm
-  '#16a34a',   // Xanh lá
-  '#dc2626',   // Đỏ
-  '#7c3aed',   // Tím
-  '#ca8a04',   // Vàng đậm
-  '#0ea5e9',   // Xanh dương sáng
-  '#db2777',   // Hồng đậm
-  '#14b8a6',   // Xanh ngọc
-  '#f97316',   // Cam sáng
+  "#2563eb", // Xanh dương đậm
+  "#ea580c", // Cam đậm
+  "#16a34a", // Xanh lá
+  "#dc2626", // Đỏ
+  "#7c3aed", // Tím
+  "#ca8a04", // Vàng đậm
+  "#0ea5e9", // Xanh dương sáng
+  "#db2777", // Hồng đậm
+  "#14b8a6", // Xanh ngọc
+  "#f97316", // Cam sáng
 ];
 
-const formatNumber = (value: number) => value.toLocaleString('vi-VN');
+const formatNumber = (value: number) => value.toLocaleString("vi-VN");
 const formatTooltipValue = (value: unknown) => formatNumber(Number(value ?? 0));
 
 const toSeries = (chart: RechartsChartData) =>
@@ -50,12 +50,25 @@ const toSeries = (chart: RechartsChartData) =>
     data: dataset.data,
   }));
 
-export function RoleChartCard({ title, chart, type, className = '' }: RoleChartCardProps) {
+export function RoleChartCard({
+  title,
+  chart,
+  type,
+  className = "",
+}: RoleChartCardProps) {
   if (!chart || !chart.labels.length || !chart.datasets.length) {
     return (
-      <div className={`rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ${className}`}>
-        {title && <h3 className="mb-4 text-base font-semibold text-slate-800">{title}</h3>}
-        <div className="flex h-72 items-center justify-center text-sm text-slate-400">Không có dữ liệu biểu đồ</div>
+      <div
+        className={`rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ${className}`}
+      >
+        {title && (
+          <h3 className="mb-4 text-base font-semibold text-slate-800">
+            {title}
+          </h3>
+        )}
+        <div className="flex h-72 items-center justify-center text-sm text-slate-400">
+          Không có dữ liệu biểu đồ
+        </div>
       </div>
     );
   }
@@ -75,12 +88,18 @@ export function RoleChartCard({ title, chart, type, className = '' }: RoleChartC
   }));
 
   return (
-    <div className={`rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ${className}`}>
-      {title && <h3 className="mb-4 text-base font-semibold text-slate-800">{title}</h3>}
-      
-      <div className="h-[420px] w-full">   {/* Tăng chiều cao để dễ nhìn hơn */}
+    <div
+      className={`rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ${className}`}
+    >
+      {title && (
+        <h3 className="mb-4 text-base font-semibold text-slate-800">{title}</h3>
+      )}
+
+      <div className="h-[420px] w-full">
+        {" "}
+        {/* Tăng chiều cao để dễ nhìn hơn */}
         <ResponsiveContainer width="100%" height="100%">
-          {type === 'line' ? (
+          {type === "line" ? (
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
@@ -88,32 +107,53 @@ export function RoleChartCard({ title, chart, type, className = '' }: RoleChartC
               <Tooltip formatter={formatTooltipValue} />
               <Legend />
               {series.map((item) => (
-                <Line key={item.key} dataKey={item.key} name={item.name} stroke={item.color} strokeWidth={2.5} dot={false} />
+                <Line
+                  key={item.key}
+                  dataKey={item.key}
+                  name={item.name}
+                  stroke={item.color}
+                  strokeWidth={2.5}
+                  dot={false}
+                />
               ))}
             </LineChart>
           ) : null}
 
-          {type === 'bar' ? (
-            <BarChart data={chartData} margin={{ bottom: 70, left: 10, right: 10 }}>
+          {type === "bar" ? (
+            <BarChart
+              data={chartData}
+              margin={{ bottom: 70, left: 10, right: 10 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis 
-                dataKey="label" 
-                tick={{ fontSize: 11, angle: -45, textAnchor: 'end' }}
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, angle: -45, textAnchor: "end" }}
                 height={80}
               />
               <YAxis tickFormatter={formatNumber} tick={{ fontSize: 12 }} />
               <Tooltip formatter={formatTooltipValue} />
               <Legend />
               {series.map((item) => (
-                <Bar key={item.key} dataKey={item.key} name={item.name} fill={item.color} radius={[4, 4, 0, 0]} />
+                <Bar
+                  key={item.key}
+                  dataKey={item.key}
+                  name={item.name}
+                  fill={item.color}
+                  radius={[4, 4, 0, 0]}
+                />
               ))}
             </BarChart>
           ) : null}
 
-          {type === 'pie' ? (
+          {type === "pie" ? (
             <PieChart>
               <Tooltip formatter={formatTooltipValue} />
-              <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" />
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                iconType="circle"
+              />
               <Pie
                 data={pieData}
                 dataKey="value"
@@ -125,9 +165,9 @@ export function RoleChartCard({ title, chart, type, className = '' }: RoleChartC
                 cy="48%"
               >
                 {pieData.map((_, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={PIE_COLORS[index % PIE_COLORS.length]}
                   />
                 ))}
               </Pie>

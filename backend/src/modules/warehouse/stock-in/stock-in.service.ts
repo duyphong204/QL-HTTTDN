@@ -18,13 +18,14 @@ export class StockInService {
     unitPrice: number,
   ) {
     const product = await tx.product.findUnique({ where: { id: productId } });
-    if (!product) throw new NotFoundException(`Sản phẩm ${productId} không tồn tại`);
+    if (!product)
+      throw new NotFoundException(`Sản phẩm ${productId} không tồn tại`);
 
     const newQuantity = product.stockQuantity + quantityChange;
 
     if (newQuantity < 0) {
       throw new BadRequestException(
-        `Sản phẩm ${product.name} đã được xuất bán, không thể hoàn tác số lượng lớn hơn tồn kho hiện tại (Hiện có: ${product.stockQuantity})`
+        `Sản phẩm ${product.name} đã được xuất bán, không thể hoàn tác số lượng lớn hơn tồn kho hiện tại (Hiện có: ${product.stockQuantity})`,
       );
     }
 
@@ -43,10 +44,18 @@ export class StockInService {
 
   async createStockIn(dto: CreateStockInDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      const totalAmount = dto.details.reduce((sum, item) => sum + item.quantity * item.price, 0);
+      const totalAmount = dto.details.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0,
+      );
 
       for (const item of dto.details) {
-        await this.applyStockChange(tx, item.productId, item.quantity, item.price);
+        await this.applyStockChange(
+          tx,
+          item.productId,
+          item.quantity,
+          item.price,
+        );
       }
 
       return tx.stockIn.create({
@@ -77,15 +86,28 @@ export class StockInService {
       if (!oldStockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
 
       for (const oldItem of oldStockIn.details) {
-        await this.applyStockChange(tx, oldItem.productId, -oldItem.quantity, oldItem.price);
+        await this.applyStockChange(
+          tx,
+          oldItem.productId,
+          -oldItem.quantity,
+          oldItem.price,
+        );
       }
 
       const nextDetails = dto.details || oldStockIn.details;
       for (const newItem of nextDetails) {
-        await this.applyStockChange(tx, newItem.productId, newItem.quantity, newItem.price);
+        await this.applyStockChange(
+          tx,
+          newItem.productId,
+          newItem.quantity,
+          newItem.price,
+        );
       }
 
-      const totalAmount = nextDetails.reduce((sum, item) => sum + item.quantity * item.price, 0);
+      const totalAmount = nextDetails.reduce(
+        (sum, item) => sum + item.quantity * item.price,
+        0,
+      );
 
       await tx.stockInDetail.deleteMany({ where: { stockInId: id } });
       return tx.stockIn.update({
@@ -115,7 +137,12 @@ export class StockInService {
       if (!stockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
 
       for (const item of stockIn.details) {
-        await this.applyStockChange(tx, item.productId, -item.quantity, item.price);
+        await this.applyStockChange(
+          tx,
+          item.productId,
+          -item.quantity,
+          item.price,
+        );
       }
 
       await tx.stockInDetail.deleteMany({ where: { stockInId: id } });

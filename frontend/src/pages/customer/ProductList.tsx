@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import ProductGrid from '@/components/Shop/ProductGrid';
-import { useProductStore } from '@/stores/product.store';
-import { Check, RefreshCw } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
-const ALL_CATEGORY = 'all';
-type SortOption = 'featured' | 'price-low' | 'price-high' | 'newest';
+import { useEffect, useState } from "react";
+import ProductGrid from "@/components/Shop/ProductGrid";
+import { useProductStore } from "@/stores/product.store";
+import { Check, RefreshCw } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+const ALL_CATEGORY = "all";
+type SortOption = "featured" | "price-low" | "price-high" | "newest";
 
 export default function ProductList() {
   const {
@@ -16,12 +16,11 @@ export default function ProductList() {
     fetchProductsByQuery,
     setPage,
     setFilters,
-  } =
-    useProductStore();
+  } = useProductStore();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeCategory = searchParams.get('categoryId') || ALL_CATEGORY;
-  const searchFromUrl = searchParams.get('search') || '';
-  const maxPriceFromUrlRaw = searchParams.get('maxPrice');
+  const activeCategory = searchParams.get("categoryId") || ALL_CATEGORY;
+  const searchFromUrl = searchParams.get("search") || "";
+  const maxPriceFromUrlRaw = searchParams.get("maxPrice");
   const maxPriceFromUrl =
     maxPriceFromUrlRaw && !Number.isNaN(Number(maxPriceFromUrlRaw))
       ? Number(maxPriceFromUrlRaw)
@@ -36,7 +35,7 @@ export default function ProductList() {
     const categoryIdFromUrl = activeCategory;
 
     setFilters({
-      categoryId: categoryIdFromUrl === ALL_CATEGORY ? '' : categoryIdFromUrl,
+      categoryId: categoryIdFromUrl === ALL_CATEGORY ? "" : categoryIdFromUrl,
       search: searchFromUrl,
       maxPrice: maxPriceFromUrl,
       limit: 12,
@@ -48,9 +47,9 @@ export default function ProductList() {
 
     const loadPriceCeiling = async () => {
       const response = await fetchProductsByQuery({
-        categoryId: activeCategory === ALL_CATEGORY ? '' : activeCategory,
+        categoryId: activeCategory === ALL_CATEGORY ? "" : activeCategory,
         search: searchFromUrl,
-        sortBy: 'price-high',
+        sortBy: "price-high",
         page: 1,
         limit: 1,
       });
@@ -71,7 +70,7 @@ export default function ProductList() {
   }, [activeCategory, fetchProductsByQuery, searchFromUrl]);
 
   const categoryOptions = [
-    { label: 'Tất cả', value: ALL_CATEGORY },
+    { label: "Tất cả", value: ALL_CATEGORY },
     ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
   ];
 
@@ -86,18 +85,18 @@ export default function ProductList() {
 
   const activeCategoryLabel =
     categoryOptions.find((cat) => cat.value === activeCategory)?.label ||
-    'Tất cả';
+    "Tất cả";
 
   const handleCategoryChange = (value: string) => {
     const nextParams = new URLSearchParams(searchParams);
 
     if (value === ALL_CATEGORY) {
-      nextParams.delete('categoryId');
+      nextParams.delete("categoryId");
     } else {
-      nextParams.set('categoryId', value);
+      nextParams.set("categoryId", value);
     }
 
-    nextParams.delete('maxPrice');
+    nextParams.delete("maxPrice");
 
     setSearchParams(nextParams);
   };
@@ -106,9 +105,9 @@ export default function ProductList() {
     const nextParams = new URLSearchParams(searchParams);
 
     if (value >= sliderMax) {
-      nextParams.delete('maxPrice');
+      nextParams.delete("maxPrice");
     } else {
-      nextParams.set('maxPrice', String(value));
+      nextParams.set("maxPrice", String(value));
     }
 
     setSearchParams(nextParams);
@@ -137,8 +136,8 @@ export default function ProductList() {
                     onClick={() => handleCategoryChange(cat.value)}
                     className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-between ${
                       activeCategory === cat.value
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                     }`}
                   >
                     <span>{cat.label}</span>
@@ -154,7 +153,7 @@ export default function ProductList() {
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="font-medium text-gray-700">Giá tối đa</span>
                 <span className="text-blue-700 font-semibold">
-                  {currentMaxSelectedPrice.toLocaleString('vi-VN')} đ
+                  {currentMaxSelectedPrice.toLocaleString("vi-VN")} đ
                 </span>
               </div>
               <input
@@ -167,14 +166,14 @@ export default function ProductList() {
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
                 <span>0 đ</span>
-                <span>{sliderMax.toLocaleString('vi-VN')} đ</span>
+                <span>{sliderMax.toLocaleString("vi-VN")} đ</span>
               </div>
             </div>
 
             <button
               onClick={() => {
                 const nextParams = new URLSearchParams(searchParams);
-                nextParams.delete('maxPrice');
+                nextParams.delete("maxPrice");
                 setSearchParams(nextParams);
                 handleCategoryChange(ALL_CATEGORY);
               }}
@@ -188,12 +187,12 @@ export default function ProductList() {
 
         {/* Main content */}
         <div className="lg:col-span-3">
-          <ProductGrid 
-            products={products} 
-            title={`Sản phẩm: ${activeCategoryLabel}`} 
-            showingCount={true} 
+          <ProductGrid
+            products={products}
+            title={`Sản phẩm: ${activeCategoryLabel}`}
+            showingCount={true}
             totalCount={totalCount}
-            sortBy={(filters.sortBy as SortOption) || 'featured'}
+            sortBy={(filters.sortBy as SortOption) || "featured"}
             onSortChange={handleSortChange}
           />
 

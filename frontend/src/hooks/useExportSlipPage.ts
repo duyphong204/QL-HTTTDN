@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
-import { toast } from 'sonner'
-import { useClientTable } from '@/hooks/useClientTable'
-import { useConfirmAction } from '@/hooks/useConfirmAction'
-import { useStockOutStore } from '@/stores/stockOut.store'
-import { useWarehouseReferenceStore } from '@/stores/warehouseReference.store'
-import { stockOutService } from '@/services/sales.service'
-import { productService } from '@/services/warehouse.service'
-import { getErrorMessage } from '@/stores/store.helpers'
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { toast } from "sonner";
+import { useClientTable } from "@/hooks/useClientTable";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { useStockOutStore } from "@/stores/stockOut.store";
+import { useWarehouseReferenceStore } from "@/stores/warehouseReference.store";
+import { stockOutService } from "@/services/sales.service";
+import { productService } from "@/services/warehouse.service";
+import { getErrorMessage } from "@/stores/store.helpers";
 import {
   StockOutStatus,
   StockOutType,
@@ -16,182 +16,204 @@ import {
   type StockOutItem,
   type StockOutQuery,
   type UpdateStockOutDto,
-} from '@/types/stockOut.types'
+} from "@/types/stockOut.types";
 
-const emptyItem = (): StockOutItem => ({ productId: '', quantity: 1, price: 0 })
+const emptyItem = (): StockOutItem => ({
+  productId: "",
+  quantity: 1,
+  price: 0,
+});
 
 export const useExportSlipPage = () => {
-  const stockOuts = useStockOutStore((state) => state.stockOuts)
-  const productOptions = useWarehouseReferenceStore((state) => state.products)
-  const isLoading = useStockOutStore((state) => state.isLoading)
-  const isLoadingProducts = useWarehouseReferenceStore((state) => state.isLoadingProducts)
-  const isSubmitting = useStockOutStore((state) => state.isSubmitting)
-  const setStockOuts = useStockOutStore((state) => state.setStockOuts)
-  const setProductOptions = useWarehouseReferenceStore((state) => state.setProducts)
-  const setLoading = useStockOutStore((state) => state.setLoading)
-  const setLoadingProducts = useWarehouseReferenceStore((state) => state.setLoadingProducts)
-  const setSubmitting = useStockOutStore((state) => state.setSubmitting)
-  const setError = useStockOutStore((state) => state.setError)
-  const { confirmAndRun } = useConfirmAction()
+  const stockOuts = useStockOutStore((state) => state.stockOuts);
+  const productOptions = useWarehouseReferenceStore((state) => state.products);
+  const isLoading = useStockOutStore((state) => state.isLoading);
+  const isLoadingProducts = useWarehouseReferenceStore(
+    (state) => state.isLoadingProducts,
+  );
+  const isSubmitting = useStockOutStore((state) => state.isSubmitting);
+  const setStockOuts = useStockOutStore((state) => state.setStockOuts);
+  const setProductOptions = useWarehouseReferenceStore(
+    (state) => state.setProducts,
+  );
+  const setLoading = useStockOutStore((state) => state.setLoading);
+  const setLoadingProducts = useWarehouseReferenceStore(
+    (state) => state.setLoadingProducts,
+  );
+  const setSubmitting = useStockOutStore((state) => state.setSubmitting);
+  const setError = useStockOutStore((state) => state.setError);
+  const { confirmAndRun } = useConfirmAction();
 
-  const [formOpen, setFormOpen] = useState(false)
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [selectedStockOut, setSelectedStockOut] = useState<StockOut | null>(null)
-  const [type, setType] = useState<keyof typeof StockOutType>('SALE')
-  const [filterStatus, setFilterStatus] = useState<string>('')
-  const [filterType, setFilterType] = useState<string>('')
-  const [items, setItems] = useState<StockOutItem[]>([emptyItem()])
+  const [formOpen, setFormOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedStockOut, setSelectedStockOut] = useState<StockOut | null>(
+    null,
+  );
+  const [type, setType] = useState<keyof typeof StockOutType>("SALE");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("");
+  const [items, setItems] = useState<StockOutItem[]>([emptyItem()]);
 
   const query = useMemo<StockOutQuery>(
     () => ({
-      ...(filterStatus ? { status: filterStatus as keyof typeof StockOutStatus } : {}),
+      ...(filterStatus
+        ? { status: filterStatus as keyof typeof StockOutStatus }
+        : {}),
       ...(filterType ? { type: filterType as keyof typeof StockOutType } : {}),
     }),
     [filterStatus, filterType],
-  )
+  );
 
   const table = useClientTable<StockOut>({
     data: stockOuts,
     pageSize: 10,
     searchFn: (stockOut, keyword) => {
-      const code = stockOut.id.slice(0, 8).toLowerCase()
-      const status = stockOut.status.toLowerCase()
-      const stockOutType = stockOut.type.toLowerCase()
-      return code.includes(keyword) || status.includes(keyword) || stockOutType.includes(keyword)
+      const code = stockOut.id.slice(0, 8).toLowerCase();
+      const status = stockOut.status.toLowerCase();
+      const stockOutType = stockOut.type.toLowerCase();
+      return (
+        code.includes(keyword) ||
+        status.includes(keyword) ||
+        stockOutType.includes(keyword)
+      );
     },
-  })
+  });
 
   const fetchProducts = useCallback(async () => {
-    setLoadingProducts(true)
-    setError(null)
+    setLoadingProducts(true);
+    setError(null);
     try {
       const response = await productService.getProducts({
         page: 1,
         limit: 200,
-        sortBy: 'name',
-        sortOrder: 'asc',
-      })
-      setProductOptions(response.data)
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      setProductOptions(response.data);
     } catch (error: unknown) {
-      const message = getErrorMessage(error)
-      setError(message)
-      toast.error(message)
+      const message = getErrorMessage(error);
+      setError(message);
+      toast.error(message);
     } finally {
-      setLoadingProducts(false)
+      setLoadingProducts(false);
     }
-  }, [setError, setLoadingProducts, setProductOptions])
+  }, [setError, setLoadingProducts, setProductOptions]);
 
   const fetchStockOuts = useCallback(
     async (params: StockOutQuery) => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const data = await stockOutService.getStockOuts(params)
-        setStockOuts(data)
+        const data = await stockOutService.getStockOuts(params);
+        setStockOuts(data);
       } catch (error: unknown) {
-        const message = getErrorMessage(error)
-        setError(message)
-        toast.error(message)
+        const message = getErrorMessage(error);
+        setError(message);
+        toast.error(message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     },
     [setError, setLoading, setStockOuts],
-  )
+  );
 
   const createStockOut = useCallback(
     async (payload: CreateStockOutDto) => {
-      setSubmitting(true)
-      setError(null)
+      setSubmitting(true);
+      setError(null);
       try {
-        const newStockOut = await stockOutService.createStockOut(payload)
-        setStockOuts([newStockOut, ...stockOuts])
-        toast.success('Tạo phiếu xuất thành công')
+        const newStockOut = await stockOutService.createStockOut(payload);
+        setStockOuts([newStockOut, ...stockOuts]);
+        toast.success("Tạo phiếu xuất thành công");
       } catch (error: unknown) {
-        const message = getErrorMessage(error)
-        setError(message)
-        toast.error(message)
-        throw error
+        const message = getErrorMessage(error);
+        setError(message);
+        toast.error(message);
+        throw error;
       } finally {
-        setSubmitting(false)
+        setSubmitting(false);
       }
     },
     [setError, setStockOuts, setSubmitting, stockOuts],
-  )
+  );
 
   const updateStockOut = useCallback(
     async (id: string, payload: UpdateStockOutDto) => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const updated = await stockOutService.updateStockOut(id, payload)
-        setStockOuts(stockOuts.map((stockOut) => (stockOut.id === id ? updated : stockOut)))
-        toast.success('Cập nhật phiếu xuất thành công')
+        const updated = await stockOutService.updateStockOut(id, payload);
+        setStockOuts(
+          stockOuts.map((stockOut) =>
+            stockOut.id === id ? updated : stockOut,
+          ),
+        );
+        toast.success("Cập nhật phiếu xuất thành công");
       } catch (error: unknown) {
-        const message = getErrorMessage(error)
-        setError(message)
-        toast.error(message)
-        throw error
+        const message = getErrorMessage(error);
+        setError(message);
+        toast.error(message);
+        throw error;
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     },
     [setError, setLoading, setStockOuts, stockOuts],
-  )
+  );
 
   const deleteStockOut = useCallback(
     async (id: string) => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        await stockOutService.deleteStockOut(id)
-        setStockOuts(stockOuts.filter((stockOut) => stockOut.id !== id))
-        toast.success('Xóa phiếu xuất thành công')
+        await stockOutService.deleteStockOut(id);
+        setStockOuts(stockOuts.filter((stockOut) => stockOut.id !== id));
+        toast.success("Xóa phiếu xuất thành công");
       } catch (error: unknown) {
-        const message = getErrorMessage(error)
-        setError(message)
-        toast.error(message)
-        throw error
+        const message = getErrorMessage(error);
+        setError(message);
+        toast.error(message);
+        throw error;
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     },
     [setError, setLoading, setStockOuts, stockOuts],
-  )
+  );
 
   const getStockOutById = useCallback(async (id: string) => {
     try {
-      return await stockOutService.getStockOutById(id)
+      return await stockOutService.getStockOutById(id);
     } catch (error: unknown) {
-      const message = getErrorMessage(error)
-      toast.error(message)
-      throw error
+      const message = getErrorMessage(error);
+      toast.error(message);
+      throw error;
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void fetchProducts()
-  }, [fetchProducts])
+    void fetchProducts();
+  }, [fetchProducts]);
 
   useEffect(() => {
-    void fetchStockOuts(query)
-  }, [fetchStockOuts, query])
+    void fetchStockOuts(query);
+  }, [fetchStockOuts, query]);
 
   const resetForm = () => {
-    setEditingId(null)
-    setType('SALE')
-    setItems([emptyItem()])
-  }
+    setEditingId(null);
+    setType("SALE");
+    setItems([emptyItem()]);
+  };
 
   const openCreateModal = () => {
-    resetForm()
-    setFormOpen(true)
-  }
+    resetForm();
+    setFormOpen(true);
+  };
 
   const openEditModal = (stockOut: StockOut) => {
-    setEditingId(stockOut.id)
-    setType(stockOut.type)
+    setEditingId(stockOut.id);
+    setType(stockOut.type);
     setItems(
       stockOut.details.length > 0
         ? stockOut.details.map((detail) => ({
@@ -200,59 +222,61 @@ export const useExportSlipPage = () => {
             price: detail.price,
           }))
         : [emptyItem()],
-    )
-    setFormOpen(true)
-  }
+    );
+    setFormOpen(true);
+  };
 
   const closeFormModal = () => {
-    setFormOpen(false)
-    resetForm()
-  }
+    setFormOpen(false);
+    resetForm();
+  };
 
   const openDetailModal = async (id: string) => {
-    const detail = await getStockOutById(id)
-    setSelectedStockOut(detail)
-    setDetailOpen(true)
-  }
+    const detail = await getStockOutById(id);
+    setSelectedStockOut(detail);
+    setDetailOpen(true);
+  };
 
   const closeDetailModal = () => {
-    setDetailOpen(false)
-    setSelectedStockOut(null)
-  }
+    setDetailOpen(false);
+    setSelectedStockOut(null);
+  };
 
-  const addItem = () => setItems((prev) => [...prev, emptyItem()])
+  const addItem = () => setItems((prev) => [...prev, emptyItem()]);
 
   const removeItem = (index: number) => {
-    setItems((prev) => (prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== index)))
-  }
+    setItems((prev) =>
+      prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== index),
+    );
+  };
 
   const updateItem = (
     index: number,
-    field: 'productId' | 'quantity' | 'price',
+    field: "productId" | "quantity" | "price",
     value: string | number,
   ) => {
     setItems((prev) =>
       prev.map((item, idx) => {
-        if (idx !== index) return item
-        if (field !== 'productId') return { ...item, [field]: value }
+        if (idx !== index) return item;
+        if (field !== "productId") return { ...item, [field]: value };
 
-        const selected = productOptions.find((product) => product.id === value)
+        const selected = productOptions.find((product) => product.id === value);
         return {
           ...item,
           productId: String(value),
           price: selected?.price ?? item.price,
-        }
+        };
       }),
-    )
-  }
+    );
+  };
 
   const totalAmount = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items],
-  )
+  );
 
   const submitForm = async (event: FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
 
     const payload = {
       type,
@@ -261,23 +285,23 @@ export const useExportSlipPage = () => {
         quantity: item.quantity,
         price: item.price,
       })),
-    }
+    };
 
     if (editingId) {
-      await updateStockOut(editingId, payload)
+      await updateStockOut(editingId, payload);
     } else {
-      await createStockOut(payload)
+      await createStockOut(payload);
     }
 
-    closeFormModal()
-  }
+    closeFormModal();
+  };
 
   const removeStockOut = async (id: string) => {
     await confirmAndRun({
-      message: 'Bạn có chắc muốn xóa phiếu xuất này?',
+      message: "Bạn có chắc muốn xóa phiếu xuất này?",
       action: () => deleteStockOut(id),
-    })
-  }
+    });
+  };
 
   return {
     stockOuts,
@@ -308,5 +332,5 @@ export const useExportSlipPage = () => {
     updateItem,
     submitForm,
     removeStockOut,
-  }
-}
+  };
+};

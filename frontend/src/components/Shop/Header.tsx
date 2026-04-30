@@ -1,39 +1,44 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, UserCircle } from 'lucide-react';
-import { useCartStore } from '@/stores/cart.store';
-import { useAuthStore } from '@/stores/auth.store';
+import { useState, useEffect, useCallback } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, ShoppingCart, Menu, X, UserCircle } from "lucide-react";
+import { useCartStore } from "@/stores/cart.store";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const items = useCartStore((state) => state.items);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const submitSearch = useCallback((value: string) => {
-    const nextSearch = value.trim();
-    const nextParams = new URLSearchParams();
+  const submitSearch = useCallback(
+    (value: string) => {
+      const nextSearch = value.trim();
+      const nextParams = new URLSearchParams();
 
-    if (nextSearch) {
-      nextParams.set('search', nextSearch);
-    }
+      if (nextSearch) {
+        nextParams.set("search", nextSearch);
+      }
 
-    navigate(`/products${nextParams.toString() ? `?${nextParams.toString()}` : ''}`);
-    setOpen(false);
-  }, [navigate]);
+      navigate(
+        `/products${nextParams.toString() ? `?${nextParams.toString()}` : ""}`,
+      );
+      setOpen(false);
+    },
+    [navigate],
+  );
 
   const total = items.reduce((sum, i) => sum + i.quantity, 0);
 
   useEffect(() => {
-    if (!location.pathname.startsWith('/products')) {
+    if (!location.pathname.startsWith("/products")) {
       return;
     }
 
     const params = new URLSearchParams(location.search);
-    setSearchText(params.get('search') ?? '');
+    setSearchText(params.get("search") ?? "");
   }, [location.pathname, location.search]);
 
   useEffect(() => {
@@ -42,10 +47,10 @@ export default function Header() {
     };
 
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -53,13 +58,12 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 border-b backdrop-blur-md transition-colors duration-300 ${
         isScrolled
-          ? 'bg-white/75 border-white/40 shadow-sm'
-          : 'bg-white border-gray-200/80 shadow-lg'
+          ? "bg-white/75 border-white/40 shadow-sm"
+          : "bg-white border-gray-200/80 shadow-lg"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18">
-
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="w-10 h-10 md:w-11 md:h-11 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
@@ -67,8 +71,8 @@ export default function Header() {
             </div>
             <span className="font-black text-xl md:text-2xl tracking-tighter flex items-baseline relative group">
               {/* Lớp bóng mờ phía sau tạo chiều sâu khi hover */}
-              <span 
-                className="absolute -inset-0.5 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-blue-900/20 select-none whitespace-nowrap" 
+              <span
+                className="absolute -inset-0.5 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-blue-900/20 select-none whitespace-nowrap"
                 aria-hidden="true"
               >
                 TechStore
@@ -88,22 +92,22 @@ export default function Header() {
 
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center gap-8 lg:gap-10 text-base font-semibold">
-            <Link 
-              to="/products" 
+            <Link
+              to="/products"
               className="text-gray-800 hover:text-blue-700 transition-colors duration-200 relative group"
             >
               Sản phẩm
               <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="text-gray-800 hover:text-blue-700 transition-colors duration-200 relative group"
             >
               Giới thiệu
               <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            <Link 
-              to="/contact" 
+            <Link
+              to="/contact"
               className="text-gray-800 hover:text-blue-700 transition-colors duration-200 relative group"
             >
               Liên hệ
@@ -121,7 +125,7 @@ export default function Header() {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     submitSearch(searchText);
                   }
                 }}
@@ -180,7 +184,7 @@ export default function Header() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   submitSearch(searchText);
                 }
               }}
@@ -202,34 +206,34 @@ export default function Header() {
       {open && (
         <div className="lg:hidden bg-white border-t shadow-xl">
           <div className="px-4 py-6 flex flex-col gap-3 text-lg font-medium">
-            <Link 
-              to="/products" 
+            <Link
+              to="/products"
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
               Sản phẩm
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
               Giới thiệu
             </Link>
-            <Link 
-              to="/contact" 
+            <Link
+              to="/contact"
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
               Liên hệ
             </Link>
-            <Link 
-              to={isAuthenticated ? "/profile" : "/login"} 
+            <Link
+              to={isAuthenticated ? "/profile" : "/login"}
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3 border-t pt-5 mt-2"
               onClick={() => setOpen(false)}
             >
               <UserCircle size={24} />
-              {isAuthenticated ? 'Tài khoản' : 'Đăng nhập / Đăng ký'}
+              {isAuthenticated ? "Tài khoản" : "Đăng nhập / Đăng ký"}
             </Link>
           </div>
         </div>

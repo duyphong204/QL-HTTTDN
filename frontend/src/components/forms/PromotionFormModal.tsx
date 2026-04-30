@@ -39,9 +39,16 @@ export function PromotionFormModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [allProducts, setAllProducts] = useState<
-    Array<{ id: string; name: string; imageUrl?: string | null; categoryId?: string; categoryName?: string }>
+    Array<{
+      id: string;
+      name: string;
+      imageUrl?: string | null;
+      categoryId?: string;
+      categoryName?: string;
+    }>
   >([]);
-  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("ALL");
+  const [productCategoryFilter, setProductCategoryFilter] =
+    useState<string>("ALL");
 
   const toDateTimeLocalValue = (value?: string) => {
     if (!value) return "";
@@ -72,7 +79,9 @@ export function PromotionFormModal({
       setStartAt(toDateTimeLocalValue(editingPromotion.startAt));
       setEndAt(toDateTimeLocalValue(editingPromotion.endAt));
       setIsActive(editingPromotion.isActive);
-      setSelectedProductIds(editingPromotion.products.map((link) => link.productId));
+      setSelectedProductIds(
+        editingPromotion.products.map((link) => link.productId),
+      );
     } else {
       resetForm();
     }
@@ -80,9 +89,13 @@ export function PromotionFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const loadProducts = async () => {
-      const response = await fetchProductsByQuery({ page: 1, limit: 300, sortBy: "name" });
+      const response = await fetchProductsByQuery({
+        page: 1,
+        limit: 300,
+        sortBy: "name",
+      });
       setAllProducts(
         (response?.data ?? []).map((p) => ({
           id: p.id,
@@ -90,7 +103,7 @@ export function PromotionFormModal({
           imageUrl: p.imageUrl,
           categoryId: p.categoryId,
           categoryName: p.category?.name,
-        }))
+        })),
       );
     };
 
@@ -114,20 +127,26 @@ export function PromotionFormModal({
     if (productCategoryFilter === "ALL") {
       return allProducts;
     }
-    return allProducts.filter((product) => product.categoryId === productCategoryFilter);
+    return allProducts.filter(
+      (product) => product.categoryId === productCategoryFilter,
+    );
   }, [allProducts, productCategoryFilter]);
 
   const visibleProductIds = useMemo(
     () => visibleProducts.map((product) => product.id),
-    [visibleProducts]
+    [visibleProducts],
   );
 
   const isAllProductsSelected =
-    visibleProducts.length > 0 && visibleProductIds.every((id) => selectedProductIds.includes(id));
+    visibleProducts.length > 0 &&
+    visibleProductIds.every((id) => selectedProductIds.includes(id));
 
   const selectedProductNames = useMemo(
-    () => allProducts.filter((product) => selectedProductIds.includes(product.id)).map((product) => product.name),
-    [allProducts, selectedProductIds]
+    () =>
+      allProducts
+        .filter((product) => selectedProductIds.includes(product.id))
+        .map((product) => product.name),
+    [allProducts, selectedProductIds],
   );
 
   const handleSave = async () => {
@@ -160,14 +179,22 @@ export function PromotionFormModal({
       <AppModal
         isOpen={isOpen}
         onClose={onClose}
-        title={isEditMode ? "Chỉnh sửa chương trình" : "Tạo chương trình khuyến mãi"}
-        subtitle={isEditMode ? "Cập nhật thông tin chương trình" : "Nhập thông tin chương trình mới"}
+        title={
+          isEditMode ? "Chỉnh sửa chương trình" : "Tạo chương trình khuyến mãi"
+        }
+        subtitle={
+          isEditMode
+            ? "Cập nhật thông tin chương trình"
+            : "Nhập thông tin chương trình mới"
+        }
         maxWidthClassName="max-w-2xl"
       >
         <div className="space-y-4 p-6 max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Tên chương trình</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Tên chương trình
+              </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -176,7 +203,9 @@ export function PromotionFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Loại giảm giá</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Loại giảm giá
+              </label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as PromotionType)}
@@ -187,7 +216,9 @@ export function PromotionFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Giá trị giảm</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Giá trị giảm
+              </label>
               <input
                 type="number"
                 min={0}
@@ -198,7 +229,9 @@ export function PromotionFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái kích hoạt</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Trạng thái kích hoạt
+              </label>
               <label className="h-10 w-full px-3 text-sm border border-gray-200 rounded-lg flex items-center gap-2 text-gray-700 bg-white cursor-pointer hover:bg-gray-50">
                 <input
                   type="checkbox"
@@ -209,7 +242,9 @@ export function PromotionFormModal({
               </label>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày bắt đầu</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Ngày bắt đầu
+              </label>
               <input
                 type="datetime-local"
                 value={startAt}
@@ -218,7 +253,9 @@ export function PromotionFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày kết thúc</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Ngày kết thúc
+              </label>
               <input
                 type="datetime-local"
                 value={endAt}
@@ -237,7 +274,11 @@ export function PromotionFormModal({
           <div className="border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between gap-3 mb-3">
               <label className="block text-sm font-medium text-gray-700">
-                Gán sản phẩm - Đã chọn <span className="text-blue-700 font-semibold">{selectedProductIds.length}</span> sản phẩm
+                Gán sản phẩm - Đã chọn{" "}
+                <span className="text-blue-700 font-semibold">
+                  {selectedProductIds.length}
+                </span>{" "}
+                sản phẩm
               </label>
               <button
                 type="button"
@@ -260,10 +301,18 @@ export function PromotionFormModal({
             <button
               type="button"
               onClick={handleSave}
-              disabled={!name.trim() || (type === "PERCENT" && value > 100) || isSubmitting}
+              disabled={
+                !name.trim() ||
+                (type === "PERCENT" && value > 100) ||
+                isSubmitting
+              }
               className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 rounded-lg text-sm font-medium transition-colors"
             >
-              {isSubmitting ? "Đang xử lý..." : isEditMode ? "Cập nhật" : "Tạo mới"}
+              {isSubmitting
+                ? "Đang xử lý..."
+                : isEditMode
+                  ? "Cập nhật"
+                  : "Tạo mới"}
             </button>
             <button
               type="button"
@@ -287,7 +336,9 @@ export function PromotionFormModal({
         <div className="space-y-3 p-6 max-h-[75vh] overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Danh mục</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                Danh mục
+              </label>
               <select
                 value={productCategoryFilter}
                 onChange={(e) => setProductCategoryFilter(e.target.value)}
@@ -309,9 +360,13 @@ export function PromotionFormModal({
               checked={isAllProductsSelected}
               onChange={(e) => {
                 if (e.target.checked) {
-                  setSelectedProductIds((prev) => Array.from(new Set([...prev, ...visibleProductIds])));
+                  setSelectedProductIds((prev) =>
+                    Array.from(new Set([...prev, ...visibleProductIds])),
+                  );
                 } else {
-                  setSelectedProductIds((prev) => prev.filter((id) => !visibleProductIds.includes(id)));
+                  setSelectedProductIds((prev) =>
+                    prev.filter((id) => !visibleProductIds.includes(id)),
+                  );
                 }
               }}
             />
@@ -333,22 +388,32 @@ export function PromotionFormModal({
                       if (e.target.checked) {
                         setSelectedProductIds((prev) => [...prev, product.id]);
                       } else {
-                        setSelectedProductIds((prev) => prev.filter((id) => id !== product.id));
+                        setSelectedProductIds((prev) =>
+                          prev.filter((id) => id !== product.id),
+                        );
                       }
                     }}
                   />
                   <div className="w-12 h-12 rounded-md bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {product.imageUrl ? (
                       <img
-                        src={getCloudinaryThumbnailUrl(product.imageUrl, 80, 80)}
+                        src={getCloudinaryThumbnailUrl(
+                          product.imageUrl,
+                          80,
+                          80,
+                        )}
                         alt={product.name}
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <span className="text-[10px] text-gray-400">No image</span>
+                      <span className="text-[10px] text-gray-400">
+                        No image
+                      </span>
                     )}
                   </div>
-                  <span className="text-sm text-gray-800 line-clamp-1 flex-1">{product.name}</span>
+                  <span className="text-sm text-gray-800 line-clamp-1 flex-1">
+                    {product.name}
+                  </span>
                 </label>
               );
             })}

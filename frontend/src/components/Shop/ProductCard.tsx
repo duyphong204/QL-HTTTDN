@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
-import { useCartStore } from '@/stores/cart.store';
-import type { Product } from '@/types/warehouse.type';
-import { toast } from 'sonner';
+import { Link } from "react-router-dom";
+import { ShoppingCart } from "lucide-react";
+import { useCartStore } from "@/stores/cart.store";
+import type { Product } from "@/types/warehouse.type";
+import { toast } from "sonner";
 import {
   getEffectiveProductPrice,
   getProductDiscountPercent,
   hasProductSale,
-} from '@/lib/pricing';
+} from "@/lib/pricing";
 
 interface ProductCardProps {
   product: Product;
@@ -26,19 +26,29 @@ export default function ProductCard({
 }: ProductCardProps) {
   const addToCart = useCartStore((state) => state.addToCart);
   const cartQuantity = useCartStore(
-    (state) => state.items.find((item) => item.id === product.id)?.quantity ?? 0,
+    (state) =>
+      state.items.find((item) => item.id === product.id)?.quantity ?? 0,
   );
-  const remainingStock = Math.max(0, (product.stockQuantity ?? 0) - cartQuantity);
+  const remainingStock = Math.max(
+    0,
+    (product.stockQuantity ?? 0) - cartQuantity,
+  );
   const isOutOfStock = remainingStock <= 0;
-  const effectiveDiscountPercent = discountPercent || product.discountPercent || 0;
+  const effectiveDiscountPercent =
+    discountPercent || product.discountPercent || 0;
   const effectivePrice = getEffectiveProductPrice(product, priceOverride);
   const shouldShowOriginalPrice =
-    showOriginalPrice || hasProductSale(product) || effectivePrice < product.price;
-  const computedDiscountPercent = getProductDiscountPercent(product, effectivePrice);
+    showOriginalPrice ||
+    hasProductSale(product) ||
+    effectivePrice < product.price;
+  const computedDiscountPercent = getProductDiscountPercent(
+    product,
+    effectivePrice,
+  );
 
   const handleAddToCart = (e: React.MouseEvent) => {
     if (isOutOfStock) {
-      toast.error('Sản phẩm đã đạt số lượng tối đa trong giỏ hàng');
+      toast.error("Sản phẩm đã đạt số lượng tối đa trong giỏ hàng");
       return;
     }
     e.preventDefault();
@@ -59,7 +69,9 @@ export default function ProductCard({
           </span>
         )}
         <img
-          src={product.imageUrl || 'https://via.placeholder.com/400?text=TechStore'}
+          src={
+            product.imageUrl || "https://via.placeholder.com/400?text=TechStore"
+          }
           alt={product.name}
           className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-105"
         />
@@ -77,23 +89,27 @@ export default function ProductCard({
             <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <div>
                 <p className="text-base sm:text-lg font-bold text-blue-600">
-                  {effectivePrice?.toLocaleString('vi-VN')} ₫
+                  {effectivePrice?.toLocaleString("vi-VN")} ₫
                 </p>
                 {shouldShowOriginalPrice && effectivePrice < product.price && (
                   <p className="text-xs text-gray-500 line-through mt-0.5">
-                    {product.price?.toLocaleString('vi-VN')} ₫
+                    {product.price?.toLocaleString("vi-VN")} ₫
                   </p>
                 )}
               </div>
 
               <button
                 type="button"
-                aria-label={isOutOfStock ? 'Không còn số lượng để thêm' : 'Thêm vào giỏ hàng'}
+                aria-label={
+                  isOutOfStock
+                    ? "Không còn số lượng để thêm"
+                    : "Thêm vào giỏ hàng"
+                }
                 disabled={isOutOfStock}
                 className={`h-9 w-9 rounded-full border transition-colors flex items-center justify-center ${
                   isOutOfStock
-                    ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed'
-                    : 'bg-white border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+                    ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed"
+                    : "bg-white border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600"
                 }`}
                 onClick={handleAddToCart}
               >
@@ -103,11 +119,11 @@ export default function ProductCard({
           ) : (
             <>
               <p className="text-base sm:text-lg font-bold text-blue-600">
-                {effectivePrice?.toLocaleString('vi-VN')} ₫
+                {effectivePrice?.toLocaleString("vi-VN")} ₫
               </p>
               {shouldShowOriginalPrice && effectivePrice < product.price && (
                 <p className="text-xs text-gray-500 line-through mt-0.5">
-                  {product.price?.toLocaleString('vi-VN')} ₫
+                  {product.price?.toLocaleString("vi-VN")} ₫
                 </p>
               )}
             </>
@@ -119,13 +135,13 @@ export default function ProductCard({
             disabled={isOutOfStock}
             className={`w-full font-medium text-xs sm:text-sm py-2 sm:py-2.5 px-2 sm:px-3 rounded-md sm:rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap transition-all shadow-sm ${
               isOutOfStock
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md active:scale-[0.98]'
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md active:scale-[0.98]"
             }`}
             onClick={handleAddToCart}
           >
             <ShoppingCart size={15} className="sm:h-4 sm:w-4" />
-            {isOutOfStock ? 'Sản phẩm đã hết hàng' : 'Thêm vào giỏ'}
+            {isOutOfStock ? "Sản phẩm đã hết hàng" : "Thêm vào giỏ"}
           </button>
         )}
       </div>

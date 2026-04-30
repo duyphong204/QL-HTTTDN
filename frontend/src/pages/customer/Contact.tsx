@@ -1,24 +1,24 @@
-import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from "lucide-react";
 
 const CONTACT_INFO = [
   {
     icon: <MapPin className="w-6 h-6" />,
     title: "Địa chỉ",
     content: "14/39 Phạm Hùng, phường Chánh Hưng, TP. Hồ Chí Minh",
-    subContent: "Gần ngã tư Nguyễn Văn Linh"
+    subContent: "Gần ngã tư Nguyễn Văn Linh",
   },
   {
     icon: <Phone className="w-6 h-6" />,
     title: "Số điện thoại",
     content: "0123 456 789",
-    subContent: "Hotline hỗ trợ 24/7"
+    subContent: "Hotline hỗ trợ 24/7",
   },
   {
     icon: <Mail className="w-6 h-6" />,
     title: "Email",
     content: "support@techstore.vn",
-    subContent: "Phản hồi trong vòng 24h"
-  }
+    subContent: "Phản hồi trong vòng 24h",
+  },
 ];
 
 export default function Contact() {
@@ -40,10 +40,14 @@ export default function Contact() {
             <span>Liên hệ ngay</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
-            Kết nối với <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">TechStore</span>
+            Kết nối với{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              TechStore
+            </span>
           </h1>
           <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Mọi thắc mắc của bạn sẽ được đội ngũ chuyên gia của chúng tôi giải đáp tận tâm và nhanh chóng nhất.
+            Mọi thắc mắc của bạn sẽ được đội ngũ chuyên gia của chúng tôi giải
+            đáp tận tâm và nhanh chóng nhất.
           </p>
         </div>
       </section>
@@ -53,13 +57,19 @@ export default function Contact() {
           <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-8 md:p-12">
             <div className="flex flex-col md:flex-row gap-12">
               <div className="flex-1">
-                <h2 className="text-3xl font-bold text-slate-900 mb-2">Gửi tin nhắn</h2>
-                <p className="text-slate-500 mb-8">Hãy để lại thông tin, chúng tôi sẽ liên hệ lại ngay.</p>
-                
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">
+                  Gửi tin nhắn
+                </h2>
+                <p className="text-slate-500 mb-8">
+                  Hãy để lại thông tin, chúng tôi sẽ liên hệ lại ngay.
+                </p>
+
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700 ml-1">Họ và tên</label>
+                      <label className="text-sm font-semibold text-slate-700 ml-1">
+                        Họ và tên
+                      </label>
                       <input
                         type="text"
                         placeholder="Nguyễn Văn A"
@@ -67,7 +77,9 @@ export default function Contact() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
+                      <label className="text-sm font-semibold text-slate-700 ml-1">
+                        Email
+                      </label>
                       <input
                         type="email"
                         placeholder="abc@gmail.com"
@@ -75,9 +87,11 @@ export default function Contact() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700 ml-1">Nội dung cần hỗ trợ</label>
+                    <label className="text-sm font-semibold text-slate-700 ml-1">
+                      Nội dung cần hỗ trợ
+                    </label>
                     <textarea
                       placeholder="Tôi cần tư vấn về..."
                       rows={4}
@@ -114,7 +128,9 @@ export default function Contact() {
             </div>
 
             <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
-              <h3 className="text-xl font-bold text-slate-900 mb-6">Thông tin khác</h3>
+              <h3 className="text-xl font-bold text-slate-900 mb-6">
+                Thông tin khác
+              </h3>
               <div className="space-y-6">
                 {CONTACT_INFO.map((item, i) => (
                   <div key={i} className="flex items-start gap-4">
@@ -123,8 +139,12 @@ export default function Contact() {
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900">{item.title}</h4>
-                      <p className="text-slate-600 text-sm leading-relaxed">{item.content}</p>
-                      <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-medium">{item.subContent}</p>
+                      <p className="text-slate-600 text-sm leading-relaxed">
+                        {item.content}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-medium">
+                        {item.subContent}
+                      </p>
                     </div>
                   </div>
                 ))}

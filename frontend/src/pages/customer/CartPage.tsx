@@ -1,15 +1,24 @@
-import { useEffect } from 'react';
-import { useCartStore } from '@/stores/cart.store';
-import { Trash2, Plus, Minus, ArrowLeft, ShieldCheck, Truck, RefreshCw, ShoppingCart } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useProductStore } from '@/stores/product.store';
+import { useEffect } from "react";
+import { useCartStore } from "@/stores/cart.store";
+import {
+  Trash2,
+  Plus,
+  Minus,
+  ArrowLeft,
+  ShieldCheck,
+  Truck,
+  RefreshCw,
+  ShoppingCart,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useProductStore } from "@/stores/product.store";
 
 export default function Cart() {
   const { items, increase, decrease, removeFromCart } = useCartStore();
   const { categories, fetchCategories } = useProductStore();
 
   const getUnitPrice = (price: number, salePrice?: number) =>
-    typeof salePrice === 'number' ? salePrice : price;
+    typeof salePrice === "number" ? salePrice : price;
 
   const totalPrice = items.reduce(
     (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
@@ -28,10 +37,10 @@ export default function Cart() {
           {/* Icon giỏ hàng lớn + animation */}
           <div className="relative mx-auto w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
             <div className="absolute inset-0 bg-blue-100 rounded-full animate-pulse-slow opacity-30"></div>
-            <ShoppingCart 
-              size={80} 
-              className="text-blue-600 relative z-10 animate-bounce-slow" 
-              strokeWidth={1.2} 
+            <ShoppingCart
+              size={80}
+              className="text-blue-600 relative z-10 animate-bounce-slow"
+              strokeWidth={1.2}
             />
           </div>
 
@@ -40,7 +49,8 @@ export default function Cart() {
           </h2>
 
           <p className="text-gray-600 max-w-xl mx-auto">
-            Hãy thêm sản phẩm yêu thích vào giỏ để tiến hành thanh toán nhanh hơn.
+            Hãy thêm sản phẩm yêu thích vào giỏ để tiến hành thanh toán nhanh
+            hơn.
           </p>
 
           {/* Nút CTA nổi bật */}
@@ -67,7 +77,10 @@ export default function Cart() {
                   </Link>
                 ))
               ) : (
-                <Link to="/products" className="text-blue-600 hover:text-blue-800 hover:underline">
+                <Link
+                  to="/products"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
                   Xem tất cả sản phẩm
                 </Link>
               )}
@@ -111,7 +124,7 @@ export default function Cart() {
                 {/* Ảnh sản phẩm */}
                 <div className="w-32 h-32 sm:w-28 sm:h-28 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                   <img
-                    src={item.imageUrl || 'https://via.placeholder.com/150'}
+                    src={item.imageUrl || "https://via.placeholder.com/150"}
                     alt={item.name}
                     className="w-full h-full object-contain"
                   />
@@ -121,7 +134,9 @@ export default function Cart() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {item.name}
+                      </h3>
                       <p className="text-sm text-gray-500 mt-1">Accessories</p>
                     </div>
                     <button
@@ -154,15 +169,26 @@ export default function Cart() {
 
                     <div className="text-right ml-auto">
                       <p className="text-lg font-bold text-blue-600">
-                        {(getUnitPrice(item.price, item.salePrice) * item.quantity).toLocaleString('vi-VN')} đ
+                        {(
+                          getUnitPrice(item.price, item.salePrice) *
+                          item.quantity
+                        ).toLocaleString("vi-VN")}{" "}
+                        đ
                       </p>
-                      {typeof item.salePrice === 'number' && item.salePrice < item.price ? (
+                      {typeof item.salePrice === "number" &&
+                      item.salePrice < item.price ? (
                         <div className="text-sm">
-                          <p className="text-red-600 font-medium">{item.salePrice.toLocaleString('vi-VN')} đ/cái</p>
-                          <p className="text-gray-400 line-through">{item.price.toLocaleString('vi-VN')} đ/cái</p>
+                          <p className="text-red-600 font-medium">
+                            {item.salePrice.toLocaleString("vi-VN")} đ/cái
+                          </p>
+                          <p className="text-gray-400 line-through">
+                            {item.price.toLocaleString("vi-VN")} đ/cái
+                          </p>
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">{item.price.toLocaleString('vi-VN')} đ/cái</p>
+                        <p className="text-sm text-gray-500">
+                          {item.price.toLocaleString("vi-VN")} đ/cái
+                        </p>
                       )}
                     </div>
                   </div>
@@ -175,12 +201,16 @@ export default function Cart() {
         {/* Order Summary - bên phải */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Order Summary
+            </h2>
 
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-gray-700">
                 <span>Subtotal</span>
-                <span className="font-medium">{totalPrice.toLocaleString('vi-VN')} đ</span>
+                <span className="font-medium">
+                  {totalPrice.toLocaleString("vi-VN")} đ
+                </span>
               </div>
               <div className="flex justify-between text-gray-700">
                 <span>Shipping</span>
@@ -188,7 +218,7 @@ export default function Cart() {
               </div>
               <div className="border-t border-gray-200 pt-4 flex justify-between text-lg font-bold text-gray-900">
                 <span>Total</span>
-                <span>{totalPrice.toLocaleString('vi-VN')} đ</span>
+                <span>{totalPrice.toLocaleString("vi-VN")} đ</span>
               </div>
             </div>
 

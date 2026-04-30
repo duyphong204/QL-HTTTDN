@@ -15,10 +15,7 @@ export class ReportController {
 
   @Get('reports/admin')
   @Roles(Role.ADMIN)
-  getAdminReport(
-    @Query('year') year?: string,
-    @Query('month') month?: string,
-  ) {
+  getAdminReport(@Query('year') year?: string, @Query('month') month?: string) {
     return this.reportService.getAdminDashboard({
       year: year ? Number(year) : undefined,
       month: month ? Number(month) : undefined,

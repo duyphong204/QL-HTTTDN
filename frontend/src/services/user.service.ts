@@ -1,7 +1,11 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/api/client";
 import { endpoints } from "@/api/endpoints";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
-import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.types";
+import type {
+  BaseFilters,
+  PaginatedResponse,
+  SortOrder,
+} from "@/types/common.types";
 
 export interface GetUsersParams extends Partial<BaseFilters> {
   sortBy?: "createdAt" | "email";
@@ -10,7 +14,9 @@ export interface GetUsersParams extends Partial<BaseFilters> {
 }
 
 export const userService = {
-  getUsers: async (params?: GetUsersParams): Promise<PaginatedResponse<User>> => {
+  getUsers: async (
+    params?: GetUsersParams,
+  ): Promise<PaginatedResponse<User>> => {
     return apiGet<PaginatedResponse<User>>(endpoints.users.root, params);
   },
 

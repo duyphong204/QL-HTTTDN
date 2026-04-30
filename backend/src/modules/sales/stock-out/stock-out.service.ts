@@ -19,7 +19,9 @@ export class StockOutService {
   ): Promise<Map<string, number>> {
     const costPriceMap = new Map<string, number>();
     for (const item of items) {
-      const product = await tx.product.findUnique({ where: { id: item.productId } });
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+      });
       if (!product || product.stockQuantity < item.quantity) {
         throw new BadRequestException(
           `Sản phẩm ${product?.name || item.productId} không đủ tồn kho`,
@@ -115,7 +117,8 @@ export class StockOutService {
         })),
       );
 
-      const nextItems = dto.items ??
+      const nextItems =
+        dto.items ??
         stockOut.details.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,

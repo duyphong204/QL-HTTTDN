@@ -1,93 +1,103 @@
-import { useEffect, useState } from "react"
-import dayjs from "dayjs"
-import { Plus, Trash2, CalendarX } from "lucide-react" 
-import { useLeaveRequestStore } from "@/stores/leaveRequest.store"
-import { useClientTable } from "@/hooks/useClientTable"
-import { useConfirmAction } from "@/hooks/useConfirmAction"
-import { DataTableToolbar } from "@/components/common/DataTableToolbar"
-import { PaginationControls } from "@/components/common/PaginationControls"
-import { AppModal } from "@/components/common/AppModal"
-import { OverlayLoading } from "@/components/common/Loading"
-import { REQUIRED_FIELDS_MESSAGE, hasEmptyRequiredValue } from "@/utils/validation"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import { Plus, Trash2, CalendarX } from "lucide-react";
+import { useLeaveRequestStore } from "@/stores/leaveRequest.store";
+import { useClientTable } from "@/hooks/useClientTable";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { AppModal } from "@/components/common/AppModal";
+import { OverlayLoading } from "@/components/common/Loading";
+import {
+  REQUIRED_FIELDS_MESSAGE,
+  hasEmptyRequiredValue,
+} from "@/utils/validation";
+import { toast } from "sonner";
 
 const TYPE_LABEL: Record<string, string> = {
   ANNUAL: "Nghỉ phép",
   SICK: "Nghỉ bệnh",
   MATERNITY: "Thai sản",
   RESIGNATION: "Đơn nghỉ việc",
-}
+};
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700 border border-yellow-200",
   APPROVED: "bg-green-100 text-green-700 border border-green-200",
   REJECTED: "bg-red-100 text-red-700 border border-red-200",
-}
+};
 
 export default function EmployeeLeaveRequestPage() {
-  const { 
-    myLeaveRequests, 
-    isLoading, 
-    fetchMyRequests, 
-    createRequest, 
-    deleteRequest 
-  } = useLeaveRequestStore()
+  const {
+    myLeaveRequests,
+    isLoading,
+    fetchMyRequests,
+    createRequest,
+    deleteRequest,
+  } = useLeaveRequestStore();
 
-  const { confirmAndRun } = useConfirmAction()
-  
+  const { confirmAndRun } = useConfirmAction();
+
   // Local UI State
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
     type: "ANNUAL",
     startDate: "",
     endDate: "",
     reason: "",
-  })
+  });
 
   // Phân trang & Tìm kiếm tại Client
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: myLeaveRequests,
-    pageSize: 10,
-    searchFn: (item, keyword) => {
-      const reason = item.reason?.toLowerCase() ?? ""
-      const type = (TYPE_LABEL[item.type] ?? item.type).toLowerCase()
-      return reason.includes(keyword) || type.includes(keyword)
-    },
-  })
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } =
+    useClientTable({
+      data: myLeaveRequests,
+      pageSize: 10,
+      searchFn: (item, keyword) => {
+        const reason = item.reason?.toLowerCase() ?? "";
+        const type = (TYPE_LABEL[item.type] ?? item.type).toLowerCase();
+        return reason.includes(keyword) || type.includes(keyword);
+      },
+    });
 
   useEffect(() => {
-    fetchMyRequests()
-  }, [fetchMyRequests])
+    fetchMyRequests();
+  }, [fetchMyRequests]);
 
   const handleSubmit = async () => {
     if (hasEmptyRequiredValue([form.startDate, form.endDate, form.reason])) {
-      toast.error(REQUIRED_FIELDS_MESSAGE)
-      return
+      toast.error(REQUIRED_FIELDS_MESSAGE);
+      return;
     }
     try {
       await createRequest({
         ...form,
         type: form.type as "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION",
-      })
-      setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" })
-      setDialogOpen(false)
-    } catch { /* Error handled in store */ }
-  }
+      });
+      setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" });
+      setDialogOpen(false);
+    } catch {
+      /* Error handled in store */
+    }
+  };
 
   const handleDelete = (id: string) => {
     confirmAndRun({
       message: "Bạn có chắc muốn xóa đơn này?",
       action: () => deleteRequest(id),
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Đơn xin nghỉ</h1>
-            <p className="text-sm text-gray-500 mt-1">Nộp và theo dõi đơn xin nghỉ của bạn</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Đơn xin nghỉ
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Nộp và theo dõi đơn xin nghỉ của bạn
+            </p>
           </div>
 
           <button
@@ -125,26 +135,37 @@ export default function EmployeeLeaveRequestPage() {
                     <tr>
                       <td colSpan={5} className="px-6 py-20 text-center">
                         <div className="flex flex-col items-center justify-center text-gray-400">
-                           <CalendarX size={48} className="mb-2 opacity-20" />
-                           <p className="font-medium">Chưa có dữ liệu</p>
+                          <CalendarX size={48} className="mb-2 opacity-20" />
+                          <p className="font-medium">Chưa có dữ liệu</p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     pagedData.map((request) => (
-                      <tr key={request.id} className="hover:bg-blue-50/30 transition-colors group">
+                      <tr
+                        key={request.id}
+                        className="hover:bg-blue-50/30 transition-colors group"
+                      >
                         <td className="px-6 py-4 font-medium text-gray-700">
                           {TYPE_LABEL[request.type] || request.type}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
                           <div className="flex flex-col">
-                            <span>{dayjs(request.startDate).format("DD/MM/YYYY")}</span>
-                            <span className="text-[10px] text-gray-400 italic">đến {dayjs(request.endDate).format("DD/MM/YYYY")}</span>
+                            <span>
+                              {dayjs(request.startDate).format("DD/MM/YYYY")}
+                            </span>
+                            <span className="text-[10px] text-gray-400 italic">
+                              đến {dayjs(request.endDate).format("DD/MM/YYYY")}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-gray-500 max-w-xs truncate">{request.reason}</td>
+                        <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
+                          {request.reason}
+                        </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[request.status]}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[request.status]}`}
+                          >
                             {request.status}
                           </span>
                         </td>
@@ -188,7 +209,11 @@ export default function EmployeeLeaveRequestPage() {
               onChange={(e) => setForm({ ...form, type: e.target.value })}
               className="w-full h-10 px-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
             >
-              {Object.entries(TYPE_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              {Object.entries(TYPE_LABEL).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -217,7 +242,12 @@ export default function EmployeeLeaveRequestPage() {
           />
 
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setDialogOpen(false)} className="flex-1 py-2.5 border rounded-xl">Hủy</button>
+            <button
+              onClick={() => setDialogOpen(false)}
+              className="flex-1 py-2.5 border rounded-xl"
+            >
+              Hủy
+            </button>
             <button
               onClick={handleSubmit}
               disabled={isLoading}
@@ -229,5 +259,5 @@ export default function EmployeeLeaveRequestPage() {
         </div>
       </AppModal>
     </div>
-  )
+  );
 }

@@ -47,7 +47,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
   },
   {
     path: "/admin/users",
-    title: "Quản lý User",
+    title: "Quản lý Khách hàng",
     icon: Users,
     roles: ["ADMIN"],
     inSidebar: true,
@@ -70,14 +70,14 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     path: "/hr/salaries",
     title: "Quản lý Lương",
     icon: FileText,
-    roles: ["HR_MANAGER"],
+    roles: ["HR_MANAGER", "ADMIN"],
     inSidebar: true,
   },
   {
     path: "/admin/promotions",
-    title: "Khuyen mai",
+    title: "Khuyến mãi",
     icon: Tag,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SALES_MANAGER"],
     inSidebar: true,
   },
   {
@@ -133,7 +133,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     path: "/employee/leave-request",
     title: "Xin nghỉ phép",
     icon: FileText,
-    roles: ["EMPLOYEE"],
+    roles: ["EMPLOYEE", "SALES_MANAGER", "WAREHOUSE_MANAGER"],
     inSidebar: true,
   },
   {
@@ -147,7 +147,7 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     path: "/employee/salary",
     title: "Bảng lương của tôi",
     icon: FileText,
-    roles: ["ADMIN", "EMPLOYEE"],
+    roles: ["EMPLOYEE", "HR_MANAGER", "SALES_MANAGER", "WAREHOUSE_MANAGER"],
     inSidebar: true,
   },
 ];

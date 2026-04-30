@@ -27,16 +27,23 @@ export default function UserManagement() {
   } = useUserStore();
 
   // 2. UI Hooks
-  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<User>();
+  const {
+    modalOpen,
+    editingEntity,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  } = useEntityModal<User>();
   const { confirmAndRun } = useConfirmAction();
 
   // 3. Search & Pagination Logic
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchUsers,
-    debounceMs: 300,
-  });
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } =
+    usePaginatedList({
+      filters,
+      setFilters,
+      fetchData: fetchUsers,
+      debounceMs: 300,
+    });
 
   // Khởi tạo dữ liệu
   useEffect(() => {
@@ -65,8 +72,12 @@ export default function UserManagement() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý User</h1>
-            <p className="mt-1 text-sm text-gray-500">Quản lý tài khoản và phân quyền người dùng</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý User
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Quản lý tài khoản và phân quyền người dùng
+            </p>
           </div>
 
           <button
@@ -85,7 +96,11 @@ export default function UserManagement() {
             searchPlaceholder="Tìm theo email hoặc họ tên..."
           >
             <select
-              value={typeof filters.isActive === "boolean" ? String(filters.isActive) : ""}
+              value={
+                typeof filters.isActive === "boolean"
+                  ? String(filters.isActive)
+                  : ""
+              }
               onChange={(e) => {
                 const value = e.target.value;
                 updateFilters({
@@ -116,15 +131,25 @@ export default function UserManagement() {
                   <TableLoadingRow colSpan={5} text="Đang tải dữ liệu..." />
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
+                    <td
+                      colSpan={5}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
                       Không tìm thấy user nào phù hợp.
                     </td>
                   </tr>
                 ) : (
                   users.map((user) => (
-                    <tr key={user.id} className="group transition-colors hover:bg-gray-50/70">
-                      <td className="px-6 py-4 text-gray-600">{user.profile?.fullName || "—"}</td>
-                      <td className="px-6 py-4 text-gray-600">{user.email || "—"}</td>
+                    <tr
+                      key={user.id}
+                      className="group transition-colors hover:bg-gray-50/70"
+                    >
+                      <td className="px-6 py-4 text-gray-600">
+                        {user.profile?.fullName || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {user.email || "—"}
+                      </td>
                       <td className="px-6 py-4">
                         <span
                           className={

@@ -1,18 +1,28 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
-import { getCloudinaryThumbnailUrl } from '@/utils/cloudinary';
-import { ProductFormModal } from '@/components/forms/ProductFormModal';
-import { DataTableToolbar } from '@/components/common/DataTableToolbar';
-import { PaginationControls } from '@/components/common/PaginationControls';
-import { TableLoadingRow } from '@/components/common/Loading';
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { getCloudinaryThumbnailUrl } from "@/utils/cloudinary";
+import { ProductFormModal } from "@/components/forms/ProductFormModal";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { TableLoadingRow } from "@/components/common/Loading";
 
-import { useProductStore } from '@/stores/product.store';
-import { useEntityModal } from '@/hooks/useEntityModal';
-import { useConfirmAction } from '@/hooks/useConfirmAction';
-import { usePaginatedList } from '@/hooks/usePaginatedList';
-import type { Product, CreateProductDto, UpdateProductDto } from '@/types/product.types';
+import { useProductStore } from "@/stores/product.store";
+import { useEntityModal } from "@/hooks/useEntityModal";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { usePaginatedList } from "@/hooks/usePaginatedList";
+import type {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+} from "@/types/product.types";
 
-function ProductThumbnail({ imageUrl, name }: { imageUrl?: string; name: string }) {
+function ProductThumbnail({
+  imageUrl,
+  name,
+}: {
+  imageUrl?: string;
+  name: string;
+}) {
   const [hasError, setHasError] = useState(false);
   const transformedUrl = getCloudinaryThumbnailUrl(imageUrl, 80, 80);
   const [src, setSrc] = useState<string>(transformedUrl);
@@ -66,16 +76,23 @@ export default function ProductManagement() {
   } = useProductStore();
 
   // 2. UI Hooks
-  const { modalOpen, editingEntity, openCreateModal, openEditModal, closeModal } = useEntityModal<Product>();
+  const {
+    modalOpen,
+    editingEntity,
+    openCreateModal,
+    openEditModal,
+    closeModal,
+  } = useEntityModal<Product>();
   const { confirmAndRun } = useConfirmAction();
 
   // 3. Search & Pagination Logic
-  const { searchTerm, setSearchTerm, updateFilters, goToPage } = usePaginatedList({
-    filters,
-    setFilters,
-    fetchData: fetchProducts,
-    debounceMs: 400,
-  });
+  const { searchTerm, setSearchTerm, updateFilters, goToPage } =
+    usePaginatedList({
+      filters,
+      setFilters,
+      fetchData: fetchProducts,
+      debounceMs: 400,
+    });
 
   // Initial Fetch
   useEffect(() => {
@@ -84,7 +101,9 @@ export default function ProductManagement() {
   }, []);
 
   // 4. Handlers
-  const handleFormSubmit = async (data: CreateProductDto | UpdateProductDto) => {
+  const handleFormSubmit = async (
+    data: CreateProductDto | UpdateProductDto,
+  ) => {
     if (editingEntity) {
       await updateProduct(editingEntity.id, data as UpdateProductDto);
     } else {
@@ -105,8 +124,12 @@ export default function ProductManagement() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Quản lý sản phẩm</h1>
-            <p className="text-sm text-gray-500 mt-1">Thêm, sửa, xóa thông tin sản phẩm trong kho</p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Quản lý sản phẩm
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Thêm, sửa, xóa thông tin sản phẩm trong kho
+            </p>
           </div>
           <button
             onClick={openCreateModal}
@@ -123,24 +146,28 @@ export default function ProductManagement() {
             searchPlaceholder="Tìm theo tên sản phẩm..."
           >
             <select
-              value={filters.categoryId ?? ''}
+              value={filters.categoryId ?? ""}
               onChange={(e) => updateFilters({ categoryId: e.target.value })}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">Danh mục: Tất cả</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
               ))}
             </select>
 
             <select
-              value={filters.supplierId ?? ''}
+              value={filters.supplierId ?? ""}
               onChange={(e) => updateFilters({ supplierId: e.target.value })}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">NCC: Tất cả</option>
               {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
               ))}
             </select>
           </DataTableToolbar>
@@ -163,51 +190,76 @@ export default function ProductManagement() {
                   <TableLoadingRow colSpan={7} text="Đang tải dữ liệu..." />
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">Không có sản phẩm nào.</td>
-                  </tr>
-                ) : products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50/70 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <ProductThumbnail imageUrl={product.imageUrl} name={product.name} />
-                        <span className="font-medium text-gray-800">{product.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">{product.category?.name || '—'}</td>
-                    <td className="px-6 py-4 text-gray-600">{product.supplier?.name || '—'}</td>
-                    <td className="px-6 py-4 text-right text-gray-800 font-medium">{product.price.toLocaleString('vi-VN')}đ</td>
-                    <td className="px-6 py-4 text-right text-gray-600">{product.costPrice.toLocaleString('vi-VN')}đ</td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          product.stockQuantity <= (product.minStock ?? 10)
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-green-100 text-green-600'
-                        }`}
-                      >
-                        {product.stockQuantity}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                          title="Sửa"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                    <td
+                      colSpan={7}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
+                      Không có sản phẩm nào.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  products.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-gray-50/70 transition-colors group"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <ProductThumbnail
+                            imageUrl={product.imageUrl}
+                            name={product.name}
+                          />
+                          <span className="font-medium text-gray-800">
+                            {product.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {product.category?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {product.supplier?.name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-right text-gray-800 font-medium">
+                        {product.price.toLocaleString("vi-VN")}đ
+                      </td>
+                      <td className="px-6 py-4 text-right text-gray-600">
+                        {product.costPrice.toLocaleString("vi-VN")}đ
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            product.stockQuantity <= (product.minStock ?? 10)
+                              ? "bg-red-100 text-red-600"
+                              : "bg-green-100 text-green-600"
+                          }`}
+                        >
+                          {product.stockQuantity}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditModal(product)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Sửa"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDelete(product.id, product.name)
+                            }
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Zap } from 'lucide-react';
-import type { Product } from '@/types/warehouse.type';
-import ProductCard from '@/components/Shop/ProductCard';
-import heroBannerImage from '@/assets/Panner.jpg';
-import { useProductStore } from '@/stores/product.store';
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Zap } from "lucide-react";
+import type { Product } from "@/types/warehouse.type";
+import ProductCard from "@/components/Shop/ProductCard";
+import heroBannerImage from "@/assets/Panner.jpg";
+import { useProductStore } from "@/stores/product.store";
 
-const HERO_BANNER_IMAGE =
-  heroBannerImage;
+const HERO_BANNER_IMAGE = heroBannerImage;
 
 export default function ShopHome() {
-  const { fetchCategories, fetchProductsByQuery, categories } = useProductStore();
+  const { fetchCategories, fetchProductsByQuery, categories } =
+    useProductStore();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [flashProducts, setFlashProducts] = useState<Product[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -23,12 +23,14 @@ export default function ShopHome() {
         await fetchCategories();
 
         const [featuredRes, flashRes] = await Promise.all([
-          fetchProductsByQuery({ page: 1, limit: 18, sortBy: 'newest' }),
-          fetchProductsByQuery({ page: 1, limit: 24, sortBy: 'newest' }),
+          fetchProductsByQuery({ page: 1, limit: 18, sortBy: "newest" }),
+          fetchProductsByQuery({ page: 1, limit: 24, sortBy: "newest" }),
         ]);
 
         setFeaturedProducts(featuredRes?.data ?? []);
-        setFlashProducts((flashRes?.data ?? []).filter((item) => item.isOnSale));
+        setFlashProducts(
+          (flashRes?.data ?? []).filter((item) => item.isOnSale),
+        );
         setTotalProducts(featuredRes?.meta?.total ?? 0);
       } catch {
         setFeaturedProducts([]);
@@ -44,12 +46,12 @@ export default function ShopHome() {
 
   const categoryBlocks = useMemo(() => {
     const palette = [
-      'bg-blue-100 hover:bg-blue-200',
-      'bg-cyan-100 hover:bg-cyan-200',
-      'bg-sky-100 hover:bg-sky-200',
-      'bg-indigo-100 hover:bg-indigo-200',
-      'bg-emerald-100 hover:bg-emerald-200',
-      'bg-amber-100 hover:bg-amber-200',
+      "bg-blue-100 hover:bg-blue-200",
+      "bg-cyan-100 hover:bg-cyan-200",
+      "bg-sky-100 hover:bg-sky-200",
+      "bg-indigo-100 hover:bg-indigo-200",
+      "bg-emerald-100 hover:bg-emerald-200",
+      "bg-amber-100 hover:bg-amber-200",
     ];
 
     return categories.map((cat, index) => ({
@@ -77,8 +79,8 @@ export default function ShopHome() {
               <span className="text-blue-500">cho cuộc sống hiện đại</span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 max-w-xl mx-auto lg:mx-0">
-              Khám phá phụ kiện mới nhất với mức giá hợp lý,
-              bảo hành rõ ràng và hỗ trợ nhanh chóng.
+              Khám phá phụ kiện mới nhất với mức giá hợp lý, bảo hành rõ ràng và
+              hỗ trợ nhanh chóng.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -99,7 +101,9 @@ export default function ShopHome() {
 
             <div className="flex flex-wrap justify-center lg:justify-start gap-10 mt-8">
               <div className="text-center">
-                <p className="text-4xl font-bold text-blue-400">{totalProducts}+</p>
+                <p className="text-4xl font-bold text-blue-400">
+                  {totalProducts}+
+                </p>
                 <p className="text-gray-400">Sản phẩm</p>
               </div>
               <div className="text-center">
@@ -184,9 +188,14 @@ export default function ShopHome() {
                       <Zap size={24} fill="white" />
                       Flash Sale
                     </div>
-                    <p className="text-gray-700 mt-2 font-medium">Ưu đãi có thời hạn - đừng bỏ lỡ!</p>
+                    <p className="text-gray-700 mt-2 font-medium">
+                      Ưu đãi có thời hạn - đừng bỏ lỡ!
+                    </p>
                   </div>
-                  <Link to="/products" className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2">
+                  <Link
+                    to="/products"
+                    className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2"
+                  >
                     Xem tất cả <ArrowRight size={18} />
                   </Link>
                 </div>
@@ -210,8 +219,13 @@ export default function ShopHome() {
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Sản phẩm nổi bật</h2>
-            <Link to="/products" className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Sản phẩm nổi bật
+            </h2>
+            <Link
+              to="/products"
+              className="text-blue-700 hover:text-blue-900 font-medium flex items-center gap-2"
+            >
               Xem tất cả <ArrowRight size={18} />
             </Link>
           </div>
@@ -219,13 +233,20 @@ export default function ShopHome() {
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="h-80 rounded-2xl bg-gray-200 animate-pulse" />
+                <div
+                  key={index}
+                  className="h-80 rounded-2xl bg-gray-200 animate-pulse"
+                />
               ))}
             </div>
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5 lg:gap-6">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} compactAddToCart />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  compactAddToCart
+                />
               ))}
             </div>
           ) : (
@@ -235,7 +256,6 @@ export default function ShopHome() {
           )}
         </div>
       </section>
-
     </div>
   );
 }

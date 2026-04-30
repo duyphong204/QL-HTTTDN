@@ -27,20 +27,20 @@ export interface ApiResponse<T> {
 }
 
 export interface ApiEnvelope<T> {
-    success: true
-    data: T
-    meta?: PaginationMeta | null
-    message?: string | string[]
-    timestamp?: string
+  success: true;
+  data: T;
+  meta?: PaginationMeta | null;
+  message?: string | string[];
+  timestamp?: string;
 }
 
 export interface ApiErrorResponse {
-    success?: false
-    statusCode: number
-    error?: string
-    message?: string | string[] | Record<string, string | string[]>
-    path?: string
-    timestamp?: string
+  success?: false;
+  statusCode: number;
+  error?: string;
+  message?: string | string[] | Record<string, string | string[]>;
+  path?: string;
+  timestamp?: string;
 }
 
 export interface PaginatedResponse<T> {
