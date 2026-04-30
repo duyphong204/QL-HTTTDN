@@ -1,5 +1,11 @@
-import { useEffect } from "react";
-import { UserPlus, Pencil, Trash2, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  UserPlus,
+  Trash2,
+  Eye,
+  UserPen,
+  BriefcaseBusiness,
+} from "lucide-react";
 import { useHrEmployeeStore } from "@/stores/hrEmployee.store";
 import { useEntityModal } from "@/hooks/useEntityModal";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -7,17 +13,19 @@ import { ROLE_BADGE } from "@/utils/role";
 
 import { EmployeeFormModal } from "@/components/forms/EmployeeFormModal";
 import { EmployeeDetailModal } from "@/components/forms/EmployeeDetailModal";
+import { ChangePositionModal } from "@/components/forms/ChangePositionModal";
+import { UpdateEmployeeProfileModal } from "@/components/forms/UpdateEmployeeProfileModal";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { TableLoadingRow } from "@/components/common/Loading";
 import type {
   Employee,
   CreateEmployeeDto,
-  UpdateEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
 } from "@/types/employee.types";
 
 export default function EmployeeManagement() {
-  // Store actions & state
   const {
     employees,
     meta,
@@ -29,50 +37,57 @@ export default function EmployeeManagement() {
     fetchEmployeeById,
     setFilters,
     createEmployee,
-    updateEmployee,
+    changePosition,
+    updateEmployeeProfile,
     deleteEmployee,
     clearSelectedEmployee,
   } = useHrEmployeeStore();
 
-  // UI Hooks
-  const {
-    modalOpen,
-    editingEntity,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-  } = useEntityModal<Employee>();
+  // Modal: Thêm nhân viên mới
+  const { modalOpen: addOpen, openCreateModal: openAdd, closeModal: closeAdd } =
+    useEntityModal<Employee>();
+
+  const handleCreate = async (data: CreateEmployeeDto) => {
+    await createEmployee(data);
+    closeAdd();
+  };
+
+  // Modal: Đổi chức vụ
+  const [positionTarget, setPositionTarget] = useState<Employee | null>(null);
+
+  // Modal: Sửa thông tin cá nhân
+  const [profileTarget, setProfileTarget] = useState<Employee | null>(null);
+
   const { confirmAndRun } = useConfirmAction();
 
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Handlers
-  const handleFormSubmit = async (
-    data: CreateEmployeeDto | UpdateEmployeeDto,
-  ) => {
-    if (editingEntity) {
-      await updateEmployee(editingEntity.id, data as UpdateEmployeeDto);
-    } else {
-      await createEmployee(data as CreateEmployeeDto);
-    }
-    closeModal();
+  const handleChangePosition = async (data: ChangePositionDto) => {
+    if (!positionTarget) return;
+    await changePosition(positionTarget.id, data);
+  };
+
+  const handleUpdateProfile = async (data: UpdateEmployeeProfileByHrDto) => {
+    if (!profileTarget) return;
+    await updateEmployeeProfile(profileTarget.id, data);
   };
 
   const handleDelete = (id: string, name?: string) => {
     confirmAndRun({
-      message: `Bạn có chắc muốn xoá nhân viên ${name ?? ""}?`,
+      message: `Bạn có chắc muốn cho nhân viên ${name ?? ""} nghỉ việc?`,
       action: () => deleteEmployee(id),
     });
   };
 
   const getPositionBadge = (position?: string) => {
-    const config = ROLE_BADGE[position as keyof typeof ROLE_BADGE] || {
-      label: position || "—",
-      color: "bg-indigo-100 text-indigo-700",
-    };
-    return config;
+    return (
+      ROLE_BADGE[position as keyof typeof ROLE_BADGE] || {
+        label: position || "—",
+        color: "bg-indigo-100 text-indigo-700",
+      }
+    );
   };
 
   return (
@@ -89,7 +104,7 @@ export default function EmployeeManagement() {
           </div>
 
           <button
-            onClick={openCreateModal}
+            onClick={openAdd}
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
           >
             <UserPlus size={18} /> Thêm nhân viên
@@ -139,7 +154,7 @@ export default function EmployeeManagement() {
                         <td className="px-6 py-4 font-mono text-gray-900">
                           {emp.code}
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
+                        <td className="px-6 py-4 text-gray-800 font-medium">
                           {emp.user?.profile?.fullName || "—"}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
@@ -155,21 +170,38 @@ export default function EmployeeManagement() {
                         <td className="px-6 py-4 text-gray-600">
                           {emp.user?.email || "—"}
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-1">
+                            {/* Xem chi tiết + lịch sử chức vụ */}
                             <button
+                              title="Xem chi tiết"
                               onClick={() => fetchEmployeeById(emp.id)}
                               className="p-1.5 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                             >
-                              <Eye size={18} />
+                              <Eye size={17} />
                             </button>
+
+                            {/* Sửa thông tin cá nhân */}
                             <button
-                              onClick={() => openEditModal(emp)}
+                              title="Sửa thông tin cá nhân"
+                              onClick={() => setProfileTarget(emp)}
+                              className="p-1.5 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                            >
+                              <UserPen size={17} />
+                            </button>
+
+                            {/* Đổi chức vụ / lương */}
+                            <button
+                              title="Thay đổi chức vụ"
+                              onClick={() => setPositionTarget(emp)}
                               className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                             >
-                              <Pencil size={18} />
+                              <BriefcaseBusiness size={17} />
                             </button>
+
+                            {/* Xóa / nghỉ việc */}
                             <button
+                              title="Cho nghỉ việc"
                               onClick={() =>
                                 handleDelete(
                                   emp.id,
@@ -178,7 +210,7 @@ export default function EmployeeManagement() {
                               }
                               className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={17} />
                             </button>
                           </div>
                         </td>
@@ -199,18 +231,34 @@ export default function EmployeeManagement() {
         </div>
       </div>
 
+      {/* Modal thêm nhân viên mới */}
       <EmployeeFormModal
-        key={editingEntity?.id || "create-employee"}
-        isOpen={modalOpen}
-        onClose={closeModal}
-        editingEmployee={editingEntity}
-        onSubmit={handleFormSubmit}
+        isOpen={addOpen}
+        onClose={closeAdd}
+        onSubmit={handleCreate}
       />
 
+      {/* Modal xem chi tiết + lịch sử chức vụ */}
       <EmployeeDetailModal
         employee={selectedEmployee}
         isLoading={loadingEmployeeDetail}
         onClose={clearSelectedEmployee}
+      />
+
+      {/* Modal đổi chức vụ */}
+      <ChangePositionModal
+        isOpen={!!positionTarget}
+        onClose={() => setPositionTarget(null)}
+        employee={positionTarget}
+        onSubmit={handleChangePosition}
+      />
+
+      {/* Modal sửa thông tin cá nhân */}
+      <UpdateEmployeeProfileModal
+        isOpen={!!profileTarget}
+        onClose={() => setProfileTarget(null)}
+        employee={profileTarget}
+        onSubmit={handleUpdateProfile}
       />
     </div>
   );

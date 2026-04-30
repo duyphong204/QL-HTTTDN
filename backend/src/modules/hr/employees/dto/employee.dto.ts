@@ -34,26 +34,51 @@ export class UpdateProfileDto {
 }
 
 // DTO dùng để HR cập nhật thông tin nhân sự (bao gồm role)
-export class UpdateEmployeeDto {
-  @IsString({ message: 'Phòng ban phải là chuỗi' })
-  @IsOptional()
-  department?: string;
 
+// DTO dành riêng cho thay đổi chức vụ — effectiveDate BẮT BUỘC để audit trail
+export class ChangePositionDto {
   @IsString({ message: 'Chức vụ phải là chuỗi' })
   @IsOptional()
   position?: string;
 
+  @IsString({ message: 'Phòng ban phải là chuỗi' })
+  @IsOptional()
+  department?: string;
+
   @IsNumber({}, { message: 'Lương cơ bản phải là số' })
+  @Min(0, { message: 'Lương cơ bản phải lớn hơn hoặc bằng 0' })
   @IsOptional()
   baseSalary?: number;
 
-  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  @IsDateString({}, { message: 'Ngày hiệu lực không hợp lệ' })
+  effectiveDate!: string;
+
+  @IsString()
   @IsOptional()
-  role?: Role;
+  note?: string;
+}
+
+// DTO để HR cập nhật thông tin cá nhân của nhân viên (không tạo JobHistory)
+export class UpdateEmployeeProfileByHrDto {
+  @IsString({ message: 'Họ tên phải là chuỗi' })
+  @IsOptional()
+  fullName?: string;
+
+  @IsString({ message: 'Số điện thoại phải là chuỗi' })
+  @IsOptional()
+  phone?: string;
+
+  @IsString({ message: 'Địa chỉ phải là chuỗi' })
+  @IsOptional()
+  address?: string;
+
+  @IsString({ message: 'Avatar phải là chuỗi' })
+  @IsOptional()
+  avatar?: string;
 
   @IsDateString()
   @IsOptional()
-  effectiveDate?: string;
+  dateOfBirth?: string;
 }
 
 // DTO dùng khi gán nhân viên cho user đã tồn tại (nếu có nhu cầu)

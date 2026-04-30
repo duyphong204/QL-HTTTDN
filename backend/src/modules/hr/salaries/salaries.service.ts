@@ -310,27 +310,6 @@ export class SalariesService {
     });
   }
 
-  async cancel(id: string) {
-    const salary = await this.getSalaryOrThrow(id);
-    if (
-      !(
-        [SalaryStatus.PENDING, SalaryStatus.APPROVED] as SalaryStatus[]
-      ).includes(salary.status)
-    ) {
-      throw new BadRequestException(
-        'Chỉ có thể hủy bảng lương ở trạng thái PENDING hoặc APPROVED',
-      );
-    }
-    return this.prisma.salary.update({
-      where: { id },
-      data: { status: SalaryStatus.CANCELLED },
-      include: {
-        details: true,
-        employee: { include: { user: { include: { profile: true } } } },
-      },
-    });
-  }
-
   async addDetail(salaryId: string, dto: AddSalaryDetailDto) {
     await this.getSalaryOrThrow(salaryId);
     await this.prisma.salaryDetail.create({

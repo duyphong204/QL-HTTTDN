@@ -24,12 +24,21 @@ export interface CreateEmployeeDto {
   baseSalary: number;
 }
 
-export interface UpdateEmployeeDto {
-  department?: string;
+
+export interface ChangePositionDto {
   position?: string;
+  department?: string;
   baseSalary?: number;
-  role?: Role;
-  effectiveDate?: string;
+  effectiveDate: string;
+  note?: string;
+}
+
+export interface UpdateEmployeeProfileByHrDto {
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  dateOfBirth?: string;
 }
 
 export interface QueryEmployeeDto {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PromotionType, Promotion } from "@/types/promotion.type";
 import { AppModal } from "@/components/common/AppModal";
-import { getCloudinaryThumbnailUrl } from "@/lib/cloudinary";
+import { getCloudinaryThumbnailUrl } from "@/utils/cloudinary";
 import { useProductStore } from "@/stores/product.store";
 
 interface PromotionFormModalProps {

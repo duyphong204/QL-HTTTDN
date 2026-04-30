@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateLeaveDto } from './dto/leave.dto';
-import { Prisma } from '@prisma/client';
+import { CreateLeaveDto, QueryLeaveRequestDto } from './dto/leave.dto';
+import { LeaveType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class LeaveRequestsService {
@@ -66,16 +66,11 @@ export class LeaveRequestsService {
       );
   }
 
-  async findAll(query?: {
-    status?: string;
-    type?: string;
-    employeeId?: string;
-    year?: string;
-  }) {
+  async findAll(query?: QueryLeaveRequestDto) {
     const { status, type, employeeId, year } = query || {};
     const where: Prisma.LeaveRequestWhereInput = {
       ...(status ? { status } : {}),
-      ...(type ? { type } : {}),
+      ...(type ? { type: type as LeaveType } : {}),
       ...(employeeId ? { employeeId } : {}),
     };
 

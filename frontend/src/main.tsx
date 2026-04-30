@@ -6,6 +6,6 @@ import { Toaster } from "sonner";
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
-    <Toaster richColors position="top-right" duration={2000} closeButton />
+    <Toaster richColors position="top-right" duration={1000} closeButton />
   </>,
 );

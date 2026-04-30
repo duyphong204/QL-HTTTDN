@@ -13,40 +13,18 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
-import { CalculateSalaryDto } from './dto/calculate-salary.dto';
+import {
+  CalculateAllDto,
+  CalculateSalaryDto,
+  StatisticsQueryDto,
+} from './dto/calculate-salary.dto';
 import { AddSalaryDetailDto } from './dto/salary-detail.dto';
 import { QuerySalaryDto } from './dto/query-salary.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
 
-class CalculateAllDto {
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(12)
-  month!: number;
-
-  @Type(() => Number)
-  @IsInt()
-  year!: number;
-}
-
-class StatisticsQueryDto {
-  @Type(() => Number)
-  @IsInt()
-  year!: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(12)
-  month?: number;
-}
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -135,12 +113,6 @@ export class SalariesController {
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   pay(@Param('id') id: string) {
     return this.salariesService.pay(id);
-  }
-
-  @Patch(':id/cancel')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  cancel(@Param('id') id: string) {
-    return this.salariesService.cancel(id);
   }
 
   @Post(':id/details')

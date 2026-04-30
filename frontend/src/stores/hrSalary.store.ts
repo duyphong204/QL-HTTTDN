@@ -29,7 +29,6 @@ export interface HrSalaryStatistics {
     PENDING: number;
     APPROVED: number;
     PAID: number;
-    CANCELLED: number;
   };
   monthlyBreakdown: { month: number; total: number; count: number }[];
 }
@@ -49,7 +48,6 @@ interface State {
   calculateAll: (month: number, year: number) => Promise<void>;
   approve: (id: string) => Promise<void>;
   pay: (id: string) => Promise<void>;
-  cancel: (id: string) => Promise<void>;
   addDetail: (id: string, data: AddSalaryDetailDto) => Promise<void>;
   deleteDetail: (salaryId: string, detailId: string) => Promise<void>;
   fetchStatistics: (year: number, month?: number) => Promise<void>;
@@ -126,16 +124,6 @@ export const useHrSalaryStore = create<State>((set, get) => ({
     try {
       await salaryService.pay(id);
       toast.success("Đã đánh dấu thanh toán");
-      await get().fetch();
-    } catch (e) {
-      toast.error(getErrorMessage(e));
-    }
-  },
-
-  cancel: async (id) => {
-    try {
-      await salaryService.cancel(id);
-      toast.success("Đã hủy bảng lương");
       await get().fetch();
     } catch (e) {
       toast.error(getErrorMessage(e));

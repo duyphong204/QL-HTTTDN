@@ -24,22 +24,24 @@ import { PromotionsService } from './promotions.service';
 @ApiTags('Sales - Promotions')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
 @Controller('promotions')
 export class PromotionsController {
   constructor(private readonly promotionsService: PromotionsService) {}
 
   @Get()
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
   findAll() {
     return this.promotionsService.findAll();
   }
 
   @Post()
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
   create(@Body() dto: CreatePromotionDto) {
     return this.promotionsService.create(dto);
   }
-
+  
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePromotionDto,
@@ -48,6 +50,7 @@ export class PromotionsController {
   }
 
   @Patch(':id/products')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
   setProducts(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: SetPromotionProductsDto,
@@ -56,6 +59,7 @@ export class PromotionsController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.promotionsService.remove(id);
   }

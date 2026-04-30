@@ -4,7 +4,9 @@ import { endpoints } from "@/api/endpoints";
 import type {
   Employee,
   CreateEmployeeDto,
-  UpdateEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
+  JobHistory,
 } from "@/types/employee.types";
 import type {
   LeaveRequest,
@@ -44,13 +46,6 @@ export const employeeService = {
     return apiPost<Employee>(endpoints.employees.root, data);
   },
 
-  updateEmployee: async (
-    id: string,
-    data: UpdateEmployeeDto,
-  ): Promise<Employee> => {
-    return apiPatch<Employee>(endpoints.employees.byId(id), data);
-  },
-
   deleteEmployee: async (id: string): Promise<void> => {
     await apiDelete(endpoints.employees.byId(id));
   },
@@ -68,6 +63,24 @@ export const employeeService = {
     year?: number;
   }): Promise<HrStatisticsReport> => {
     return apiGet<HrStatisticsReport>(endpoints.employees.hrReport, params);
+  },
+
+  getJobHistory: async (id: string): Promise<JobHistory[]> => {
+    return apiGet<JobHistory[]>(endpoints.employees.jobHistory(id));
+  },
+
+  changePosition: async (
+    id: string,
+    data: ChangePositionDto,
+  ): Promise<Employee> => {
+    return apiPatch<Employee>(endpoints.employees.changePosition(id), data);
+  },
+
+  updateEmployeeProfile: async (
+    id: string,
+    data: UpdateEmployeeProfileByHrDto,
+  ): Promise<Employee> => {
+    return apiPatch<Employee>(endpoints.employees.updateProfile(id), data);
   },
 };
 
@@ -121,8 +134,6 @@ export const salaryService = {
   approve: (id: string) => apiPatch<Salary>(`/salaries/${id}/approve`, {}),
 
   pay: (id: string) => apiPatch<Salary>(`/salaries/${id}/pay`, {}),
-
-  cancel: (id: string) => apiPatch<Salary>(`/salaries/${id}/cancel`, {}),
 
   addDetail: (salaryId: string, data: AddSalaryDetailDto) =>
     apiPost<Salary>(`/salaries/${salaryId}/details`, data),

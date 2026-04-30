@@ -36,6 +36,7 @@ import PaymentReturn from "@/pages/customer/PaymentReturn";
 import Profile from "@/pages/customer/Profile";
 import About from "@/pages/customer/About";
 import Contact from "@/pages/customer/Contact";
+import SalesReportPage from "@/pages/sales/SalesReportPage";
 export const AppRouter = () => {
   const location = useLocation();
 
@@ -198,7 +199,7 @@ export const AppRouter = () => {
             path="/sales/reports"
             element={
               <ProtectedRoute roles={rolesFor("/sales/reports")}>
-                <AdminReportPage />
+                <SalesReportPage />
               </ProtectedRoute>
             }
           />

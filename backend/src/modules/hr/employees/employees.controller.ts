@@ -14,9 +14,10 @@ import {
 import { EmployeesService } from './employees.service';
 import {
   CreateEmployeeDto,
-  UpdateEmployeeDto,
   UpdateProfileDto,
   QueryEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
 } from './dto/employee.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
@@ -77,17 +78,21 @@ export class EmployeesController {
     return this.employeesService.getEmployeeById(id, req.user);
   }
 
-  // Thay đổi chức vụ + lương (có effectiveDate)
-  @Patch(':id')
-  @Roles(Role.ADMIN, Role.HR_MANAGER)
-  updateEmployee(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
-    return this.employeesService.updateEmployee(id, dto);
-  }
-
+  // Thay đổi chức vụ/phòng ban/lương — effectiveDate BẮT BUỘC → tạo JobHistory
   @Patch(':id/position')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  updatePosition(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
-    return this.employeesService.updateEmployee(id, dto);
+  changePosition(@Param('id') id: string, @Body() dto: ChangePositionDto) {
+    return this.employeesService.changePosition(id, dto);
+  }
+
+  // Cập nhật thông tin cá nhân nhân viên (fullName, phone, address...) — không tạo JobHistory
+  @Patch(':id/profile')
+  @Roles(Role.ADMIN, Role.HR_MANAGER)
+  updateEmployeeProfile(
+    @Param('id') id: string,
+    @Body() dto: UpdateEmployeeProfileByHrDto,
+  ) {
+    return this.employeesService.updateEmployeeProfile(id, dto);
   }
 
   @Delete(':id')

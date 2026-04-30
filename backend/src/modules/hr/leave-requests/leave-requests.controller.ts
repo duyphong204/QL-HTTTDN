@@ -14,7 +14,11 @@ import {
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { LeaveRequestsService } from './leave-requests.service';
-import { CreateLeaveDto, UpdateLeaveStatusDto } from './dto/leave.dto';
+import {
+  CreateLeaveDto,
+  UpdateLeaveStatusDto,
+  QueryLeaveRequestDto,
+} from './dto/leave.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
@@ -83,12 +87,8 @@ export class LeaveRequestsController {
   // }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
-  findAll(@Query() query: any) {
-    return this.leaveRequestsService.findAll({
-      ...query,
-      page: query?.page ? Number(query.page) : undefined,
-      limit: query?.limit ? Number(query.limit) : undefined,
-    });
+  findAll(@Query() query: QueryLeaveRequestDto) {
+    return this.leaveRequestsService.findAll(query);
   }
   @Delete(':id')
   @Roles(

@@ -4,7 +4,6 @@ export const SalaryStatus = {
   PENDING: "PENDING",
   APPROVED: "APPROVED",
   PAID: "PAID",
-  CANCELLED: "CANCELLED",
 } as const;
 
 export type SalaryStatus = (typeof SalaryStatus)[keyof typeof SalaryStatus];

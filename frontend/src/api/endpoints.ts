@@ -20,6 +20,9 @@ export const endpoints = {
     byId: (id: string) => `/employees/${id}`,
     me: "/employees/me",
     hrReport: "/employees/statistics/hr-report",
+    jobHistory: (id: string) => `/employees/${id}/job-history`,
+    changePosition: (id: string) => `/employees/${id}/position`,
+    updateProfile: (id: string) => `/employees/${id}/profile`,
   },
   leaveRequests: {
     root: "/leave-requests",

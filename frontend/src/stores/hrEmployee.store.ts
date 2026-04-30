@@ -6,7 +6,9 @@ import { mergeFiltersWithPageReset } from "@/stores/store.helpers";
 import type {
   Employee,
   CreateEmployeeDto,
-  UpdateEmployeeDto,
+  // UpdateEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
 } from "@/types/employee.types";
 import type {
   BaseFilters,
@@ -33,7 +35,11 @@ interface HrEmployeeState {
   fetchEmployees: () => Promise<void>;
   fetchEmployeeById: (id: string) => Promise<void>;
   createEmployee: (data: CreateEmployeeDto) => Promise<void>;
-  updateEmployee: (id: string, data: UpdateEmployeeDto) => Promise<void>;
+  changePosition: (id: string, data: ChangePositionDto) => Promise<void>;
+  updateEmployeeProfile: (
+    id: string,
+    data: UpdateEmployeeProfileByHrDto,
+  ) => Promise<void>;
   deleteEmployee: (id: string) => Promise<void>;
   clearSelectedEmployee: () => void;
 }
@@ -102,13 +108,26 @@ export const useHrEmployeeStore = create<HrEmployeeState>((set, get) => ({
     }
   },
 
-  updateEmployee: async (id, data) => {
+  changePosition: async (id, data) => {
     try {
-      await employeeService.updateEmployee(id, data);
-      toast.success("Cập nhật nhân sự thành công");
+      await employeeService.changePosition(id, data);
+      toast.success("Thay đổi chức vụ thành công");
       await get().fetchEmployees();
     } catch (error) {
-      toast.error(getErrorMessage(error, "Cập nhật nhân sự thất bại"));
+      toast.error(getErrorMessage(error, "Thay đổi chức vụ thất bại"));
+      throw error;
+    }
+  },
+
+  updateEmployeeProfile: async (id, data) => {
+    try {
+      await employeeService.updateEmployeeProfile(id, data);
+      toast.success("Cập nhật thông tin nhân viên thành công");
+      await get().fetchEmployees();
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, "Cập nhật thông tin nhân viên thất bại"),
+      );
       throw error;
     }
   },
