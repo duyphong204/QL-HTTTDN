@@ -12,9 +12,6 @@ export const endpoints = {
     root: "/users",
     byId: (id: string) => `/users/${id}`,
   },
-  admin: {
-    dashboardReport: "/admin/dashboard-report",
-  },
   employees: {
     root: "/employees",
     byId: (id: string) => `/employees/${id}`,
@@ -60,9 +57,6 @@ export const endpoints = {
     root: "/stock-outs",
     byId: (id: string) => `/stock-outs/${id}`,
   },
-  warehouse: {
-    report: "/warehouse/report",
-  },
   orders: {
     root: "/orders",
     my: "/orders/my",
@@ -79,10 +73,8 @@ export const endpoints = {
     clear: "/cart/clear",
   },
   reports: {
-    admin: "/reports/admin",
-    hr: "/reports/hr",
-    warehouse: "/reports/warehouse",
     sales: "/reports/sales",
-    employeeSalary: "/reports/employee/salary",
+    warehouse: "/reports/warehouse",
+    hr: "/reports/hr",
   },
 } as const;

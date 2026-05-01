@@ -53,19 +53,6 @@ export class ProductController {
     return this.productsService.findAll(query);
   }
 
-  @Get('report/stats')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  getWarehouseReport(
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
-    return this.productsService.getWarehouseReport(
-      month ? Number(month) : undefined,
-      year ? Number(year) : undefined,
-    );
-  }
-
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)

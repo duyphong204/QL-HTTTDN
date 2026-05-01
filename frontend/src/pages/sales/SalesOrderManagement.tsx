@@ -110,6 +110,7 @@ export default function SalesOrderManagement() {
                   <th className="px-6 py-4">Mã đơn</th>
                   <th className="px-6 py-4">Khách hàng</th>
                   <th className="px-6 py-4">SĐT</th>
+                  <th className="px-6 py-4">Sản phẩm</th>
                   <th className="px-6 py-4">Ngày tạo</th>
                   <th className="px-6 py-4">PT thanh toán</th>
                   <th className="px-6 py-4 text-right">Tổng tiền</th>
@@ -155,6 +156,26 @@ export default function SalesOrderManagement() {
                           {o.fullName}
                         </td>
                         <td className="px-6 py-4 text-gray-600">{o.phone}</td>
+                        <td className="px-6 py-4">
+                        <div
+                          className="text-sm text-gray-700 truncate max-w-55"
+                          title={o.items?.map((i) => i.productName).join(", ")}
+                        >
+                          {o.items?.slice(0, 2).map((item, index) => (
+                            <span key={item.id}>
+                              {item.productName}
+                              {index < Math.min(o.items.length, 2) - 1 && ", "}
+                            </span>
+                          ))}
+
+                          {o.items && o.items.length > 2 && (
+                            <span className="text-gray-400">
+                              {" "}
+                              +{o.items.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                         <td className="px-6 py-4 text-gray-500">
                           {new Date(o.createdAt).toLocaleDateString("vi-VN")}
                         </td>

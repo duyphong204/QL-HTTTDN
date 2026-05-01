@@ -1,897 +1,482 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import {
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  endOfMonth,
+  endOfYear,
+  format,
+  startOfMonth,
+  startOfYear,
+} from 'date-fns';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type { ReportQueryParams, RechartsSeriesResponse } from './report.types';
+import { ReportQueryDto, ReportType } from './dto/report.dto';
+
+type ReportBucket = 'day' | 'month';
+
+interface SalesSummaryRow {
+  revenue: number;
+  totalSell: number;
+  totalCost: number;
+  totalQuantity: number;
+}
+
+interface SalesBreakdownRow {
+  bucketStart: Date;
+  revenue: number;
+  totalSell: number;
+  totalCost: number;
+  quantity: number;
+}
+
+interface WarehouseSummaryRow {
+  totalImportAmount: number;
+  totalImportQuantity: number;
+  totalExportAmount: number;
+  totalExportQuantity: number;
+  totalInventory: number;
+}
+
+interface WarehouseBreakdownRow {
+  bucketStart: Date;
+  importAmount: number;
+  exportAmount: number;
+}
+
+interface HrSummaryRow {
+  totalSalary: number;
+  totalBonus: number;
+  totalDeduction: number;
+  activeEmployees: number;
+  resignedEmployees: number;
+}
+
+interface HrBreakdownRow {
+  bucketStart: Date;
+  salary: number;
+  bonus: number;
+  deduction: number;
+}
 
 @Injectable()
 export class ReportService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly palette = {
-    revenue: '#2563eb',
-    profit: '#16a34a',
-    quantity: '#f97316',
-    salary: '#0ea5e9',
-    bonus: '#22c55e',
-    deduction: '#ef4444',
-    stock: '#0891b2',
-    inbound: '#22c55e',
-    outbound: '#f97316',
-  };
+  private resolveSalesPeriod(query: ReportQueryDto) {
+    const { type, year, month, quarter } = query;
 
-  private toNumber(value: number | null | undefined): number {
-    return Number(value ?? 0);
-  }
-
-  private getYear(value?: number): number {
-    return value || new Date().getFullYear();
-  }
-
-  private monthKey(date: Date): number {
-    return date.getMonth() + 1;
-  }
-
-  private dayKey(date: Date): number {
-    return date.getDate();
-  }
-
-  private monthLabels(year: number): string[] {
-    return Array.from(
-      { length: 12 },
-      (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`,
-    );
-  }
-
-  private quarterMonths(quarter: number): number[] {
-    const start = (quarter - 1) * 3 + 1;
-    return [start, start + 1, start + 2];
-  }
-
-  private toChart(
-    labels: string[],
-    datasets: RechartsSeriesResponse['datasets'],
-  ): RechartsSeriesResponse {
-    return { labels, datasets };
-  }
-
-  async getAdminDashboard(params: ReportQueryParams = {}) {
-    const year = this.getYear(params.year);
-    const month = params.month;
-
-    const periodStart = month
-      ? new Date(year, month - 1, 1)
-      : new Date(year, 0, 1);
-    const periodEnd = month
-      ? new Date(year, month, 0, 23, 59, 59)
-      : new Date(year, 11, 31, 23, 59, 59);
-
-    const [
-      completedOrders,
-      completedStockOuts,
-      products,
-      employees,
-      salaries,
-      logs,
-    ] = await Promise.all([
-      this.prisma.order.findMany({
-        where: {
-          status: 'COMPLETED',
-          createdAt: { gte: periodStart, lte: periodEnd },
-        },
-        select: {
-          id: true,
-          totalAmount: true,
-          createdAt: true,
-          details: {
-            select: {
-              quantity: true,
-              price: true,
-              costPrice: true,
-              productId: true,
-              product: {
-                select: { name: true, category: { select: { name: true } } },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.stockOut.findMany({
-        where: {
-          status: 'COMPLETED',
-          type: 'SALE',
-          createdAt: { gte: periodStart, lte: periodEnd },
-        },
-        select: {
-          createdAt: true,
-          details: {
-            select: {
-              quantity: true,
-            },
-          },
-        },
-      }),
-      this.prisma.product.findMany({
-        where: { deletedAt: null },
-        select: {
-          id: true,
-          name: true,
-          stockQuantity: true,
-          minStock: true,
-          category: { select: { name: true } },
-        },
-      }),
-      this.prisma.employee.count({ where: { resignDate: null } }),
-      this.prisma.salary.aggregate({
-        where: {
-          ...(month ? { month } : {}),
-          year,
-        },
-        _sum: { netSalary: true, totalBonus: true },
-      }),
-      this.prisma.systemLog.findMany({
-        where: { createdAt: { gte: periodStart, lte: periodEnd } },
-        select: { userId: true },
-      }),
-    ]);
-
-    let totalRevenue = 0;
-    let totalProfit = 0;
-    let totalItemsSold = 0;
-
-    const revenueByMonth = new Map<
-      number,
-      { revenue: number; profit: number }
-    >();
-    const productAgg = new Map<
-      string,
-      { name: string; quantity: number; revenue: number }
-    >();
-    const revenueByCategory = new Map<string, number>();
-
-    for (const order of completedOrders) {
-      const monthBucket = this.monthKey(order.createdAt);
-      const monthRow = revenueByMonth.get(monthBucket) || {
-        revenue: 0,
-        profit: 0,
-      };
-      monthRow.revenue += this.toNumber(order.totalAmount);
-      revenueByMonth.set(monthBucket, monthRow);
-
-      totalRevenue += this.toNumber(order.totalAmount);
-
-      for (const detail of order.details) {
-        const lineRevenue = detail.quantity * this.toNumber(detail.price);
-        const lineProfit =
-          detail.quantity *
-          (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
-
-        totalItemsSold += detail.quantity;
-        totalProfit += lineProfit;
-
-        monthRow.profit += lineProfit;
-
-        const key = detail.productId;
-        const existing = productAgg.get(key) || {
-          name: detail.product?.name || 'N/A',
-          quantity: 0,
-          revenue: 0,
-        };
-        existing.quantity += detail.quantity;
-        existing.revenue += lineRevenue;
-        productAgg.set(key, existing);
-
-        const categoryName = detail.product?.category?.name || 'Khác';
-        revenueByCategory.set(
-          categoryName,
-          (revenueByCategory.get(categoryName) || 0) + lineRevenue,
-        );
+    if (type === ReportType.MONTH) {
+      if (!month) throw new BadRequestException('Month is required');
+      if (month < 1 || month > 12) {
+        throw new BadRequestException('Month must be between 1 and 12');
       }
 
-      revenueByMonth.set(monthBucket, monthRow);
+      const start = startOfMonth(new Date(year, month - 1, 1));
+      const end = endOfMonth(start);
+
+      return { start, end, bucket: 'day' as const };
     }
 
-    for (const stockOut of completedStockOuts) {
-      for (const detail of stockOut.details) {
-        totalItemsSold += detail.quantity;
+    if (type === ReportType.QUARTER) {
+      if (!quarter) throw new BadRequestException('Quarter is required');
+      if (quarter < 1 || quarter > 4) {
+        throw new BadRequestException('Quarter must be between 1 and 4');
       }
+
+      const startMonth = (quarter - 1) * 3;
+      const start = startOfMonth(new Date(year, startMonth, 1));
+      const end = endOfMonth(new Date(year, startMonth + 2, 1));
+
+      return { start, end, bucket: 'month' as const };
     }
 
-    const labels = month
-      ? [`${year}-${String(month).padStart(2, '0')}`]
-      : this.monthLabels(year);
+    if (type === ReportType.YEAR) {
+      const start = startOfYear(new Date(year, 0, 1));
+      const end = endOfYear(new Date(year, 0, 1));
 
-    const revenueTrend = labels.map((_, idx) => {
-      const monthIndex = month ? month : idx + 1;
-      return revenueByMonth.get(monthIndex)?.revenue || 0;
-    });
+      return { start, end, bucket: 'month' as const };
+    }
 
-    const profitTrend = labels.map((_, idx) => {
-      const monthIndex = month ? month : idx + 1;
-      return revenueByMonth.get(monthIndex)?.profit || 0;
-    });
-
-    const topProducts = [...productAgg.entries()]
-      .map(([id, value]) => ({ id, ...value }))
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 10);
-
-    const lowStockProducts = products
-      .filter((p) => p.stockQuantity <= p.minStock)
-      .sort((a, b) => a.stockQuantity - b.stockQuantity)
-      .slice(0, 10)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        stockQuantity: p.stockQuantity,
-        minStock: p.minStock,
-      }));
-
-    const topProductChart = this.toChart(
-      topProducts.map((p) => p.name),
-      [
-        {
-          name: 'Số lượng bán',
-          data: topProducts.map((p) => p.quantity),
-          color: this.palette.quantity,
-        },
-      ],
-    );
-
-    const categoryRows = [...revenueByCategory.entries()].sort(
-      (a, b) => b[1] - a[1],
-    );
-
-    const categoryPie = this.toChart(
-      categoryRows.map(([name]) => name),
-      [
-        {
-          name: 'Doanh thu theo danh mục',
-          data: categoryRows.map(([, value]) => value),
-          color: this.palette.revenue,
-        },
-      ],
-    );
-
-    const activeUsers = new Set(logs.map((log) => log.userId).filter(Boolean));
-
-    return {
-      period: { year, month },
-      generatedAt: new Date().toISOString(),
-      summary: {
-        totalRevenue,
-        totalProfit,
-        totalItemsSold,
-        totalOrders: completedOrders.length,
-        totalEmployees: employees,
-        totalSalaryPaid: this.toNumber(salaries._sum.netSalary),
-        totalBonus: this.toNumber(salaries._sum.totalBonus),
-        userActivity: {
-          totalActions: logs.length,
-          uniqueUsers: activeUsers.size,
-        },
-      },
-      charts: {
-        trend: this.toChart(labels, [
-          {
-            name: 'Doanh thu',
-            data: revenueTrend,
-            color: this.palette.revenue,
-          },
-          { name: 'Lợi nhuận', data: profitTrend, color: this.palette.profit },
-        ]),
-        topProducts: topProductChart,
-        categoryDistribution: categoryPie,
-      },
-      topProducts,
-      lowStockProducts,
-    };
+    throw new BadRequestException('Invalid report type');
   }
 
-  async getAdminDashboardLegacy(params: ReportQueryParams = {}) {
-    const admin = await this.getAdminDashboard(params);
+  private resolveWarehousePeriod(query: ReportQueryDto) {
+    const { type, year, month } = query;
 
-    const year = this.getYear(params.year);
-    const month = params.month;
+    if (type === ReportType.MONTH) {
+      if (!month) throw new BadRequestException('Month is required');
+      if (month < 1 || month > 12) {
+        throw new BadRequestException('Month must be between 1 and 12');
+      }
 
-    const [warehouseStockIns, productStats, totalResigned] = await Promise.all([
-      this.prisma.stockIn.aggregate({
-        where: {
-          date: {
-            gte: month ? new Date(year, month - 1, 1) : new Date(year, 0, 1),
-            lte: month
-              ? new Date(year, month, 0, 23, 59, 59)
-              : new Date(year, 11, 31, 23, 59, 59),
-          },
-        },
-        _sum: { totalAmount: true },
-        _count: { id: true },
-      }),
-      this.prisma.product.aggregate({
-        where: { deletedAt: null },
-        _sum: { stockQuantity: true },
-        _count: { id: true },
-      }),
-      this.prisma.employee.count({ where: { resignDate: { not: null } } }),
-    ]);
+      const start = startOfMonth(new Date(year, month - 1, 1));
+      const end = endOfMonth(start);
 
-    return {
-      period: { month, year },
-      generatedAt: admin.generatedAt,
-      sales: {
-        totalOrders: admin.summary.totalOrders,
-        totalItemsSold: admin.summary.totalItemsSold,
-        totalRevenue: admin.summary.totalRevenue,
-        totalProfit: admin.summary.totalProfit,
-      },
-      warehouse: {
-        totalStockIns: warehouseStockIns._count.id,
-        totalImportValue: this.toNumber(warehouseStockIns._sum.totalAmount),
-        totalImportQuantity: 0,
-        totalProductTypes: productStats._count.id,
-        totalStockQuantity: this.toNumber(productStats._sum.stockQuantity),
-        lowStockProducts: admin.lowStockProducts,
-      },
-      hr: {
-        totalEmployees: admin.summary.totalEmployees,
-        totalResigned,
-        headcount: admin.summary.totalEmployees,
-        totalSalaryPaid: admin.summary.totalSalaryPaid,
-        totalBonus: admin.summary.totalBonus,
-      },
-    };
+      return { start, end, bucket: 'day' as const };
+    }
+
+    if (type === ReportType.YEAR) {
+      const start = startOfYear(new Date(year, 0, 1));
+      const end = endOfYear(new Date(year, 0, 1));
+
+      return { start, end, bucket: 'month' as const };
+    }
+
+    throw new BadRequestException('Warehouse report supports month or year only');
   }
 
-  async getHrManagerReport(params: ReportQueryParams = {}) {
-    const year = this.getYear(params.year);
-    const month = params.month || new Date().getMonth() + 1;
+  private resolveHrPeriod(query: ReportQueryDto) {
+    const { type, year, month } = query;
 
-    const [monthSalaries, allSalariesInYear, employees, leaves] =
-      await Promise.all([
-        this.prisma.salary.findMany({
-          where: { month, year },
-          select: {
-            netSalary: true,
-            totalBonus: true,
-            totalDeduction: true,
-            employee: { select: { department: true } },
-          },
-        }),
-        this.prisma.salary.findMany({
-          where: { year },
-          select: { month: true, netSalary: true, totalBonus: true },
-        }),
-        this.prisma.employee.findMany({
-          select: { joinDate: true, resignDate: true },
-        }),
-        this.prisma.leaveRequest.findMany({
-          where: {
-            startDate: {
-              gte: new Date(year, 0, 1),
-              lte: new Date(year, 11, 31, 23, 59, 59),
-            },
-            status: 'APPROVED',
-          },
-          select: { type: true },
-        }),
-      ]);
+    if (type === ReportType.MONTH) {
+      if (!month) throw new BadRequestException('Month is required');
+      if (month < 1 || month > 12) {
+        throw new BadRequestException('Month must be between 1 and 12');
+      }
 
-    const byDepartment = new Map<string, number>();
-    let totalSalary = 0;
-    let totalBonus = 0;
+      const start = startOfMonth(new Date(year, month - 1, 1));
+      const end = endOfMonth(start);
 
-    for (const row of monthSalaries) {
-      const dept = row.employee?.department || 'Chưa phân phòng ban';
-      byDepartment.set(
-        dept,
-        (byDepartment.get(dept) || 0) + this.toNumber(row.netSalary),
-      );
-      totalSalary += this.toNumber(row.netSalary);
-      totalBonus += this.toNumber(row.totalBonus);
+      return { start, end, bucket: 'day' as const };
     }
 
-    const salaryByMonth = Array.from({ length: 12 }, () => ({
-      salary: 0,
-      bonus: 0,
-    }));
-    for (const row of allSalariesInYear) {
-      salaryByMonth[row.month - 1].salary += this.toNumber(row.netSalary);
-      salaryByMonth[row.month - 1].bonus += this.toNumber(row.totalBonus);
+    if (type === ReportType.YEAR) {
+      const start = startOfYear(new Date(year, 0, 1));
+      const end = endOfYear(new Date(year, 0, 1));
+
+      return { start, end, bucket: 'month' as const };
     }
 
-    const activeHeadcountByMonth = Array.from({ length: 12 }, (_, idx) => {
-      const checkpoint = new Date(year, idx + 1, 0, 23, 59, 59);
-      return employees.filter(
-        (e) =>
-          e.joinDate <= checkpoint &&
-          (!e.resignDate || e.resignDate > checkpoint),
-      ).length;
-    });
-
-    const leaveByType = new Map<string, number>();
-    for (const leave of leaves) {
-      leaveByType.set(leave.type, (leaveByType.get(leave.type) || 0) + 1);
-    }
-
-    const salaryByDepartmentChart = this.toChart(
-      [...byDepartment.keys()],
-      [
-        {
-          name: 'Tổng lương theo phòng ban',
-          data: [...byDepartment.values()],
-          color: this.palette.salary,
-        },
-      ],
-    );
-
-    const headcountGrowth = this.toChart(this.monthLabels(year), [
-      {
-        name: 'Tăng trưởng nhân sự',
-        data: activeHeadcountByMonth,
-        color: this.palette.revenue,
-      },
-    ]);
-
-    const leaveRatio = this.toChart(
-      [...leaveByType.keys()],
-      [
-        {
-          name: 'Tỷ lệ nghỉ phép',
-          data: [...leaveByType.values()],
-          color: this.palette.quantity,
-        },
-      ],
-    );
-
-    const monthlySalarySummary = this.toChart(this.monthLabels(year), [
-      {
-        name: 'Lương thực trả',
-        data: salaryByMonth.map((m) => m.salary),
-        color: this.palette.salary,
-      },
-      {
-        name: 'Thưởng',
-        data: salaryByMonth.map((m) => m.bonus),
-        color: this.palette.bonus,
-      },
-    ]);
-
-    return {
-      period: { year, month },
-      summary: {
-        totalEmployeesCurrent: activeHeadcountByMonth[month - 1] || 0,
-        totalSalary,
-        totalBonus,
-        totalBudget: totalSalary + totalBonus,
-        totalApprovedLeaves: leaves.length,
-      },
-      charts: {
-        salaryByDepartment: salaryByDepartmentChart,
-        headcountGrowth,
-        leaveRatio,
-        monthlySalarySummary,
-      },
-    };
+    throw new BadRequestException('HR report supports month or year only');
   }
 
-  async getWarehouseManagerReport(params: ReportQueryParams = {}) {
-    const year = this.getYear(params.year);
-    const month = params.month;
-
-    const periodStart = month
-      ? new Date(year, month - 1, 1)
-      : new Date(year, 0, 1);
-    const periodEnd = month
-      ? new Date(year, month, 0, 23, 59, 59)
-      : new Date(year, 11, 31, 23, 59, 59);
-
-    const [products, stockIns, stockOuts] = await Promise.all([
-      this.prisma.product.findMany({
-        where: { deletedAt: null },
-        select: {
-          id: true,
-          name: true,
-          stockQuantity: true,
-          minStock: true,
-          category: { select: { name: true } },
-        },
-      }),
-      this.prisma.stockIn.findMany({
-        where: { date: { gte: periodStart, lte: periodEnd } },
-        select: {
-          date: true,
-          totalAmount: true,
-          details: { select: { quantity: true } },
-        },
-      }),
-      this.prisma.stockOut.findMany({
-        where: {
-          status: 'COMPLETED',
-          createdAt: { gte: periodStart, lte: periodEnd },
-        },
-        select: {
-          createdAt: true,
-          details: { select: { quantity: true } },
-        },
-      }),
-    ]);
-
-    const byCategory = new Map<string, number>();
-    for (const product of products) {
-      const key = product.category?.name || 'Khác';
-      byCategory.set(key, (byCategory.get(key) || 0) + product.stockQuantity);
-    }
-
-    const lowStockProducts = products
-      .filter((p) => p.stockQuantity <= p.minStock)
-      .sort((a, b) => a.stockQuantity - b.stockQuantity)
-      .slice(0, 20)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        stockQuantity: p.stockQuantity,
-        minStock: p.minStock,
-        alert: p.stockQuantity <= 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
-      }));
-
-    const movementByMonth = Array.from({ length: 12 }, () => ({
-      inbound: 0,
-      outbound: 0,
-    }));
-
-    let totalImportValue = 0;
-    let totalInboundQty = 0;
-
-    for (const stockIn of stockIns) {
-      const m = this.monthKey(stockIn.date) - 1;
-      const qty = stockIn.details.reduce((sum, d) => sum + d.quantity, 0);
-      movementByMonth[m].inbound += qty;
-      totalInboundQty += qty;
-      totalImportValue += this.toNumber(stockIn.totalAmount);
-    }
-
-    let totalOutboundQty = 0;
-    for (const stockOut of stockOuts) {
-      const m = this.monthKey(stockOut.createdAt) - 1;
-      const qty = stockOut.details.reduce((sum, d) => sum + d.quantity, 0);
-      movementByMonth[m].outbound += qty;
-      totalOutboundQty += qty;
-    }
-
-    return {
-      period: { year, month },
-      summary: {
-        totalStockIns: stockIns.length,
-        totalStockQuantity: products.reduce(
-          (sum, p) => sum + p.stockQuantity,
-          0,
-        ),
-        totalProductTypes: products.length,
-        totalImportValue,
-        totalInboundQty,
-        totalOutboundQty,
-        lowStockCount: lowStockProducts.length,
-      },
-      charts: {
-        stockByCategory: this.toChart(
-          [...byCategory.keys()],
-          [
-            {
-              name: 'Tồn kho',
-              data: [...byCategory.values()],
-              color: this.palette.stock,
-            },
-          ],
-        ),
-        movementTrend: this.toChart(this.monthLabels(year), [
-          {
-            name: 'Nhập kho',
-            data: movementByMonth.map((m) => m.inbound),
-            color: this.palette.inbound,
-          },
-          {
-            name: 'Xuất kho',
-            data: movementByMonth.map((m) => m.outbound),
-            color: this.palette.outbound,
-          },
-        ]),
-      },
-      lowStockProducts,
-    };
+  private getSeriesDates(start: Date, end: Date, bucket: ReportBucket) {
+    return bucket === 'day'
+      ? eachDayOfInterval({ start, end })
+      : eachMonthOfInterval({ start, end });
   }
 
-  async getWarehouseLegacyReport(params: ReportQueryParams = {}) {
-    const report = await this.getWarehouseManagerReport(params);
-    return {
-      period: report.period,
-      totalStockIns: report.summary.totalStockIns,
-      totalImportValue: report.summary.totalImportValue,
-      totalImportQuantity: report.summary.totalInboundQty,
-      totalProductTypes: report.summary.totalProductTypes,
-      totalStockQuantity: report.summary.totalStockQuantity,
-      lowStockProducts: report.lowStockProducts.map((item) => ({
-        id: item.id,
-        name: item.name,
-        stockQuantity: item.stockQuantity,
-        minStock: item.minStock,
-      })),
-    };
+  private getSeriesKey(date: Date, bucket: ReportBucket) {
+    return format(date, bucket === 'day' ? 'yyyy-MM-dd' : 'yyyy-MM');
   }
 
-  async getSalesManagerReport(params: ReportQueryParams = {}) {
-    const year = this.getYear(params.year);
-    const period = params.period || 'year';
-    const month = params.month || new Date().getMonth() + 1;
-    const quarter = params.quarter || 1;
-
-    let labels: string[] = [];
-    let rangeStart: Date;
-    let rangeEnd: Date;
-
-    if (period === 'month') {
-      const daysInMonth = new Date(year, month, 0).getDate();
-      labels = Array.from(
-        { length: daysInMonth },
-        (_, i) =>
-          `${year}-${String(month).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`,
-      );
-      rangeStart = new Date(year, month - 1, 1);
-      rangeEnd = new Date(year, month, 0, 23, 59, 59);
-    } else if (period === 'quarter') {
-      const months = this.quarterMonths(quarter);
-      labels = months.map((m) => `${year}-${String(m).padStart(2, '0')}`);
-      rangeStart = new Date(year, months[0] - 1, 1);
-      rangeEnd = new Date(year, months[2], 0, 23, 59, 59);
-    } else {
-      labels = this.monthLabels(year);
-      rangeStart = new Date(year, 0, 1);
-      rangeEnd = new Date(year, 11, 31, 23, 59, 59);
-    }
-
-    const [orders, stockOuts] = await Promise.all([
-      this.prisma.order.findMany({
-        where: {
-          status: 'COMPLETED',
-          createdAt: { gte: rangeStart, lte: rangeEnd },
-        },
-        select: {
-          createdAt: true,
-          totalAmount: true,
-          details: {
-            select: {
-              quantity: true,
-              price: true,
-              costPrice: true,
-              productId: true,
-              product: { select: { name: true } },
-            },
-          },
-        },
-      }),
-      this.prisma.stockOut.findMany({
-        where: {
-          status: 'COMPLETED',
-          type: 'SALE',
-          createdAt: { gte: rangeStart, lte: rangeEnd },
-        },
-        select: {
-          createdAt: true,
-          details: { select: { quantity: true } },
-        },
-      }),
-    ]);
-
-    const revenueBuckets = Array.from({ length: labels.length }, () => ({
-      revenue: 0,
-      profit: 0,
-    }));
-    const quantityBuckets = Array.from({ length: labels.length }, () => 0);
-    const topProducts = new Map<string, { name: string; quantity: number }>();
-
-    let totalQuantity = 0;
-    let totalRevenue = 0;
-    let totalProfit = 0;
-
-    for (const order of orders) {
-      let bucketIndex = 0;
-
-      if (period === 'month') {
-        bucketIndex = this.dayKey(order.createdAt) - 1;
-      } else if (period === 'quarter') {
-        const qMonths = this.quarterMonths(quarter);
-        bucketIndex = qMonths.indexOf(this.monthKey(order.createdAt));
-      } else {
-        bucketIndex = this.monthKey(order.createdAt) - 1;
-      }
-
-      if (bucketIndex < 0 || bucketIndex >= revenueBuckets.length) {
-        continue;
-      }
-
-      revenueBuckets[bucketIndex].revenue += this.toNumber(order.totalAmount);
-      totalRevenue += this.toNumber(order.totalAmount);
-
-      for (const detail of order.details) {
-        const detailProfit =
-          detail.quantity *
-          (this.toNumber(detail.price) - this.toNumber(detail.costPrice));
-        revenueBuckets[bucketIndex].profit += detailProfit;
-        totalProfit += detailProfit;
-        totalQuantity += detail.quantity;
-
-        const agg = topProducts.get(detail.productId) || {
-          name: detail.product?.name || 'N/A',
-          quantity: 0,
-        };
-        agg.quantity += detail.quantity;
-        topProducts.set(detail.productId, agg);
-      }
-    }
-
-    for (const stockOut of stockOuts) {
-      let bucketIndex = 0;
-
-      if (period === 'month') {
-        bucketIndex = this.dayKey(stockOut.createdAt) - 1;
-      } else if (period === 'quarter') {
-        const qMonths = this.quarterMonths(quarter);
-        bucketIndex = qMonths.indexOf(this.monthKey(stockOut.createdAt));
-      } else {
-        bucketIndex = this.monthKey(stockOut.createdAt) - 1;
-      }
-
-      if (bucketIndex < 0 || bucketIndex >= revenueBuckets.length) {
-        continue;
-      }
-
-      const qty = stockOut.details.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-      );
-      totalQuantity += qty;
-    }
-
-    for (const stockOut of stockOuts) {
-      let bucketIndex = 0;
-
-      if (period === 'month') {
-        bucketIndex = this.dayKey(stockOut.createdAt) - 1;
-      } else if (period === 'quarter') {
-        const qMonths = this.quarterMonths(quarter);
-        bucketIndex = qMonths.indexOf(this.monthKey(stockOut.createdAt));
-      } else {
-        bucketIndex = this.monthKey(stockOut.createdAt) - 1;
-      }
-
-      if (bucketIndex < 0 || bucketIndex >= quantityBuckets.length) {
-        continue;
-      }
-
-      const qty = stockOut.details.reduce(
-        (sum, item) => sum + item.quantity,
-        0,
-      );
-      quantityBuckets[bucketIndex] += qty;
-    }
-
-    const topRows = [...topProducts.values()]
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 10);
-
-    return {
-      period: {
-        year,
-        period,
-        month: period === 'month' ? month : undefined,
-        quarter: period === 'quarter' ? quarter : undefined,
-      },
-      summary: {
-        totalOrders: orders.length,
-        totalQuantity,
-        totalRevenue,
-        totalProfit,
-      },
-      charts: {
-        profitTrend: this.toChart(labels, [
-          {
-            name: 'Lợi nhuận',
-            data: revenueBuckets.map((b) => b.profit),
-            color: this.palette.profit,
-          },
-        ]),
-        quantityTrend: this.toChart(labels, [
-          {
-            name: 'Số lượng đã xuất',
-            data: quantityBuckets,
-            color: this.palette.quantity,
-          },
-        ]),
-        revenueProfitComposed: this.toChart(labels, [
-          {
-            name: 'Doanh thu',
-            data: revenueBuckets.map((b) => b.revenue),
-            color: this.palette.revenue,
-          },
-          {
-            name: 'Lợi nhuận',
-            data: revenueBuckets.map((b) => b.profit),
-            color: this.palette.profit,
-          },
-        ]),
-      },
-    };
+  private getSeriesTime(date: Date, bucket: ReportBucket) {
+    return format(date, bucket === 'day' ? 'dd' : 'MM');
   }
 
-  async getEmployeeSalaryReport(
-    userId: string,
-    params: ReportQueryParams = {},
+  private fillSalesBreakdown(
+    rows: SalesBreakdownRow[],
+    start: Date,
+    end: Date,
+    bucket: ReportBucket,
   ) {
-    const year = this.getYear(params.year);
-    const month = params.month;
+    const rowMap = new Map(
+      rows.map((row) => [this.getSeriesKey(row.bucketStart, bucket), row]),
+    );
 
-    const salaries = await this.prisma.salary.findMany({
-      where: {
-        employee: { userId },
-        year,
-        ...(month ? { month } : {}),
-      },
-      orderBy: [{ year: 'asc' }, { month: 'asc' }],
-      include: {
-        employee: {
-          select: {
-            baseSalary: true,
-            user: { select: { profile: { select: { fullName: true } } } },
-          },
-        },
-      },
+    return this.getSeriesDates(start, end, bucket).map((date) => {
+      const row = rowMap.get(this.getSeriesKey(date, bucket));
+      return {
+        time: this.getSeriesTime(date, bucket),
+        revenue: Number(row?.revenue ?? 0),
+        profit: Number(row?.totalSell ?? 0) - Number(row?.totalCost ?? 0),
+        quantity: Number(row?.quantity ?? 0),
+      };
     });
+  }
 
-    const labels = salaries.map(
-      (s) => `${s.year}-${String(s.month).padStart(2, '0')}`,
+  private fillWarehouseBreakdown(
+    rows: WarehouseBreakdownRow[],
+    start: Date,
+    end: Date,
+    bucket: ReportBucket,
+  ) {
+    const rowMap = new Map(
+      rows.map((row) => [this.getSeriesKey(row.bucketStart, bucket), row]),
     );
 
-    const baseSalaryData = salaries.map((s) =>
-      this.toNumber(s.employee?.baseSalary),
-    );
-    const bonusData = salaries.map((s) => this.toNumber(s.totalBonus));
-    const deductionData = salaries.map((s) => this.toNumber(s.totalDeduction));
-    const netData = salaries.map((s) => this.toNumber(s.netSalary));
+    return this.getSeriesDates(start, end, bucket).map((date) => {
+      const row = rowMap.get(this.getSeriesKey(date, bucket));
+      return {
+        time: this.getSeriesTime(date, bucket),
+        import: Number(row?.importAmount ?? 0),
+        export: Number(row?.exportAmount ?? 0),
+      };
+    });
+  }
 
-    const summary = {
-      totalRecords: salaries.length,
-      totalNetSalary: netData.reduce((sum, value) => sum + value, 0),
-      totalBonus: bonusData.reduce((sum, value) => sum + value, 0),
-      totalDeduction: deductionData.reduce((sum, value) => sum + value, 0),
+  private fillHrBreakdown(
+    rows: HrBreakdownRow[],
+    start: Date,
+    end: Date,
+    bucket: ReportBucket,
+  ) {
+    const rowMap = new Map(
+      rows.map((row) => [this.getSeriesKey(row.bucketStart, bucket), row]),
+    );
+
+    return this.getSeriesDates(start, end, bucket).map((date) => {
+      const row = rowMap.get(this.getSeriesKey(date, bucket));
+      return {
+        time: this.getSeriesTime(date, bucket),
+        salary: Number(row?.salary ?? 0),
+        bonus: Number(row?.bonus ?? 0),
+        deduction: Number(row?.deduction ?? 0),
+      };
+    });
+  }
+
+  async getSalesReport(query: ReportQueryDto) {
+    const { start, end, bucket } = this.resolveSalesPeriod(query);
+    const bucketUnit = bucket === 'day' ? 'day' : 'month';
+    const bucketInterval = bucket === 'day' ? '1 day' : '1 month';
+
+    const [summaryRows, breakdownRows] = await Promise.all([
+      this.prisma.$queryRaw<SalesSummaryRow[]>(Prisma.sql`
+        WITH filtered_orders AS (
+          SELECT id, "totalAmount"
+          FROM "Order"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status <> 'PENDING'
+        ),
+        filtered_details AS (
+          SELECT od.price, od.quantity, od."costPrice"
+          FROM "OrderDetail" od
+          INNER JOIN filtered_orders fo ON fo.id = od."orderId"
+        )
+        SELECT
+          COALESCE((SELECT SUM("totalAmount") FROM filtered_orders), 0)::double precision AS revenue,
+          COALESCE((SELECT SUM(price * quantity) FROM filtered_details), 0)::double precision AS "totalSell",
+          COALESCE((SELECT SUM("costPrice" * quantity) FROM filtered_details), 0)::double precision AS "totalCost",
+          COALESCE((SELECT SUM(quantity) FROM filtered_details), 0)::double precision AS "totalQuantity"
+      `),
+      this.prisma.$queryRaw<SalesBreakdownRow[]>(Prisma.sql`
+        WITH filtered_orders AS (
+          SELECT id, "totalAmount", "createdAt"
+          FROM "Order"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status <> 'PENDING'
+        ),
+        order_breakdown AS (
+          SELECT
+            date_trunc(${bucketUnit}, fo."createdAt") AS bucket_start,
+            SUM(fo."totalAmount")::double precision AS revenue
+          FROM filtered_orders fo
+          GROUP BY 1
+        ),
+        detail_breakdown AS (
+          SELECT
+            date_trunc(${bucketUnit}, fo."createdAt") AS bucket_start,
+            SUM(od.price * od.quantity)::double precision AS "totalSell",
+            SUM(od."costPrice" * od.quantity)::double precision AS "totalCost",
+            SUM(od.quantity)::double precision AS quantity
+          FROM filtered_orders fo
+          INNER JOIN "OrderDetail" od ON od."orderId" = fo.id
+          GROUP BY 1
+        ),
+        series AS (
+          SELECT generate_series(
+            ${start}::timestamp,
+            ${end}::timestamp,
+            ${bucketInterval}::interval
+          ) AS bucket_start
+        )
+        SELECT
+          series.bucket_start AS "bucketStart",
+          COALESCE(order_breakdown.revenue, 0)::double precision AS revenue,
+          COALESCE(detail_breakdown."totalSell", 0)::double precision AS "totalSell",
+          COALESCE(detail_breakdown."totalCost", 0)::double precision AS "totalCost",
+          COALESCE(detail_breakdown.quantity, 0)::double precision AS quantity
+        FROM series
+        LEFT JOIN order_breakdown USING (bucket_start)
+        LEFT JOIN detail_breakdown USING (bucket_start)
+        ORDER BY series.bucket_start
+      `),
+    ]);
+
+    const summary = summaryRows[0] ?? {
+      revenue: 0,
+      totalSell: 0,
+      totalCost: 0,
+      totalQuantity: 0,
     };
 
     return {
-      period: { year, month },
-      summary,
-      charts: {
-        salaryBreakdown: this.toChart(labels, [
-          {
-            name: 'Lương cơ bản',
-            data: baseSalaryData,
-            color: this.palette.salary,
-          },
-          { name: 'Thưởng', data: bonusData, color: this.palette.bonus },
-          {
-            name: 'Khấu trừ',
-            data: deductionData,
-            color: this.palette.deduction,
-          },
-          { name: 'Thực lĩnh', data: netData, color: this.palette.revenue },
-        ]),
+      summary: {
+        revenue: Number(summary.revenue),
+        profit: Number(summary.totalSell) - Number(summary.totalCost),
+        totalSoldQuantity: Number(summary.totalQuantity),
       },
-      salaryHistory: salaries.map((s) => ({
-        id: s.id,
-        month: s.month,
-        year: s.year,
-        baseSalary: this.toNumber(s.employee?.baseSalary),
-        bonus: this.toNumber(s.totalBonus),
-        deduction: this.toNumber(s.totalDeduction),
-        totalSalary: this.toNumber(s.netSalary),
-        status: s.status,
-        employeeName: s.employee?.user?.profile?.fullName || '',
-      })),
+      breakdown: this.fillSalesBreakdown(breakdownRows, start, end, bucket),
+    };
+  }
+
+  async getWarehouseReport(query: ReportQueryDto) {
+    const { start, end, bucket } = this.resolveWarehousePeriod(query);
+    const bucketUnit = bucket === 'day' ? 'day' : 'month';
+    const bucketInterval = bucket === 'day' ? '1 day' : '1 month';
+
+    const [summaryRows, breakdownRows] = await Promise.all([
+      this.prisma.$queryRaw<WarehouseSummaryRow[]>(Prisma.sql`
+        WITH filtered_stock_in AS (
+          SELECT id, "totalAmount", date
+          FROM "StockIn"
+          WHERE date BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+        ),
+        filtered_stock_out AS (
+          SELECT id, "totalAmount", "createdAt"
+          FROM "StockOut"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+        )
+        SELECT
+          COALESCE((SELECT SUM("totalAmount") FROM filtered_stock_in), 0)::double precision AS "totalImportAmount",
+          COALESCE((SELECT SUM(sid.quantity)
+            FROM filtered_stock_in si
+            INNER JOIN "StockInDetail" sid ON sid."stockInId" = si.id
+          ), 0)::double precision AS "totalImportQuantity",
+          COALESCE((SELECT SUM("totalAmount") FROM filtered_stock_out), 0)::double precision AS "totalExportAmount",
+          COALESCE((SELECT SUM(sod.quantity)
+            FROM filtered_stock_out so
+            INNER JOIN "StockOutDetail" sod ON sod."stockOutId" = so.id
+          ), 0)::double precision AS "totalExportQuantity",
+          COALESCE((SELECT SUM("stockQuantity") FROM "Product"), 0)::double precision AS "totalInventory"
+      `),
+      this.prisma.$queryRaw<WarehouseBreakdownRow[]>(Prisma.sql`
+        WITH filtered_stock_in AS (
+          SELECT id, "totalAmount", date
+          FROM "StockIn"
+          WHERE date BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+        ),
+        filtered_stock_out AS (
+          SELECT id, "totalAmount", "createdAt"
+          FROM "StockOut"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+        ),
+        import_breakdown AS (
+          SELECT
+            date_trunc(${bucketUnit}, si.date) AS bucket_start,
+            SUM(si."totalAmount")::double precision AS "importAmount"
+          FROM filtered_stock_in si
+          GROUP BY 1
+        ),
+        export_breakdown AS (
+          SELECT
+            date_trunc(${bucketUnit}, so."createdAt") AS bucket_start,
+            SUM(so."totalAmount")::double precision AS "exportAmount"
+          FROM filtered_stock_out so
+          GROUP BY 1
+        ),
+        series AS (
+          SELECT generate_series(
+            ${start}::timestamp,
+            ${end}::timestamp,
+            ${bucketInterval}::interval
+          ) AS bucket_start
+        )
+        SELECT
+          series.bucket_start AS "bucketStart",
+          COALESCE(import_breakdown."importAmount", 0)::double precision AS "importAmount",
+          COALESCE(export_breakdown."exportAmount", 0)::double precision AS "exportAmount"
+        FROM series
+        LEFT JOIN import_breakdown USING (bucket_start)
+        LEFT JOIN export_breakdown USING (bucket_start)
+        ORDER BY series.bucket_start
+      `),
+    ]);
+
+    const summary = summaryRows[0] ?? {
+      totalImportAmount: 0,
+      totalImportQuantity: 0,
+      totalExportAmount: 0,
+      totalExportQuantity: 0,
+      totalInventory: 0,
+    };
+
+    return {
+      summary: {
+        totalImportAmount: Number(summary.totalImportAmount),
+        totalExportAmount: Number(summary.totalExportAmount),
+        totalInventory: Number(summary.totalInventory),
+        totalImportQuantity: Number(summary.totalImportQuantity),
+        totalExportQuantity: Number(summary.totalExportQuantity),
+      },
+      breakdown: this.fillWarehouseBreakdown(breakdownRows, start, end, bucket),
+    };
+  }
+
+  async getHrReport(query: ReportQueryDto) {
+    const { start, end, bucket } = this.resolveHrPeriod(query);
+    const bucketUnit = bucket === 'day' ? 'day' : 'month';
+    const bucketInterval = bucket === 'day' ? '1 day' : '1 month';
+
+    const [summaryRows, breakdownRows] = await Promise.all([
+      this.prisma.$queryRaw<HrSummaryRow[]>(Prisma.sql`
+        WITH filtered_salary AS (
+          SELECT "netSalary", "totalBonus", "totalDeduction"
+          FROM "Salary"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+        )
+        SELECT
+          COALESCE((SELECT SUM("netSalary") FROM filtered_salary), 0)::double precision AS "totalSalary",
+          COALESCE((SELECT SUM("totalBonus") FROM filtered_salary), 0)::double precision AS "totalBonus",
+          COALESCE((SELECT SUM("totalDeduction") FROM filtered_salary), 0)::double precision AS "totalDeduction",
+          (SELECT COUNT(*) FROM "Employee" WHERE "resignDate" IS NULL)::int AS "activeEmployees",
+          (SELECT COUNT(*) FROM "Employee" WHERE "resignDate" IS NOT NULL)::int AS "resignedEmployees"
+      `),
+      this.prisma.$queryRaw<HrBreakdownRow[]>(Prisma.sql`
+        WITH filtered_salary AS (
+          SELECT "netSalary", "totalBonus", "totalDeduction", "createdAt"
+          FROM "Salary"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+        ),
+        salary_breakdown AS (
+          SELECT
+            date_trunc(${bucketUnit}, fs."createdAt") AS bucket_start,
+            SUM(fs."netSalary")::double precision AS salary,
+            SUM(fs."totalBonus")::double precision AS bonus,
+            SUM(fs."totalDeduction")::double precision AS deduction
+          FROM filtered_salary fs
+          GROUP BY 1
+        ),
+        series AS (
+          SELECT generate_series(
+            ${start}::timestamp,
+            ${end}::timestamp,
+            ${bucketInterval}::interval
+          ) AS bucket_start
+        )
+        SELECT
+          series.bucket_start AS "bucketStart",
+          COALESCE(salary_breakdown.salary, 0)::double precision AS salary,
+          COALESCE(salary_breakdown.bonus, 0)::double precision AS bonus,
+          COALESCE(salary_breakdown.deduction, 0)::double precision AS deduction
+        FROM series
+        LEFT JOIN salary_breakdown USING (bucket_start)
+        ORDER BY series.bucket_start
+      `),
+    ]);
+
+    const summary = summaryRows[0] ?? {
+      totalSalary: 0,
+      totalBonus: 0,
+      totalDeduction: 0,
+      activeEmployees: 0,
+      resignedEmployees: 0,
+    };
+
+    return {
+      summary: {
+        totalSalary: Number(summary.totalSalary),
+        totalBonus: Number(summary.totalBonus),
+        totalDeduction: Number(summary.totalDeduction),
+        activeEmployees: Number(summary.activeEmployees),
+        resignedEmployees: Number(summary.resignedEmployees),
+      },
+      breakdown: this.fillHrBreakdown(breakdownRows, start, end, bucket),
     };
   }
 }

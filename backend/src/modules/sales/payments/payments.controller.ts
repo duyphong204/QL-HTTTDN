@@ -7,9 +7,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { MomoService } from './momo.service';
-import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags('Sales - Payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly momoService: MomoService) {}

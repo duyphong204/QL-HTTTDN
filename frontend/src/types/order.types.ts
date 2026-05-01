@@ -1,4 +1,4 @@
-import type { BaseEntity } from "./common.type";
+import type { BaseEntity } from "./common.types";
 import type { Product } from "./warehouse.type";
 
 export interface Cart extends BaseEntity {
@@ -46,8 +46,16 @@ export interface Order extends BaseEntity {
   paymentMethod: string;
   paymentStatus: string;
   details: OrderDetail[];
+  items?: OrderItem[];
 }
-
+export interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  imageUrl: string;
+  price: number;
+  quantity: number;
+}
 export interface CreateOrderDto {
   userId?: string;
   fullName: string;

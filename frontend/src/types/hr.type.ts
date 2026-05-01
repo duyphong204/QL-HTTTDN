@@ -1,7 +1,6 @@
 export type {
   Employee,
   CreateEmployeeDto,
-  UpdateEmployeeDto,
   QueryEmployeeDto,
   JobHistory,
   CreateJobHistoryDto,
@@ -29,21 +28,35 @@ export type {
   MonthlyReport,
   YearlyReport,
 } from "./salary.types";
-export type {
-  HrStatisticsReport,
-  EmployeeStatistics,
-  SalaryReport,
-  AdminDashboardReport,
-  WarehouseReport,
-  RevenueReport,
-  ProfitReport,
-  StockReport,
-  RoleReportResponse,
-  ChartDataset,
-  RechartsChartData,
-  SystemLog,
-  ReportQuery,
-} from "./report.types";
+
+export interface MonthlyPayrollBreakdown {
+  month: number;
+  totalNetSalary: number;
+  totalBonus: number;
+  employeeCount: number;
+}
+
+export interface LeaveStatByType {
+  type: string;
+  _count: { id: number };
+}
+
+export interface HrStatisticsReport {
+  totalEmployees: number;
+  totalResigned: number;
+  newThisMonth: number;
+  resignedThisMonth: number;
+  headcount: number;
+  salaryMonth: number;
+  salaryYear: number;
+  totalSalaryPaid: number;
+  totalBonus: number;
+  totalDeduction: number;
+  avgSalary: number;
+  pendingLeaveRequests: number;
+  monthlyBreakdown: MonthlyPayrollBreakdown[];
+  leaveStatsByType: LeaveStatByType[];
+}
 
 export type CreateSalaryDto = {
   employeeId: string;

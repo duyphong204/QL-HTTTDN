@@ -1,29 +1,19 @@
 import { apiGet } from "@/api/client";
 import { endpoints } from "@/api/endpoints";
-import type { ReportQuery, RoleReportResponse } from "@/types/report.types";
+import type {
+  HrReport,
+  ReportQuery,
+  SalesReport,
+  WarehouseReport,
+} from "@/types/report.type";
 
 export const reportService = {
-  getAdminReport: async (params?: ReportQuery): Promise<RoleReportResponse> => {
-    return apiGet<RoleReportResponse>(endpoints.reports.admin, params);
-  },
+  getSales: (query: ReportQuery) =>
+    apiGet<SalesReport>(endpoints.reports.sales, query),
 
-  getHrReport: async (params?: ReportQuery): Promise<RoleReportResponse> => {
-    return apiGet<RoleReportResponse>(endpoints.reports.hr, params);
-  },
+  getWarehouse: (query: ReportQuery) =>
+    apiGet<WarehouseReport>(endpoints.reports.warehouse, query),
 
-  getWarehouseReport: async (
-    params?: ReportQuery,
-  ): Promise<RoleReportResponse> => {
-    return apiGet<RoleReportResponse>(endpoints.reports.warehouse, params);
-  },
-
-  getSalesReport: async (params?: ReportQuery): Promise<RoleReportResponse> => {
-    return apiGet<RoleReportResponse>(endpoints.reports.sales, params);
-  },
-
-  getEmployeeSalaryReport: async (
-    params?: Pick<ReportQuery, "year" | "month">,
-  ): Promise<RoleReportResponse> => {
-    return apiGet<RoleReportResponse>(endpoints.reports.employeeSalary, params);
-  },
+  getHr: (query: ReportQuery) =>
+    apiGet<HrReport>(endpoints.reports.hr, query),
 };

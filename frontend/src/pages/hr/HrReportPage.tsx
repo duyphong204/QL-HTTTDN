@@ -1,38 +1,32 @@
 import { useEffect } from "react";
-import { Warehouse } from "lucide-react";
-import { ReportFilter, WarehouseReportSection } from "@/components/charts";
+import { Users } from "lucide-react";
+import { HrReportSection, ReportFilter } from "@/components/charts";
 import { useReportStore } from "@/stores/report.store";
 
-export default function WarehouseReportPage() {
+export default function HrReportPage() {
   const filters = useReportStore((s) => s.filters);
   const setFilters = useReportStore((s) => s.setFilters);
-  const fetchWarehouse = useReportStore((s) => s.fetchWarehouse);
-  const loading = useReportStore((s) => s.loadingWarehouse);
+  const fetchHr = useReportStore((s) => s.fetchHr);
+  const loading = useReportStore((s) => s.loadingHr);
 
   useEffect(() => {
-    fetchWarehouse();
-  }, [
-    fetchWarehouse,
-    filters.type,
-    filters.year,
-    filters.month,
-    filters.quarter,
-  ]);
+    fetchHr();
+  }, [fetchHr, filters.type, filters.year, filters.month, filters.quarter]);
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-              <Warehouse size={22} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <Users size={22} />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                Báo cáo kho hàng
+                Báo cáo nhân sự
               </h1>
               <p className="text-sm text-gray-500">
-                Theo dõi tình hình nhập, xuất và tồn kho
+                Tổng hợp chi phí nhân sự và biến động nhân lực
               </p>
             </div>
           </div>
@@ -45,7 +39,7 @@ export default function WarehouseReportPage() {
           typeOptions={["month", "year"]}
         />
 
-        <WarehouseReportSection />
+        <HrReportSection />
       </div>
     </div>
   );

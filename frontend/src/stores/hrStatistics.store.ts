@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { toast } from "sonner";
 import { employeeService } from "@/services/hr.service";
 import { getErrorMessage } from "@/stores/store.helpers";
-import type { HrStatisticsReport } from "@/types/report.types";
+import type { HrStatisticsReport } from "@/types/hr.type";
 
 interface HrStatisticsState {
   statistics: HrStatisticsReport | null;

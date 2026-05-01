@@ -17,7 +17,6 @@ import type {
   CreateStockInDto,
   UpdateStockInDto,
 } from "@/types/stockIn.types";
-import type { WarehouseReport } from "@/types/report.types";
 import type {
   BaseFilters,
   PaginatedResponse,
@@ -129,14 +128,5 @@ export const stockInService = {
 
   deleteStockIn: async (id: string): Promise<void> => {
     await apiDelete(`/stock-ins/${id}`);
-  },
-};
-
-export const warehouseReportService = {
-  getReport: async (params?: {
-    month?: number;
-    year?: number;
-  }): Promise<WarehouseReport> => {
-    return apiGet<WarehouseReport>("/warehouse/report", params);
   },
 };

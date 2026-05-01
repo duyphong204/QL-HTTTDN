@@ -1,4 +1,4 @@
-import type { BaseEntity } from "./common.type";
+import type { BaseEntity } from "./common.types";
 import type { Product } from "./warehouse.type";
 
 export type PromotionType = "PERCENT" | "FIXED";

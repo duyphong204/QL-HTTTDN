@@ -19,7 +19,7 @@ import type {
   AddSalaryDetailDto,
   QuerySalaryParams,
 } from "@/types/salary.types";
-import type { HrStatisticsReport } from "@/types/report.types";
+import type { HrStatisticsReport } from "@/types/hr.type";
 import type { BaseFilters, PaginatedResponse } from "@/types/common.types";
 
 type EmployeeFilters = BaseFilters & {

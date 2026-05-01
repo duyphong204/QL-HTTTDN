@@ -1,4 +1,4 @@
-import type { BaseEntity, SortOrder } from "./common.type";
+import type { BaseEntity, SortOrder } from "./common.types";
 
 export interface Category extends BaseEntity {
   name: string;

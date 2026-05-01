@@ -7,9 +7,9 @@ import {
   Building,
   FileText,
   ShoppingCart,
-  BarChart3,
   Tag,
   Folder,
+  BarChart3,
 } from "lucide-react";
 export type PortalId = "admin" | "hr" | "warehouse" | "sales" | "employee";
 
@@ -123,10 +123,31 @@ export const ROUTE_CONFIGS: RouteConfig[] = [
     inSidebar: true,
   },
   {
-    path: "/sales/reports",
-    title: "Báo cáo",
+    path: "/admin/reports",
+    title: "Báo cáo tổng hợp",
     icon: BarChart3,
-    roles: ["ADMIN", "SALES_MANAGER"],
+    roles: ["ADMIN"],
+    inSidebar: true,
+  },
+  {
+    path: "/sales/reports",
+    title: "Báo cáo bán hàng",
+    icon: BarChart3,
+    roles: ["SALES_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/warehouse/reports",
+    title: "Báo cáo kho",
+    icon: BarChart3,
+    roles: ["WAREHOUSE_MANAGER"],
+    inSidebar: true,
+  },
+  {
+    path: "/hr/reports",
+    title: "Báo cáo nhân sự",
+    icon: BarChart3,
+    roles: ["HR_MANAGER"],
     inSidebar: true,
   },
   {

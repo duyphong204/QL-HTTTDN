@@ -20,8 +20,11 @@ import MySalaryPage from "@/pages/employee/MySalaryPage";
 import ProfilePage from "@/pages/employee/ProfilePage";
 import SalesOrderManagement from "@/pages/sales/SalesOrderManagement";
 import ExportSlipManagement from "@/pages/sales/ExportSlipManagement";
-import AdminReportPage from "@/pages/admin/AdminReportPage";
 import ImportSlipManagement from "@/pages/warehouse/ImportSlipManagement";
+import AdminReportPage from "@/pages/admin/AdminReportPage";
+import SalesReportPage from "@/pages/sales/SalesReportPage";
+import WarehouseReportPage from "@/pages/warehouse/WarehouseReportPage";
+import HrReportPage from "@/pages/hr/HrReportPage";
 import { rolesFor } from "@/routes/routes.config";
 // IMPORT CUSTOMER PAGES
 import ShopHome from "@/pages/customer/ShopHome";
@@ -36,7 +39,6 @@ import PaymentReturn from "@/pages/customer/PaymentReturn";
 import Profile from "@/pages/customer/Profile";
 import About from "@/pages/customer/About";
 import Contact from "@/pages/customer/Contact";
-import SalesReportPage from "@/pages/sales/SalesReportPage";
 export const AppRouter = () => {
   const location = useLocation();
 
@@ -195,11 +197,36 @@ export const AppRouter = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute roles={rolesFor("/admin/reports")}>
+                <AdminReportPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/sales/reports"
             element={
               <ProtectedRoute roles={rolesFor("/sales/reports")}>
                 <SalesReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/warehouse/reports"
+            element={
+              <ProtectedRoute roles={rolesFor("/warehouse/reports")}>
+                <WarehouseReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/reports"
+            element={
+              <ProtectedRoute roles={rolesFor("/hr/reports")}>
+                <HrReportPage />
               </ProtectedRoute>
             }
           />
