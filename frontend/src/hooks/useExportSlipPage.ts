@@ -13,15 +13,16 @@ import {
   StockOutType,
   type CreateStockOutDto,
   type StockOut,
-  type StockOutItem,
+  type StockOutItemForm,
   type StockOutQuery,
   type UpdateStockOutDto,
 } from "@/types/stockOut.types";
 
-const emptyItem = (): StockOutItem => ({
+const emptyItem = (): StockOutItemForm => ({
   productId: "",
   quantity: 1,
   price: 0,
+  _uid: Math.random().toString(36).slice(2),
 });
 
 export const useExportSlipPage = () => {
@@ -53,7 +54,7 @@ export const useExportSlipPage = () => {
   const [type, setType] = useState<keyof typeof StockOutType>("SALE");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
-  const [items, setItems] = useState<StockOutItem[]>([emptyItem()]);
+  const [items, setItems] = useState<StockOutItemForm[]>([emptyItem()]);
 
   const query = useMemo<StockOutQuery>(
     () => ({
@@ -65,19 +66,21 @@ export const useExportSlipPage = () => {
     [filterStatus, filterType],
   );
 
+  const searchFn = useCallback((stockOut: StockOut, keyword: string) => {
+    const code = stockOut.id.slice(0, 8).toLowerCase();
+    const status = stockOut.status.toLowerCase();
+    const stockOutType = stockOut.type.toLowerCase();
+    return (
+      code.includes(keyword) ||
+      status.includes(keyword) ||
+      stockOutType.includes(keyword)
+    );
+  }, []);
+
   const table = useClientTable<StockOut>({
     data: stockOuts,
     pageSize: 10,
-    searchFn: (stockOut, keyword) => {
-      const code = stockOut.id.slice(0, 8).toLowerCase();
-      const status = stockOut.status.toLowerCase();
-      const stockOutType = stockOut.type.toLowerCase();
-      return (
-        code.includes(keyword) ||
-        status.includes(keyword) ||
-        stockOutType.includes(keyword)
-      );
-    },
+    searchFn,
   });
 
   const fetchProducts = useCallback(async () => {
@@ -220,6 +223,7 @@ export const useExportSlipPage = () => {
             productId: detail.productId,
             quantity: detail.quantity,
             price: detail.price,
+            _uid: Math.random().toString(36).slice(2),
           }))
         : [emptyItem()],
     );

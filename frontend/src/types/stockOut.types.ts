@@ -24,6 +24,10 @@ export interface StockOutItem {
   price: number;
 }
 
+export interface StockOutItemForm extends StockOutItem {
+  _uid: string;
+}
+
 export interface StockOutDetail extends BaseEntity {
   stockOutId: string;
   productId: string;

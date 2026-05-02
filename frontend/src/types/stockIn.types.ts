@@ -8,6 +8,10 @@ export interface StockInDetailInput {
   price: number;
 }
 
+export interface StockInDetailForm extends StockInDetailInput {
+  _uid: string;
+}
+
 export interface StockInDetail extends BaseEntity {
   stockInId: string;
   productId: string;

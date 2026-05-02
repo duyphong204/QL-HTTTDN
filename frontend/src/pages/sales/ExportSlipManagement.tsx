@@ -234,7 +234,7 @@ export default function ExportSlipManagement() {
             <div className="space-y-2">
               {items.map((item, i) => (
                 <div
-                  key={i}
+                  key={item._uid}
                   className="grid grid-cols-[1fr_96px_128px_auto] gap-2 items-center"
                 >
                   <select

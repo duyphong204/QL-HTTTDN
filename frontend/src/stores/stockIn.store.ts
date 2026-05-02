@@ -6,13 +6,14 @@ import {
   supplierService,
 } from "@/services/warehouse.service";
 import { getErrorMessage } from "@/stores/store.helpers";
-import type { StockIn, StockInDetailInput } from "@/types/stockIn.types";
+import type { StockIn, StockInDetailInput, StockInDetailForm } from "@/types/stockIn.types";
 import type { Product, Supplier } from "@/types/warehouse.type";
 
-const emptyDetail = (): StockInDetailInput => ({
+const emptyDetail = (): StockInDetailForm => ({
   productId: "",
   quantity: 1,
   price: 0,
+  _uid: Math.random().toString(36).slice(2),
 });
 
 interface StockInState {
@@ -26,7 +27,7 @@ interface StockInState {
   formOpen: boolean;
   editingId: string | null;
   supplierId: string;
-  details: StockInDetailInput[];
+  details: StockInDetailForm[];
 
   // ================= LOADING/ERROR STATE =================
   isLoading: boolean;
@@ -40,11 +41,11 @@ interface StockInState {
 
   // ================= CRUD ACTIONS =================
   createStockIn: (
-    payload: { supplierId: string; details: StockInDetailInput[] }
+    payload: { supplierId: string; details: StockInDetailForm[] }
   ) => Promise<void>;
   updateStockIn: (
     id: string,
-    payload: { supplierId: string; details: StockInDetailInput[] }
+    payload: { supplierId: string; details: StockInDetailForm[] }
   ) => Promise<void>;
   deleteStockIn: (id: string) => Promise<void>;
 
@@ -161,8 +162,15 @@ export const useStockInStore = create<StockInState>((set, get) => ({
     }
 
     try {
-      const newStockIn = await stockInService.createStockIn(payload);
-      // Prepend to list
+      const apiPayload = {
+        supplierId,
+        details: details.map((d) => ({
+          productId: d.productId,
+          quantity: d.quantity,
+          price: d.price,
+        })),
+      };
+      const newStockIn = await stockInService.createStockIn(apiPayload);
       get().setStockIns([newStockIn, ...get().stockIns]);
       get().resetForm();
       toast.success("Tạo phiếu nhập thành công");
@@ -198,8 +206,15 @@ export const useStockInStore = create<StockInState>((set, get) => ({
     }
 
     try {
-      const updated = await stockInService.updateStockIn(id, payload);
-      // Update in list
+      const apiPayload = {
+        supplierId,
+        details: details.map((d) => ({
+          productId: d.productId,
+          quantity: d.quantity,
+          price: d.price,
+        })),
+      };
+      const updated = await stockInService.updateStockIn(id, apiPayload);
       get().setStockIns(
         get().stockIns.map((s) => (s.id === id ? updated : s))
       );
@@ -215,7 +230,6 @@ export const useStockInStore = create<StockInState>((set, get) => ({
   deleteStockIn: async (id) => {
     try {
       await stockInService.deleteStockIn(id);
-      // Optimistic update: remove immediately
       get().setStockIns(get().stockIns.filter((s) => s.id !== id));
       toast.success("Xóa phiếu nhập thành công");
     } catch (error: unknown) {
@@ -245,6 +259,7 @@ export const useStockInStore = create<StockInState>((set, get) => ({
         productId: detail.productId,
         quantity: detail.quantity,
         price: detail.price,
+        _uid: Math.random().toString(36).slice(2),
       })),
       error: null,
     });
