@@ -55,7 +55,6 @@ export class ProductService {
       minPrice,
       maxPrice,
       sortBy = 'featured',
-      sortOrder = 'asc',
       page = 1,
       limit = 9,
     } = query;
@@ -64,7 +63,6 @@ export class ProductService {
     const skip = (pageNumber - 1) * limitNumber;
 
     const where: Prisma.ProductWhereInput = {};
-    const normalizedSearch = search ? normalizeVietnamese(search) : '';
 
     if (categoryId) {
       where.categoryId = categoryId;
@@ -73,148 +71,73 @@ export class ProductService {
       where.supplierId = supplierId;
     }
 
-    const priceFilter: Prisma.FloatFilter = {};
-    if (typeof minPrice === 'number' && Number.isFinite(minPrice)) {
-      priceFilter.gte = minPrice;
-    }
-    if (typeof maxPrice === 'number' && Number.isFinite(maxPrice)) {
-      priceFilter.lte = maxPrice;
-    }
-    if (Object.keys(priceFilter).length > 0) {
-      where.price = priceFilter;
-    }
-
-    const orderBy: Prisma.ProductOrderByWithRelationInput =
-      sortBy === 'price-low'
-        ? { price: 'asc' }
-        : sortBy === 'price-high'
-          ? { price: 'desc' }
-          : sortBy === 'newest'
-            ? { id: 'desc' }
-            : sortBy === 'price'
-              ? { price: sortOrder }
-              : sortBy === 'costPrice'
-                ? { costPrice: sortOrder }
-                : sortBy === 'stockQuantity'
-                  ? { stockQuantity: sortOrder }
-                  : { name: sortOrder };
-
-    const inStockWhere: Prisma.ProductWhereInput = {
-      ...where,
-      stockQuantity: { gt: 0 },
-    };
-    const outOfStockWhere: Prisma.ProductWhereInput = {
-      ...where,
-      stockQuantity: { lte: 0 },
-    };
-
-    if (normalizedSearch) {
-      const allProducts = await this.prisma.product.findMany({
-        where,
-        include: {
-          category: { select: { id: true, name: true } },
-          supplier: { select: { id: true, name: true } },
-          promotionLinks: {
-            include: {
-              promotion: true,
-            },
+    // Lấy toàn bộ sản phẩm thỏa mãn category, supplier
+    const allProducts = await this.prisma.product.findMany({
+      where,
+      include: {
+        category: { select: { id: true, name: true } },
+        supplier: { select: { id: true, name: true } },
+        promotionLinks: {
+          include: {
+            promotion: true,
           },
         },
-        orderBy,
-      });
+      },
+    });
 
-      const pricedProducts = allProducts.map((product) =>
-        enrichProductPricing(product),
-      );
-
-      const filteredProducts = pricedProducts.filter((product) =>
-        normalizeVietnamese(product.name).includes(normalizedSearch),
-      );
-
-      const inStockProducts = filteredProducts.filter(
-        (product) => product.stockQuantity > 0,
-      );
-      const outOfStockProducts = filteredProducts.filter(
-        (product) => product.stockQuantity <= 0,
-      );
-      const orderedProducts = [...inStockProducts, ...outOfStockProducts];
-
-      const pagedProducts = orderedProducts.slice(skip, skip + limitNumber);
-
-      return {
-        data: pagedProducts,
-        meta: {
-          total: orderedProducts.length,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(orderedProducts.length / limitNumber) || 1,
-        },
-      };
-    }
-
-    const [inStockTotal, outOfStockTotal] = await this.prisma.$transaction([
-      this.prisma.product.count({ where: inStockWhere }),
-      this.prisma.product.count({ where: outOfStockWhere }),
-    ]);
-
-    const total = inStockTotal + outOfStockTotal;
-    let inStockSkip = 0;
-    let inStockTake = 0;
-    let outOfStockSkip = 0;
-    let outOfStockTake = 0;
-
-    if (skip < inStockTotal) {
-      inStockSkip = skip;
-      inStockTake = Math.min(limitNumber, inStockTotal - skip);
-      outOfStockTake = limitNumber - inStockTake;
-    } else {
-      outOfStockSkip = skip - inStockTotal;
-      outOfStockTake = limitNumber;
-    }
-
-    const [inStockData, outOfStockData] = await Promise.all([
-      inStockTake > 0
-        ? this.prisma.product.findMany({
-            where: inStockWhere,
-            skip: inStockSkip,
-            take: inStockTake,
-            include: {
-              category: { select: { id: true, name: true } },
-              supplier: { select: { id: true, name: true } },
-              promotionLinks: {
-                include: {
-                  promotion: true,
-                },
-              },
-            },
-            orderBy,
-          })
-        : Promise.resolve([]),
-      outOfStockTake > 0
-        ? this.prisma.product.findMany({
-            where: outOfStockWhere,
-            skip: outOfStockSkip,
-            take: outOfStockTake,
-            include: {
-              category: { select: { id: true, name: true } },
-              supplier: { select: { id: true, name: true } },
-              promotionLinks: {
-                include: {
-                  promotion: true,
-                },
-              },
-            },
-            orderBy,
-          })
-        : Promise.resolve([]),
-    ]);
-
-    const data = [...inStockData, ...outOfStockData].map((product) =>
+    // 1. Áp dụng giá sau khuyến mãi
+    let processedProducts = allProducts.map((product) =>
       enrichProductPricing(product),
     );
 
+    // 2. Lọc theo search (nếu có)
+    if (search) {
+      const normalizedSearch = normalizeVietnamese(search);
+      processedProducts = processedProducts.filter((product) =>
+        normalizeVietnamese(product.name).includes(normalizedSearch),
+      );
+    }
+
+    // 3. Lọc theo khoảng giá (áp dụng trên salePrice thực tế)
+    if (typeof minPrice === 'number' && Number.isFinite(minPrice)) {
+      processedProducts = processedProducts.filter(
+        (p) => (p.salePrice ?? p.price) >= minPrice,
+      );
+    }
+    if (typeof maxPrice === 'number' && Number.isFinite(maxPrice)) {
+      processedProducts = processedProducts.filter(
+        (p) => (p.salePrice ?? p.price) <= maxPrice,
+      );
+    }
+
+    // 4. Sắp xếp
+    processedProducts.sort((a, b) => {
+      // Ưu tiên sản phẩm còn hàng lên trên
+      const aInStock = a.stockQuantity > 0 ? 1 : 0;
+      const bInStock = b.stockQuantity > 0 ? 1 : 0;
+      if (aInStock !== bInStock) {
+        return bInStock - aInStock; 
+      }
+
+      // Sắp xếp các sản phẩm trong cùng nhóm (còn hàng/hết hàng)
+      if (sortBy === 'price-low') {
+        return (a.salePrice ?? a.price) - (b.salePrice ?? b.price);
+      } else if (sortBy === 'price-high') {
+        return (b.salePrice ?? b.price) - (a.salePrice ?? a.price);
+      } else if (sortBy === 'newest') {
+        return b.id.localeCompare(a.id);
+      } else {
+        // featured hoặc mặc định -> xếp theo tên
+        return a.name.localeCompare(b.name);
+      }
+    });
+
+    // 5. Phân trang
+    const total = processedProducts.length;
+    const pagedProducts = processedProducts.slice(skip, skip + limitNumber);
+
     return {
-      data,
+      data: pagedProducts,
       meta: {
         total,
         page: pageNumber,
