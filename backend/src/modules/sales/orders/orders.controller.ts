@@ -33,7 +33,7 @@ export class OrdersController {
   }
 
   @Post()
-  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
+  @Roles(Role.CUSTOMER)
   createOrder(@Body() dto: CreateOrderDto, @Request() req: any) {
     return this.ordersService.createOrder(req.user.id, dto);
   }

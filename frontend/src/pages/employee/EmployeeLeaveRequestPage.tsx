@@ -195,19 +195,23 @@ export default function EmployeeLeaveRequestPage() {
           />
         </div>
       </div>
-
+      
       <AppModal
         isOpen={dialogOpen}
         onClose={() => setDialogOpen(false)}
         title="Nộp đơn xin nghỉ"
+        maxWidthClassName="max-w-md" // Thu nhỏ modal lại cho vừa vặn
       >
-        <div className="space-y-4 p-6">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Loại đơn</label>
+        <div className="p-6 space-y-5 bg-white">
+          {/* Loại đơn */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-semibold text-gray-700 uppercase tracking-wider ml-1">
+              Loại đơn nghỉ phép
+            </label>
             <select
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="w-full h-10 px-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
             >
               {Object.entries(TYPE_LABEL).map(([v, l]) => (
                 <option key={v} value={v}>
@@ -217,43 +221,62 @@ export default function EmployeeLeaveRequestPage() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="date"
-              value={form.startDate}
-              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-              className="w-full h-10 px-3 border rounded-lg"
-            />
-            <input
-              type="date"
-              min={form.startDate}
-              value={form.endDate}
-              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-              className="w-full h-10 px-3 border rounded-lg"
+          {/* Thời gian */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-semibold text-gray-700 uppercase tracking-wider ml-1">
+              Thời gian nghỉ
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative">
+                <input
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                  className="w-full h-11 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-blue-500 outline-none transition-all"
+                />
+                <span className="absolute -top-2 left-3 px-1 bg-white text-[10px] text-gray-400">Từ ngày</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="date"
+                  min={form.startDate}
+                  value={form.endDate}
+                  onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                  className="w-full h-11 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-blue-500 outline-none transition-all"
+                />
+                <span className="absolute -top-2 left-3 px-1 bg-white text-[10px] text-gray-400">Đến ngày</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lý do */}
+          <div className="space-y-1.5">
+            <label className="text-[13px] font-semibold text-gray-700 uppercase tracking-wider ml-1">
+              Lý do cụ thể
+            </label>
+            <textarea
+              value={form.reason}
+              onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              rows={4}
+              placeholder="Vui lòng cung cấp lý do để quản lý dễ dàng phê duyệt..."
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none placeholder:text-gray-400"
             />
           </div>
 
-          <textarea
-            value={form.reason}
-            onChange={(e) => setForm({ ...form, reason: e.target.value })}
-            rows={3}
-            placeholder="Lý do xin nghỉ..."
-            className="w-full px-3 py-2 border rounded-lg resize-none"
-          />
-
+          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               onClick={() => setDialogOpen(false)}
-              className="flex-1 py-2.5 border rounded-xl"
+              className="flex-1 py-3 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
             >
-              Hủy
+              Hủy bỏ
             </button>
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl disabled:opacity-50"
+              className="flex-1 py-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98]"
             >
-              Gửi đơn
+              {isLoading ? "Đang gửi..." : "Xác nhận gửi đơn"}
             </button>
           </div>
         </div>

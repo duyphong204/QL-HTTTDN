@@ -84,7 +84,7 @@ export const AppRouter = () => {
           <Route
             path="/admin/products"
             element={
-              <ProtectedRoute roles={rolesFor("/admin/products")}>
+              <ProtectedRoute roles={rolesFor("/warehouse/products")}>
                 <ProductManagement />
               </ProtectedRoute>
             }
@@ -92,7 +92,7 @@ export const AppRouter = () => {
           <Route
             path="/admin/suppliers"
             element={
-              <ProtectedRoute roles={rolesFor("/admin/suppliers")}>
+              <ProtectedRoute roles={rolesFor("/warehouse/suppliers")}>
                 <SupplierManagement />
               </ProtectedRoute>
             }
@@ -240,7 +240,7 @@ export const AppRouter = () => {
           <Route
             path="checkout"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["CUSTOMER"]}>
                 <CheckoutPage />
               </ProtectedRoute>
             }
@@ -248,7 +248,7 @@ export const AppRouter = () => {
           <Route
             path="orders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["CUSTOMER"]}>
                 <CustomerOrders />
               </ProtectedRoute>
             }
@@ -256,7 +256,7 @@ export const AppRouter = () => {
           <Route
             path="orders/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["CUSTOMER"]}>
                 <CustomerOrders />
               </ProtectedRoute>
             }
@@ -264,7 +264,7 @@ export const AppRouter = () => {
           <Route
             path="profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["CUSTOMER"]}>
                 <Profile />
               </ProtectedRoute>
             }
@@ -272,7 +272,7 @@ export const AppRouter = () => {
           <Route
             path="order-success/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={["CUSTOMER"]}>
                 <OrderSuccess />
               </ProtectedRoute>
             }

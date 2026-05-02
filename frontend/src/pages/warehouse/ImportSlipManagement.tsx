@@ -1,11 +1,15 @@
+import { useEffect, useMemo } from "react";
 import { Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { TableLoadingRow } from "@/components/common/Loading";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { AppModal } from "@/components/common/AppModal";
-import { useImportSlipPage } from "@/hooks/useImportSlipPage";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { useClientTable } from "@/hooks/useClientTable";
+import { useStockInStore } from "@/stores/stockIn.store";
 import { cn } from "@/lib/utils";
 import { formatNumberWithDong } from "@/utils/format";
+import type { StockIn } from "@/types/stockIn.types";
 
 const statusLabel: Record<string, string> = {
   PENDING: "Chờ xử lý",
@@ -20,33 +24,88 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function ImportSlipManagement() {
-  const {
-    selectedStockIn,
-    products,
-    suppliers,
-    isLoading,
-    formOpen,
-    editingId,
-    supplierId,
-    details,
-    totalAmount,
-    table,
-    setSupplierId,
-    openCreateModal,
-    openEditModal,
-    closeFormModal,
-    openDetailModal,
-    closeDetailModal,
-    addDetail,
-    removeDetail,
-    updateDetail,
-    submitForm,
-    removeSlip,
-  } = useImportSlipPage();
+  const { confirmAndRun } = useConfirmAction();
+
+  // ================= STORE STATE =================
+  const stockIns = useStockInStore((state) => state.stockIns);
+  const selectedStockIn = useStockInStore((state) => state.selectedStockIn);
+  const products = useStockInStore((state) => state.products);
+  const suppliers = useStockInStore((state) => state.suppliers);
+  const isLoading = useStockInStore((state) => state.isLoading);
+  const formOpen = useStockInStore((state) => state.formOpen);
+  const editingId = useStockInStore((state) => state.editingId);
+  const supplierId = useStockInStore((state) => state.supplierId);
+  const details = useStockInStore((state) => state.details);
+
+  // ================= STORE ACTIONS =================
+  const fetchStockIns = useStockInStore((state) => state.fetchStockIns);
+  const fetchReferenceData = useStockInStore(
+    (state) => state.fetchReferenceData
+  );
+  const openCreateModal = useStockInStore((state) => state.openCreateModal);
+  const openEditModal = useStockInStore((state) => state.openEditModal);
+  const closeFormModal = useStockInStore((state) => state.closeFormModal);
+  const openDetailModal = useStockInStore((state) => state.openDetailModal);
+  const closeDetailModal = useStockInStore((state) => state.closeDetailModal);
+  const setSupplierId = useStockInStore((state) => state.setSupplierId);
+  const addDetail = useStockInStore((state) => state.addDetail);
+  const removeDetail = useStockInStore((state) => state.removeDetail);
+  const updateDetail = useStockInStore((state) => state.updateDetail);
+  const createStockIn = useStockInStore((state) => state.createStockIn);
+  const updateStockInAction = useStockInStore((state) => state.updateStockIn);
+  const deleteStockIn = useStockInStore((state) => state.deleteStockIn);
+
+  // ================= TABLE SETUP =================
+  const table = useClientTable<StockIn>({
+    data: stockIns,
+    pageSize: 10,
+    searchFn: (slip, keyword) => {
+      const slipCode = slip.id.slice(0, 8).toLowerCase();
+      const supplierName = slip.supplier?.name?.toLowerCase() ?? "";
+      return slipCode.includes(keyword) || supplierName.includes(keyword);
+    },
+  });
+
+  // ================= CALCULATE TOTAL =================
+  const totalAmount = useMemo(
+    () =>
+      details.reduce((sum, detail) => sum + detail.quantity * detail.price, 0),
+    [details]
+  );
+
+  // ================= LIFECYCLE =================
+  useEffect(() => {
+    void Promise.all([fetchStockIns(), fetchReferenceData()]);
+  }, [fetchStockIns, fetchReferenceData]);
+
+  // ================= FORM SUBMISSION =================
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const payload = {
+      supplierId,
+      details,
+    };
+
+    if (editingId) {
+      await updateStockInAction(editingId, payload);
+    } else {
+      await createStockIn(payload);
+    }
+  };
+
+  // ================= DELETE HANDLER =================
+  const handleRemoveSlip = async (id: string) => {
+    await confirmAndRun({
+      message: "Bạn có chắc muốn xóa phiếu nhập này?",
+      action: () => deleteStockIn(id),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -64,6 +123,7 @@ export default function ImportSlipManagement() {
           </button>
         </div>
 
+        {/* TABLE */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <DataTableToolbar
             searchValue={table.searchTerm}
@@ -106,7 +166,7 @@ export default function ImportSlipManagement() {
                           className={cn(
                             "px-2.5 py-0.5 rounded-full text-xs font-medium border",
                             statusStyle[slip.status] ??
-                              "bg-gray-50 text-gray-700 border-gray-100",
+                              "bg-gray-50 text-gray-700 border-gray-100"
                           )}
                         >
                           {statusLabel[slip.status] ?? slip.status}
@@ -130,7 +190,7 @@ export default function ImportSlipManagement() {
                             <Pencil size={18} />
                           </button>
                           <button
-                            onClick={() => removeSlip(slip.id)}
+                            onClick={() => handleRemoveSlip(slip.id)}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                           >
                             <Trash2 size={18} />
@@ -153,14 +213,16 @@ export default function ImportSlipManagement() {
         </div>
       </div>
 
+      {/* FORM MODAL */}
       <AppModal
         isOpen={formOpen}
         onClose={closeFormModal}
         title={editingId ? "Cập nhật phiếu nhập kho" : "Lập phiếu nhập kho"}
         maxWidthClassName="max-w-2xl"
       >
-        <form onSubmit={submitForm} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 gap-4">
+            {/* SUPPLIER SELECT */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nhà cung cấp *
@@ -180,6 +242,7 @@ export default function ImportSlipManagement() {
               </select>
             </div>
 
+            {/* PRODUCTS SECTION */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-semibold text-gray-700">
@@ -195,56 +258,76 @@ export default function ImportSlipManagement() {
               </div>
 
               <div className="space-y-3 max-h-75 overflow-y-auto pr-2">
-                {details.map((detail, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <select
-                      value={detail.productId}
-                      onChange={(e) =>
-                        updateDetail(i, "productId", e.target.value)
-                      }
-                      required
-                      className="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg"
-                    >
-                      <option value="">Chọn SP...</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min={1}
-                      value={detail.quantity}
-                      onChange={(e) =>
-                        updateDetail(i, "quantity", Number(e.target.value))
-                      }
-                      className="w-20 h-10 px-2 text-sm border border-gray-200 rounded-lg text-center"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      value={detail.price}
-                      onChange={(e) =>
-                        updateDetail(i, "price", Number(e.target.value))
-                      }
-                      className="w-32 h-10 px-2 text-sm border border-gray-200 rounded-lg text-right"
-                    />
-                    {details.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDetail(i)}
-                        className="mt-2 text-red-400 hover:text-red-600"
+                {details.map((detail, i) => {
+                  const maxLength = 24;
+                  return (
+                    <div key={i} className="flex gap-3 items-start">
+                      {/* PRODUCT SELECT */}
+                      <select
+                        value={detail.productId}
+                        onChange={(e) =>
+                          updateDetail(i, "productId", e.target.value)
+                        }
+                        required
+                        className="flex-1 h-10 px-3 text-sm border border-gray-200 rounded-lg"
                       >
-                        <Trash2 size={18} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        <option value="">Chọn Sản phẩm cần nhập...</option>
+                        {products.map((product) => {
+                          const shortName =
+                            product.name.length > maxLength
+                              ? product.name.slice(0, maxLength) + "..."
+                              : product.name;
+
+                          return (
+                            <option key={product.id} value={product.id}>
+                              {shortName} -{" "}
+                              {formatNumberWithDong(product.costPrice)}- {"SL :"}
+                              {(product.stockQuantity)}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      {/* QUANTITY INPUT */}
+                      <input
+                        type="number"
+                        min={1}
+                        value={detail.quantity}
+                        onChange={(e) =>
+                          updateDetail(i, "quantity", Number(e.target.value))
+                        }
+                        className="w-20 h-10 px-2 text-sm border border-gray-200 rounded-lg text-center"
+                      />
+
+                      {/* PRICE INPUT */}
+                      <input
+                        type="number"
+                        min={0}
+                        value={detail.price}
+                        onChange={(e) =>
+                          updateDetail(i, "price", Number(e.target.value))
+                        }
+                        className="w-32 h-10 px-2 text-sm border border-gray-200 rounded-lg text-right"
+                      />
+
+                      {/* REMOVE BUTTON */}
+                      {details.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDetail(i)}
+                          className="mt-2 text-red-400 hover:text-red-600"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
+          {/* TOTAL AMOUNT */}
           <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl">
             <span className="text-sm font-medium text-blue-900">
               Tổng giá trị:
@@ -254,6 +337,7 @@ export default function ImportSlipManagement() {
             </span>
           </div>
 
+          {/* FORM ACTIONS */}
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
@@ -272,6 +356,7 @@ export default function ImportSlipManagement() {
         </form>
       </AppModal>
 
+      {/* DETAIL MODAL */}
       <AppModal
         isOpen={Boolean(selectedStockIn)}
         onClose={closeDetailModal}
@@ -280,6 +365,7 @@ export default function ImportSlipManagement() {
       >
         {selectedStockIn && (
           <div className="p-6 space-y-6">
+            {/* DETAIL INFO */}
             <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
               <div>
                 <div className="text-gray-500">Người lập</div>
@@ -308,6 +394,7 @@ export default function ImportSlipManagement() {
               </div>
             </div>
 
+            {/* ITEMS TABLE */}
             <div className="border border-gray-100 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-500">
@@ -358,6 +445,7 @@ export default function ImportSlipManagement() {
               </table>
             </div>
 
+            {/* CLOSE BUTTON */}
             <div className="flex justify-end">
               <button
                 onClick={closeDetailModal}
