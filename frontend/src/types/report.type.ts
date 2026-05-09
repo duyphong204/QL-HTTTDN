@@ -39,9 +39,32 @@ export interface WarehouseSeriesPoint {
   export: number;
 }
 
+export interface TopProductItem {
+  productId: string;
+  productName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface TopCategoryItem {
+  categoryId: string;
+  categoryName: string;
+  totalQuantity: number;
+}
+
+export interface TopSupplierItem {
+  supplierId: string;
+  supplierName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
 export interface WarehouseReport {
   summary: WarehouseReportSummary;
   breakdown: WarehouseSeriesPoint[];
+  topProducts: TopProductItem[];
+  topCategories: TopCategoryItem[];
+  topSuppliers: TopSupplierItem[];
 }
 
 export interface HrReportSummary {

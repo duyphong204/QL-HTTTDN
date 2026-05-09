@@ -3,6 +3,7 @@ import {
   productService,
   categoryService,
   supplierService,
+  type ProductStats,
 } from "@/services/warehouse.service";
 import {
   getErrorMessage,
@@ -24,6 +25,7 @@ type ProductFilters = BaseFilters & {
   categoryId?: string;
   supplierId?: string;
   maxPrice?: number;
+  inStock?: boolean;
   sortBy?: string;
   sortOrder: SortOrder;
 };
@@ -33,6 +35,7 @@ interface ProductState {
   categories: Category[];
   suppliers: Supplier[];
   meta?: ProductResponse["meta"];
+  stats: ProductStats | null;
   filters: ProductFilters;
   isLoading: boolean;
 
@@ -40,6 +43,7 @@ interface ProductState {
   setFilters: (filters: Partial<ProductFilters>) => void;
   setPage: (page: number) => void;
   fetchProducts: () => Promise<void>;
+  fetchStats: () => Promise<void>;
   fetchProductsByQuery: (
     query: ProductQuery,
   ) => Promise<ProductResponse | null>;
@@ -56,6 +60,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
   categories: [],
   suppliers: [],
   meta: undefined,
+  stats: null,
   isLoading: false,
   filters: {
     page: 1,
@@ -95,6 +100,15 @@ export const useProductStore = create<ProductState>((set, get) => ({
       toast.error(getErrorMessage(error, "Không thể tải danh sách sản phẩm"));
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  fetchStats: async () => {
+    try {
+      const stats = await productService.getStats();
+      set({ stats });
+    } catch {
+      // non-critical, silently ignore
     }
   },
 

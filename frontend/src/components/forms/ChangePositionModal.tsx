@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { AppModal } from "@/components/common/AppModal";
+import {
+  EMPLOYEE_ROLE_OPTIONS,
+  ROLE_DEPARTMENT_MAP,
+  ROLE_SALARY_MAP,
+} from "@/utils/role";
 import type { ChangePositionDto, Employee } from "@/types/employee.types";
+import type { Role } from "@/types/auth.types";
 import dayjs from "dayjs";
 
 type Props = {
@@ -10,6 +16,9 @@ type Props = {
   employee: Employee | null;
 };
 
+const inputClass =
+  "w-full h-10 px-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm";
+
 export function ChangePositionModal({
   isOpen,
   onClose,
@@ -17,7 +26,7 @@ export function ChangePositionModal({
   employee,
 }: Props) {
   const [form, setForm] = useState({
-    position: "",
+    position: "" as Role | "",
     department: "",
     baseSalary: 0,
     effectiveDate: dayjs().format("YYYY-MM-DD"),
@@ -29,7 +38,7 @@ export function ChangePositionModal({
   useEffect(() => {
     if (isOpen && employee) {
       setForm({
-        position: employee.position || "",
+        position: (employee.position as Role) || "",
         department: employee.department || "",
         baseSalary: employee.baseSalary || 0,
         effectiveDate: dayjs().format("YYYY-MM-DD"),
@@ -38,6 +47,16 @@ export function ChangePositionModal({
       setErrors({});
     }
   }, [isOpen, employee]);
+
+  const handlePositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const role = e.target.value as Role | "";
+    setForm((prev) => ({
+      ...prev,
+      position: role,
+      department: role ? (ROLE_DEPARTMENT_MAP[role] ?? prev.department) : prev.department,
+      baseSalary: role ? (ROLE_SALARY_MAP[role] ?? prev.baseSalary) : prev.baseSalary,
+    }));
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -64,6 +83,7 @@ export function ChangePositionModal({
     setIsSubmitting(true);
     try {
       await onSubmit({
+        role: form.position || undefined,
         position: form.position || undefined,
         department: form.department || undefined,
         baseSalary: form.baseSalary || undefined,
@@ -77,9 +97,6 @@ export function ChangePositionModal({
       setIsSubmitting(false);
     }
   };
-
-  const inputClass =
-    "w-full h-10 px-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm";
 
   return (
     <AppModal
@@ -104,19 +121,25 @@ export function ChangePositionModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">
+              Chức vụ mới
+            </label>
+            <select
+              value={form.position}
+              onChange={handlePositionChange}
+              className={inputClass}
+            >
+              <option value="">-- Chọn chức vụ --</option>
+              {EMPLOYEE_ROLE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Chức vụ mới
-              </label>
-              <input
-                name="position"
-                value={form.position}
-                onChange={handleChange}
-                placeholder="Nhập chức vụ"
-                className={inputClass}
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-700">
                 Phòng ban
@@ -125,27 +148,27 @@ export function ChangePositionModal({
                 name="department"
                 value={form.department}
                 onChange={handleChange}
-                placeholder="Nhập phòng ban"
+                placeholder="Phòng ban"
                 className={inputClass}
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
-              Lương cơ bản mới (VNĐ)
-            </label>
-            <input
-              name="baseSalary"
-              type="number"
-              min={0}
-              value={form.baseSalary}
-              onChange={handleChange}
-              className={inputClass}
-            />
-            {errors.baseSalary && (
-              <p className="text-red-500 text-xs mt-1">{errors.baseSalary}</p>
-            )}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Lương cơ bản (VNĐ)
+              </label>
+              <input
+                name="baseSalary"
+                type="number"
+                min={0}
+                value={form.baseSalary}
+                onChange={handleChange}
+                className={inputClass}
+              />
+              {errors.baseSalary && (
+                <p className="text-red-500 text-xs mt-1">{errors.baseSalary}</p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -160,9 +183,7 @@ export function ChangePositionModal({
               className={inputClass}
             />
             {errors.effectiveDate && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.effectiveDate}
-              </p>
+              <p className="text-red-500 text-xs mt-1">{errors.effectiveDate}</p>
             )}
           </div>
 

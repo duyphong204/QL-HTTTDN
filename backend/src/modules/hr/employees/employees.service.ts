@@ -195,6 +195,13 @@ export class EmployeesService {
         },
       });
 
+      if (dto.role !== undefined) {
+        await tx.user.update({
+          where: { id: current.userId },
+          data: { role: dto.role },
+        });
+      }
+
       await tx.employee.update({
         where: { id },
         data: {
@@ -408,6 +415,13 @@ export class EmployeesService {
     const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
     const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
 
+    const leaveFrom = month
+      ? new Date(currentYear, currentMonth - 1, 1)
+      : new Date(currentYear, 0, 1);
+    const leaveTo = month
+      ? new Date(currentYear, currentMonth, 0, 23, 59, 59)
+      : new Date(currentYear, 11, 31, 23, 59, 59);
+
     const [
       totalEmployees,
       totalResigned,
@@ -418,6 +432,7 @@ export class EmployeesService {
       pendingLeaveRequests,
       monthlySalaries,
       leaveStatsByType,
+      leaveDetails,
     ] = await Promise.all([
       this.prisma.employee.count({ where: { resignDate: null } }),
       this.prisma.employee.count({ where: { resignDate: { not: null } } }),
@@ -446,16 +461,24 @@ export class EmployeesService {
         _count: { id: true },
         orderBy: { month: 'asc' },
       }),
-      // Leave requests by type for the year
+      // Leave requests by type for the year/month
       this.prisma.leaveRequest.groupBy({
         by: ['type'],
-        where: {
-          createdAt: {
-            gte: new Date(currentYear, 0, 1),
-            lte: new Date(currentYear, 11, 31, 23, 59, 59),
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        _count: { id: true },
+      }),
+      // Per-employee leave detail for the year/month
+      this.prisma.leaveRequest.findMany({
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        orderBy: { startDate: 'desc' },
+        include: {
+          employee: {
+            select: {
+              code: true,
+              user: { select: { profile: { select: { fullName: true } } } },
+            },
           },
         },
-        _count: { id: true },
       }),
     ]);
 
@@ -485,6 +508,14 @@ export class EmployeesService {
       pendingLeaveRequests,
       monthlyBreakdown,
       leaveStatsByType,
+      leaveDetails: leaveDetails.map((l) => ({
+        employeeName: l.employee.user.profile?.fullName ?? l.employee.code,
+        type: l.type,
+        totalDays: l.totalDays,
+        status: l.status,
+        startDate: l.startDate,
+        endDate: l.endDate,
+      })),
     };
   }
 }

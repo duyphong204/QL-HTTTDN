@@ -4,28 +4,36 @@ import {
   Post,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
   ParseUUIDPipe,
   Patch,
   Delete,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { StockInService } from './stock-in.service';
-import { CreateStockInDto, UpdateStockInDto } from './dto/stock-in.dto';
+import {
+  CreateStockInDto,
+  QueryStockInDto,
+  UpdateStockInDto,
+} from './dto/stock-in.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UsePipes(new ValidationPipe({ transform: true }))
 @Controller('stock-ins')
 export class StockInController {
   constructor(private readonly stockInService: StockInService) {}
 
   @Get()
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)
-  findAll() {
-    return this.stockInService.findAll();
+  findAll(@Query() query: QueryStockInDto) {
+    return this.stockInService.findAll(query);
   }
 
   @Get(':id')

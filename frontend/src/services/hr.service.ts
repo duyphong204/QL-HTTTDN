@@ -95,6 +95,15 @@ export const leaveRequestService = {
     return apiGet<LeaveRequest[]>(endpoints.leaveRequests.me);
   },
 
+  getMyLeaveBalance: async (): Promise<{
+    year: number;
+    totalDays: number;
+    usedDays: number;
+    remainingDays: number;
+  }> => {
+    return apiGet(endpoints.leaveRequests.balance);
+  },
+
   createLeaveRequest: async (
     data: CreateLeaveRequestDto,
   ): Promise<LeaveRequest> => {

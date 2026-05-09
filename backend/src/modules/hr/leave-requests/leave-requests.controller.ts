@@ -23,6 +23,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ValidationPipe } from '@nestjs/common';
+import { LeaveStatus } from '@prisma/client';
 @ApiTags('HR - Leave Requests')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -51,6 +52,17 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.getMyRequests(req.user.id);
   }
 
+  @Get('balance')
+  @Roles(
+    Role.EMPLOYEE,
+    Role.HR_MANAGER,
+    Role.WAREHOUSE_MANAGER,
+    Role.SALES_MANAGER,
+  )
+  async getMyBalance(@Request() req: any) {
+    return this.leaveRequestsService.getMyBalance(req.user.id);
+  }
+
   @Patch(':id/status')
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   updateStatus(
@@ -60,31 +72,11 @@ export class LeaveRequestsController {
   ) {
     return this.leaveRequestsService.updateStatus(
       id,
-      dto.status,
+      dto.status as LeaveStatus,
       req.user.id,
       dto.rejectionReason,
     );
   }
-
-  // @Get()
-  // @Roles(Role.ADMIN, Role.HR_MANAGER)
-  // findAll(
-  //   @Query()
-  //   query?: {
-  //     status?: string;
-  //     type?: string;
-  //     employeeId?: string;
-  //     year?: string;
-  //     page?: string;
-  //     limit?: string;
-  //   },
-  // ) {
-  //   return this.leaveRequestsService.findAll({
-  //     ...query,
-  //     page: query?.page ? Number(query.page) : undefined,
-  //     limit: query?.limit ? Number(query.limit) : undefined,
-  //   });
-  // }
   @Get()
   @Roles(Role.ADMIN, Role.HR_MANAGER)
   findAll(@Query() query: QueryLeaveRequestDto) {

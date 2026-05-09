@@ -53,6 +53,11 @@ export class ProductController {
     return this.productsService.findAll(query);
   }
 
+  @Get('stats')
+  getStats() {
+    return this.productsService.getStats();
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.WAREHOUSE_MANAGER)

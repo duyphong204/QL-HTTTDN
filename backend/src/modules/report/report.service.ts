@@ -58,6 +58,26 @@ interface HrBreakdownRow {
   deduction: number;
 }
 
+interface TopProductRow {
+  productId: string;
+  productName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+interface TopCategoryRow {
+  categoryId: string;
+  categoryName: string;
+  totalQuantity: number;
+}
+
+interface TopSupplierRow {
+  supplierId: string;
+  supplierName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
 @Injectable()
 export class ReportService {
   constructor(private readonly prisma: PrismaService) {}
@@ -237,34 +257,66 @@ export class ReportService {
           SELECT id, "totalAmount"
           FROM "Order"
           WHERE "createdAt" BETWEEN ${start} AND ${end}
-            AND status <> 'PENDING'
+            AND status NOT IN ('PENDING', 'CANCELLED')
         ),
-        filtered_details AS (
+        filtered_order_details AS (
           SELECT od.price, od.quantity, od."costPrice"
           FROM "OrderDetail" od
           INNER JOIN filtered_orders fo ON fo.id = od."orderId"
+        ),
+        manual_sales AS (
+          SELECT id
+          FROM "StockOut"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+            AND type = 'SALE'
+            AND "orderId" IS NULL
+        ),
+        manual_sales_details AS (
+          SELECT sod.price, sod.quantity, sod."costPrice"
+          FROM "StockOutDetail" sod
+          INNER JOIN manual_sales ms ON ms.id = sod."stockOutId"
         )
         SELECT
-          COALESCE((SELECT SUM("totalAmount") FROM filtered_orders), 0)::double precision AS revenue,
-          COALESCE((SELECT SUM(price * quantity) FROM filtered_details), 0)::double precision AS "totalSell",
-          COALESCE((SELECT SUM("costPrice" * quantity) FROM filtered_details), 0)::double precision AS "totalCost",
-          COALESCE((SELECT SUM(quantity) FROM filtered_details), 0)::double precision AS "totalQuantity"
+          (COALESCE((SELECT SUM("totalAmount") FROM filtered_orders), 0) +
+           COALESCE((SELECT SUM(price * quantity) FROM manual_sales_details), 0))::double precision AS revenue,
+          (COALESCE((SELECT SUM(price * quantity) FROM filtered_order_details), 0) +
+           COALESCE((SELECT SUM(price * quantity) FROM manual_sales_details), 0))::double precision AS "totalSell",
+          (COALESCE((SELECT SUM("costPrice" * quantity) FROM filtered_order_details), 0) +
+           COALESCE((SELECT SUM("costPrice" * quantity) FROM manual_sales_details), 0))::double precision AS "totalCost",
+          (COALESCE((SELECT SUM(quantity) FROM filtered_order_details), 0) +
+           COALESCE((SELECT SUM(quantity) FROM manual_sales_details), 0))::double precision AS "totalQuantity"
       `),
       this.prisma.$queryRaw<SalesBreakdownRow[]>(Prisma.sql`
         WITH filtered_orders AS (
           SELECT id, "totalAmount", "createdAt"
           FROM "Order"
           WHERE "createdAt" BETWEEN ${start} AND ${end}
-            AND status <> 'PENDING'
+            AND status NOT IN ('PENDING', 'CANCELLED')
         ),
-        order_breakdown AS (
+        manual_sales AS (
+          SELECT id, "totalAmount", "createdAt"
+          FROM "StockOut"
+          WHERE "createdAt" BETWEEN ${start} AND ${end}
+            AND status = 'COMPLETED'
+            AND type = 'SALE'
+            AND "orderId" IS NULL
+        ),
+        order_revenue AS (
           SELECT
             date_trunc(${bucketUnit}, fo."createdAt") AS bucket_start,
             SUM(fo."totalAmount")::double precision AS revenue
           FROM filtered_orders fo
           GROUP BY 1
         ),
-        detail_breakdown AS (
+        manual_revenue AS (
+          SELECT
+            date_trunc(${bucketUnit}, ms."createdAt") AS bucket_start,
+            SUM(ms."totalAmount")::double precision AS revenue
+          FROM manual_sales ms
+          GROUP BY 1
+        ),
+        order_detail_agg AS (
           SELECT
             date_trunc(${bucketUnit}, fo."createdAt") AS bucket_start,
             SUM(od.price * od.quantity)::double precision AS "totalSell",
@@ -272,6 +324,29 @@ export class ReportService {
             SUM(od.quantity)::double precision AS quantity
           FROM filtered_orders fo
           INNER JOIN "OrderDetail" od ON od."orderId" = fo.id
+          GROUP BY 1
+        ),
+        manual_detail_agg AS (
+          SELECT
+            date_trunc(${bucketUnit}, ms."createdAt") AS bucket_start,
+            SUM(sod.price * sod.quantity)::double precision AS "totalSell",
+            SUM(sod."costPrice" * sod.quantity)::double precision AS "totalCost",
+            SUM(sod.quantity)::double precision AS quantity
+          FROM manual_sales ms
+          INNER JOIN "StockOutDetail" sod ON sod."stockOutId" = ms.id
+          GROUP BY 1
+        ),
+        combined_revenue AS (
+          SELECT bucket_start, SUM(revenue) AS revenue
+          FROM (SELECT * FROM order_revenue UNION ALL SELECT * FROM manual_revenue) r
+          GROUP BY 1
+        ),
+        combined_detail AS (
+          SELECT bucket_start,
+            SUM("totalSell") AS "totalSell",
+            SUM("totalCost") AS "totalCost",
+            SUM(quantity) AS quantity
+          FROM (SELECT * FROM order_detail_agg UNION ALL SELECT * FROM manual_detail_agg) d
           GROUP BY 1
         ),
         series AS (
@@ -283,13 +358,13 @@ export class ReportService {
         )
         SELECT
           series.bucket_start AS "bucketStart",
-          COALESCE(order_breakdown.revenue, 0)::double precision AS revenue,
-          COALESCE(detail_breakdown."totalSell", 0)::double precision AS "totalSell",
-          COALESCE(detail_breakdown."totalCost", 0)::double precision AS "totalCost",
-          COALESCE(detail_breakdown.quantity, 0)::double precision AS quantity
+          COALESCE(combined_revenue.revenue, 0)::double precision AS revenue,
+          COALESCE(combined_detail."totalSell", 0)::double precision AS "totalSell",
+          COALESCE(combined_detail."totalCost", 0)::double precision AS "totalCost",
+          COALESCE(combined_detail.quantity, 0)::double precision AS quantity
         FROM series
-        LEFT JOIN order_breakdown USING (bucket_start)
-        LEFT JOIN detail_breakdown USING (bucket_start)
+        LEFT JOIN combined_revenue USING (bucket_start)
+        LEFT JOIN combined_detail USING (bucket_start)
         ORDER BY series.bucket_start
       `),
     ]);
@@ -316,7 +391,7 @@ export class ReportService {
     const bucketUnit = bucket === 'day' ? 'day' : 'month';
     const bucketInterval = bucket === 'day' ? '1 day' : '1 month';
 
-    const [summaryRows, breakdownRows] = await Promise.all([
+    const [summaryRows, breakdownRows, topProducts, topCategories, topSuppliers] = await Promise.all([
       this.prisma.$queryRaw<WarehouseSummaryRow[]>(Prisma.sql`
         WITH filtered_stock_in AS (
           SELECT id, "totalAmount", date
@@ -329,6 +404,16 @@ export class ReportService {
           FROM "StockOut"
           WHERE "createdAt" BETWEEN ${start} AND ${end}
             AND status = 'COMPLETED'
+        ),
+        order_exports AS (
+          SELECT o.id, o."totalAmount", o."createdAt"
+          FROM "Order" o
+          WHERE o."createdAt" BETWEEN ${start} AND ${end}
+            AND o.status <> 'PENDING'
+            AND NOT EXISTS (
+              SELECT 1 FROM "StockOut" so
+              WHERE so."orderId" = o.id AND so.status = 'COMPLETED'
+            )
         )
         SELECT
           COALESCE((SELECT SUM("totalAmount") FROM filtered_stock_in), 0)::double precision AS "totalImportAmount",
@@ -336,11 +421,16 @@ export class ReportService {
             FROM filtered_stock_in si
             INNER JOIN "StockInDetail" sid ON sid."stockInId" = si.id
           ), 0)::double precision AS "totalImportQuantity",
-          COALESCE((SELECT SUM("totalAmount") FROM filtered_stock_out), 0)::double precision AS "totalExportAmount",
-          COALESCE((SELECT SUM(sod.quantity)
+          (COALESCE((SELECT SUM("totalAmount") FROM filtered_stock_out), 0) +
+           COALESCE((SELECT SUM("totalAmount") FROM order_exports), 0))::double precision AS "totalExportAmount",
+          (COALESCE((SELECT SUM(sod.quantity)
             FROM filtered_stock_out so
             INNER JOIN "StockOutDetail" sod ON sod."stockOutId" = so.id
-          ), 0)::double precision AS "totalExportQuantity",
+          ), 0) +
+           COALESCE((SELECT SUM(od.quantity)
+            FROM order_exports oe
+            INNER JOIN "OrderDetail" od ON od."orderId" = oe.id
+          ), 0))::double precision AS "totalExportQuantity",
           COALESCE((SELECT SUM("stockQuantity") FROM "Product"), 0)::double precision AS "totalInventory"
       `),
       this.prisma.$queryRaw<WarehouseBreakdownRow[]>(Prisma.sql`
@@ -356,6 +446,16 @@ export class ReportService {
           WHERE "createdAt" BETWEEN ${start} AND ${end}
             AND status = 'COMPLETED'
         ),
+        order_exports AS (
+          SELECT o.id, o."totalAmount", o."createdAt"
+          FROM "Order" o
+          WHERE o."createdAt" BETWEEN ${start} AND ${end}
+            AND o.status <> 'PENDING'
+            AND NOT EXISTS (
+              SELECT 1 FROM "StockOut" so
+              WHERE so."orderId" = o.id AND so.status = 'COMPLETED'
+            )
+        ),
         import_breakdown AS (
           SELECT
             date_trunc(${bucketUnit}, si.date) AS bucket_start,
@@ -363,11 +463,23 @@ export class ReportService {
           FROM filtered_stock_in si
           GROUP BY 1
         ),
-        export_breakdown AS (
+        stock_out_export AS (
           SELECT
             date_trunc(${bucketUnit}, so."createdAt") AS bucket_start,
             SUM(so."totalAmount")::double precision AS "exportAmount"
           FROM filtered_stock_out so
+          GROUP BY 1
+        ),
+        order_export_agg AS (
+          SELECT
+            date_trunc(${bucketUnit}, oe."createdAt") AS bucket_start,
+            SUM(oe."totalAmount")::double precision AS "exportAmount"
+          FROM order_exports oe
+          GROUP BY 1
+        ),
+        combined_export AS (
+          SELECT bucket_start, SUM("exportAmount") AS "exportAmount"
+          FROM (SELECT * FROM stock_out_export UNION ALL SELECT * FROM order_export_agg) e
           GROUP BY 1
         ),
         series AS (
@@ -380,11 +492,102 @@ export class ReportService {
         SELECT
           series.bucket_start AS "bucketStart",
           COALESCE(import_breakdown."importAmount", 0)::double precision AS "importAmount",
-          COALESCE(export_breakdown."exportAmount", 0)::double precision AS "exportAmount"
+          COALESCE(combined_export."exportAmount", 0)::double precision AS "exportAmount"
         FROM series
         LEFT JOIN import_breakdown USING (bucket_start)
-        LEFT JOIN export_breakdown USING (bucket_start)
+        LEFT JOIN combined_export USING (bucket_start)
         ORDER BY series.bucket_start
+      `),
+      this.prisma.$queryRaw<TopProductRow[]>(Prisma.sql`
+        WITH order_sales AS (
+          SELECT od."productId", od.quantity, od.price
+          FROM "OrderDetail" od
+          INNER JOIN "Order" o ON o.id = od."orderId"
+          WHERE o."createdAt" BETWEEN ${start} AND ${end}
+            AND o.status NOT IN ('PENDING', 'CANCELLED')
+        ),
+        manual_sales AS (
+          SELECT sod."productId", sod.quantity, sod.price
+          FROM "StockOutDetail" sod
+          INNER JOIN "StockOut" so ON so.id = sod."stockOutId"
+          WHERE so."createdAt" BETWEEN ${start} AND ${end}
+            AND so.status = 'COMPLETED'
+            AND so.type = 'SALE'
+        ),
+        combined AS (
+          SELECT * FROM order_sales UNION ALL SELECT * FROM manual_sales
+        )
+        SELECT
+          p.id AS "productId",
+          p.name AS "productName",
+          SUM(c.quantity)::double precision AS "totalQuantity",
+          SUM(c.quantity * c.price)::double precision AS "totalRevenue"
+        FROM combined c
+        INNER JOIN "Product" p ON p.id = c."productId"
+        GROUP BY p.id, p.name
+        ORDER BY SUM(c.quantity) DESC
+        LIMIT 10
+      `),
+      this.prisma.$queryRaw<TopCategoryRow[]>(Prisma.sql`
+        WITH order_sales AS (
+          SELECT od."productId", od.quantity
+          FROM "OrderDetail" od
+          INNER JOIN "Order" o ON o.id = od."orderId"
+          WHERE o."createdAt" BETWEEN ${start} AND ${end}
+            AND o.status NOT IN ('PENDING', 'CANCELLED')
+        ),
+        manual_sales AS (
+          SELECT sod."productId", sod.quantity
+          FROM "StockOutDetail" sod
+          INNER JOIN "StockOut" so ON so.id = sod."stockOutId"
+          WHERE so."createdAt" BETWEEN ${start} AND ${end}
+            AND so.status = 'COMPLETED'
+            AND so.type = 'SALE'
+        ),
+        combined AS (
+          SELECT * FROM order_sales UNION ALL SELECT * FROM manual_sales
+        )
+        SELECT
+          cat.id AS "categoryId",
+          cat.name AS "categoryName",
+          SUM(c.quantity)::double precision AS "totalQuantity"
+        FROM combined c
+        INNER JOIN "Product" p ON p.id = c."productId"
+        INNER JOIN "Category" cat ON cat.id = p."categoryId"
+        GROUP BY cat.id, cat.name
+        ORDER BY SUM(c.quantity) DESC
+        LIMIT 10
+      `),
+      this.prisma.$queryRaw<TopSupplierRow[]>(Prisma.sql`
+        WITH order_sales AS (
+          SELECT od."productId", od.quantity, od.price
+          FROM "OrderDetail" od
+          INNER JOIN "Order" o ON o.id = od."orderId"
+          WHERE o."createdAt" BETWEEN ${start} AND ${end}
+            AND o.status NOT IN ('PENDING', 'CANCELLED')
+        ),
+        manual_sales AS (
+          SELECT sod."productId", sod.quantity, sod.price
+          FROM "StockOutDetail" sod
+          INNER JOIN "StockOut" so ON so.id = sod."stockOutId"
+          WHERE so."createdAt" BETWEEN ${start} AND ${end}
+            AND so.status = 'COMPLETED'
+            AND so.type = 'SALE'
+        ),
+        combined AS (
+          SELECT * FROM order_sales UNION ALL SELECT * FROM manual_sales
+        )
+        SELECT
+          sup.id AS "supplierId",
+          sup.name AS "supplierName",
+          SUM(c.quantity)::double precision AS "totalQuantity",
+          SUM(c.quantity * c.price)::double precision AS "totalRevenue"
+        FROM combined c
+        INNER JOIN "Product" p ON p.id = c."productId"
+        INNER JOIN "Supplier" sup ON sup.id = p."supplierId"
+        GROUP BY sup.id, sup.name
+        ORDER BY SUM(c.quantity) DESC
+        LIMIT 10
       `),
     ]);
 
@@ -405,6 +608,23 @@ export class ReportService {
         totalExportQuantity: Number(summary.totalExportQuantity),
       },
       breakdown: this.fillWarehouseBreakdown(breakdownRows, start, end, bucket),
+      topProducts: topProducts.map((r) => ({
+        productId: r.productId,
+        productName: r.productName,
+        totalQuantity: Number(r.totalQuantity),
+        totalRevenue: Number(r.totalRevenue),
+      })),
+      topCategories: topCategories.map((r) => ({
+        categoryId: r.categoryId,
+        categoryName: r.categoryName,
+        totalQuantity: Number(r.totalQuantity),
+      })),
+      topSuppliers: topSuppliers.map((r) => ({
+        supplierId: r.supplierId,
+        supplierName: r.supplierName,
+        totalQuantity: Number(r.totalQuantity),
+        totalRevenue: Number(r.totalRevenue),
+      })),
     };
   }
 

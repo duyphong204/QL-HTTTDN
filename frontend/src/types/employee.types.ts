@@ -26,6 +26,7 @@ export interface CreateEmployeeDto {
 
 
 export interface ChangePositionDto {
+  role?: Role;
   position?: string;
   department?: string;
   baseSalary?: number;

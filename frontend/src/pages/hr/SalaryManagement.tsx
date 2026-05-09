@@ -16,8 +16,7 @@ import { formatCurrencyVnd } from "@/utils/format";
 import { useHrSalaryStore } from "@/stores/hrSalary.store";
 import {
   DetailType,
-  type AddSalaryDetailDto,
-  type Salary,
+  type AddSalaryDetailDto
 } from "@/types/salary.types";
 
 export default function SalaryManagement() {
@@ -88,14 +87,24 @@ export default function SalaryManagement() {
     setDetailModalOpen(false);
   };
 
+  const handlePrint = () => {
+    document.body.classList.add("print-salary-mgmt");
+    window.print();
+    document.body.classList.remove("print-salary-mgmt");
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <style>{`
         #print-salary-management { display: none; }
         @media print {
-          body * { visibility: hidden !important }
-          #print-salary-management, #print-salary-management * { visibility: visible !important }
-          #print-salary-management { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; }
+          body * { visibility: hidden !important; }
+          body.print-salary-mgmt #print-salary-management,
+          body.print-salary-mgmt #print-salary-management * { visibility: visible !important; }
+          body.print-salary-mgmt #print-salary-management {
+            display: block !important; position: absolute;
+            left: 0; top: 0; width: 100%; background: white;
+          }
         }
       `}</style>
 
@@ -148,8 +157,9 @@ export default function SalaryManagement() {
             </button>
 
             <button
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 transition-colors shadow-sm"
+              onClick={handlePrint}
+              disabled={salaries.length === 0}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
             >
               <Printer size={16} /> In bảng lương
             </button>
@@ -277,28 +287,64 @@ export default function SalaryManagement() {
         </div>
       </AppModal>
 
-      {/* Print Section (Ẩn trên UI) */}
-      <div id="print-salary-management" className="p-8">
-        <h2 className="text-xl font-bold text-center mb-4">
-          BẢNG LƯƠNG THÁNG {filters.month ?? "—"}/{filters.year ?? new Date().getFullYear()}
-        </h2>
-        <table className="w-full border-collapse border border-black text-xs">
+      {/* Print Section */}
+      <div id="print-salary-management" className="p-8 text-black text-xs">
+        <div className="text-center mb-4">
+          <h2 className="text-base font-bold uppercase">
+            Bảng lương tháng {filters.month ?? "—"}/{filters.year ?? new Date().getFullYear()}
+          </h2>
+          <p className="text-gray-500 mt-0.5">Ngày in: {new Date().toLocaleDateString("vi-VN")}</p>
+        </div>
+        <table className="w-full border-collapse border border-black">
           <thead>
-            <tr>
-              <th className="border border-black p-2">Nhân viên</th>
-              <th className="border border-black p-2">Thực lĩnh</th>
-              <th className="border border-black p-2">Trạng thái</th>
+            <tr className="bg-gray-100">
+              <th className="border border-black p-1.5 text-center">STT</th>
+              <th className="border border-black p-1.5">Mã NV</th>
+              <th className="border border-black p-1.5">Họ tên</th>
+              <th className="border border-black p-1.5">Chức vụ</th>
+              <th className="border border-black p-1.5 text-right">Lương CB</th>
+              <th className="border border-black p-1.5 text-center">Ngày công</th>
+              <th className="border border-black p-1.5 text-right">Lương Gross</th>
+              <th className="border border-black p-1.5 text-right">Thưởng</th>
+              <th className="border border-black p-1.5 text-right">Khấu trừ</th>
+              <th className="border border-black p-1.5 text-right">Thực lĩnh</th>
+              <th className="border border-black p-1.5 text-center">TT</th>
             </tr>
           </thead>
           <tbody>
-            {salaries.map((s) => (
+            {salaries.map((s, idx) => (
               <tr key={s.id}>
-                <td className="border border-black p-2">{s.employee?.user?.profile?.fullName}</td>
-                <td className="border border-black p-2 text-right">{formatCurrencyVnd(s.netSalary || 0)}</td>
-                <td className="border border-black p-2 text-center">{s.status}</td>
+                <td className="border border-black p-1.5 text-center">{idx + 1}</td>
+                <td className="border border-black p-1.5 font-mono">{s.employee?.code ?? "—"}</td>
+                <td className="border border-black p-1.5">{s.employee?.user?.profile?.fullName ?? "—"}</td>
+                <td className="border border-black p-1.5">{s.employee?.position ?? "—"}</td>
+                <td className="border border-black p-1.5 text-right tabular-nums">{formatCurrencyVnd(s.baseSalary)}</td>
+                <td className="border border-black p-1.5 text-center">{s.actualWorkDays}/{s.workingDays}</td>
+                <td className="border border-black p-1.5 text-right tabular-nums">{formatCurrencyVnd(s.grossSalary)}</td>
+                <td className="border border-black p-1.5 text-right tabular-nums">{formatCurrencyVnd(s.totalBonus)}</td>
+                <td className="border border-black p-1.5 text-right tabular-nums">{formatCurrencyVnd(s.totalDeduction)}</td>
+                <td className="border border-black p-1.5 text-right font-semibold tabular-nums">{formatCurrencyVnd(s.netSalary)}</td>
+                <td className="border border-black p-1.5 text-center">
+                  {SALARY_STATUS_BADGE[s.status as keyof typeof SALARY_STATUS_BADGE]?.label ?? s.status}
+                </td>
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="font-bold bg-gray-100">
+              <td colSpan={7} className="border border-black p-1.5 text-right">Tổng cộng</td>
+              <td className="border border-black p-1.5 text-right tabular-nums">
+                {formatCurrencyVnd(salaries.reduce((sum, s) => sum + s.totalBonus, 0))}
+              </td>
+              <td className="border border-black p-1.5 text-right tabular-nums">
+                {formatCurrencyVnd(salaries.reduce((sum, s) => sum + s.totalDeduction, 0))}
+              </td>
+              <td className="border border-black p-1.5 text-right tabular-nums">
+                {formatCurrencyVnd(salaries.reduce((sum, s) => sum + s.netSalary, 0))}
+              </td>
+              <td className="border border-black p-1.5" />
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

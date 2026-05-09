@@ -3,16 +3,7 @@ import {
   endOfMonth,
   eachDayOfInterval,
   getDay,
-  isSameDay,
 } from 'date-fns';
-
-export enum LeaveType {
-  PAID = 'PAID',
-  UNPAID = 'UNPAID',
-  SICK = 'SICK',
-  MATERNITY = 'MATERNITY',
-  PERSONAL = 'PERSONAL',
-}
 
 export const calculateStandardWorkingDays = (
   month: number,
@@ -25,7 +16,7 @@ export const calculateStandardWorkingDays = (
 
   const workingDays = days.filter((day) => {
     const dayOfWeek = getDay(day);
-    return dayOfWeek >= 1 && dayOfWeek <= 5;
+    return dayOfWeek >= 1 && dayOfWeek <= 5; // T2–T6 (Mon–Fri)
   });
 
   return workingDays.length;
@@ -42,7 +33,7 @@ export const calculateUnpaidLeaveDays = (
   let unpaidDays = 0;
 
   for (const leave of leaveRequests) {
-    if (leave.type !== LeaveType.UNPAID) continue;
+    if (leave.type !== 'UNPAID') continue;
 
     const leaveStart =
       new Date(leave.startDate) > start ? new Date(leave.startDate) : start;
@@ -52,8 +43,8 @@ export const calculateUnpaidLeaveDays = (
     const days = eachDayOfInterval({ start: leaveStart, end: leaveEnd });
 
     for (const day of days) {
-      const dayOfWeek = getDay(day);
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      const dow = getDay(day);
+      if (dow >= 1 && dow <= 5) { // T2–T6 (Mon–Fri)
         unpaidDays++;
       }
     }
@@ -68,14 +59,44 @@ export const calculateGrossSalary = (
   unpaidDays: number,
 ): number => {
   if (standardDays <= 0) return 0;
-  const dailyRate = baseSalary / standardDays;
-  const effectiveDays = standardDays - unpaidDays;
-  return Math.round(dailyRate * effectiveDays);
+  const effectiveDays = Math.max(0, standardDays - unpaidDays);
+  return Math.round((baseSalary / standardDays) * effectiveDays);
+};
+
+/** Đếm số ngày làm việc T2–T6 trong khoảng [start, end] */
+export const countWeekdays = (start: Date, end: Date): number => {
+  if (end < start) return 0;
+  return eachDayOfInterval({ start, end }).filter((d) => {
+    const dow = getDay(d);
+    return dow >= 1 && dow <= 5; // T2–T6 (Mon–Fri)
+  }).length;
 };
 
 export const calculateInsurance = (grossSalary: number): number => {
   const RATE = 0.105;
   return Math.round(grossSalary * RATE);
+};
+
+const TAX_BRACKETS = [
+  { limit: 5_000_000, rate: 0.05 },
+  { limit: 10_000_000, rate: 0.1 },
+  { limit: 18_000_000, rate: 0.15 },
+  { limit: 32_000_000, rate: 0.2 },
+  { limit: 52_000_000, rate: 0.25 },
+  { limit: 80_000_000, rate: 0.3 },
+  { limit: Infinity, rate: 0.35 },
+];
+
+export const calculateProgressiveTax = (taxableIncome: number): number => {
+  if (taxableIncome <= 0) return 0;
+  let tax = 0;
+  let prev = 0;
+  for (const { limit, rate } of TAX_BRACKETS) {
+    if (taxableIncome <= prev) break;
+    tax += Math.min(taxableIncome - prev, limit - prev) * rate;
+    prev = limit;
+  }
+  return Math.round(tax);
 };
 
 export const formatCurrency = (amount: number): string => {

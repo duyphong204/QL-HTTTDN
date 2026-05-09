@@ -24,6 +24,7 @@ export const endpoints = {
   leaveRequests: {
     root: "/leave-requests",
     me: "/leave-requests/me",
+    balance: "/leave-requests/balance",
     status: (id: string) => `/leave-requests/${id}/status`,
     byId: (id: string) => `/leave-requests/${id}`,
   },
@@ -47,6 +48,7 @@ export const endpoints = {
   },
   products: {
     root: "/products",
+    stats: "/products/stats",
     byId: (id: string) => `/products/${id}`,
   },
   stockIns: {

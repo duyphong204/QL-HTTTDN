@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from "react";
-import { Plus, Trash2, Eye, Pencil } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Trash2, Eye, Pencil, Package, CheckCircle2, TrendingUp } from "lucide-react";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { TableLoadingRow } from "@/components/common/Loading";
 import { PaginationControls } from "@/components/common/PaginationControls";
@@ -43,6 +43,37 @@ export default function ImportSlipManagement() {
   const closeDetailModal = useStockInStore((state) => state.closeDetailModal);
   const deleteStockIn = useStockInStore((state) => state.deleteStockIn);
 
+  // ================= MONTH FILTER =================
+  const [filterMonth, setFilterMonth] = useState("");
+
+  const monthOptions = useMemo(() => {
+    const seen = new Set<string>();
+    stockIns.forEach((slip) => {
+      const d = new Date(slip.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      seen.add(key);
+    });
+    return Array.from(seen).sort().reverse();
+  }, [stockIns]);
+
+  const filteredStockIns = useMemo(() => {
+    if (!filterMonth) return stockIns;
+    return stockIns.filter((slip) => {
+      const d = new Date(slip.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return key === filterMonth;
+    });
+  }, [stockIns, filterMonth]);
+
+  const stats = useMemo(
+    () => ({
+      total: filteredStockIns.length,
+      completed: filteredStockIns.filter((s) => s.status === "COMPLETED").length,
+      totalValue: filteredStockIns.reduce((sum, s) => sum + s.totalAmount, 0),
+    }),
+    [filteredStockIns]
+  );
+
   // ================= TABLE SETUP =================
   const searchFn = useCallback(
     (slip: StockIn, keyword: string) => {
@@ -54,7 +85,7 @@ export default function ImportSlipManagement() {
   );
 
   const table = useClientTable<StockIn>({
-    data: stockIns,
+    data: filteredStockIns,
     pageSize: 10,
     searchFn,
   });
@@ -68,7 +99,8 @@ export default function ImportSlipManagement() {
   const handleRemoveSlip = useCallback(
     async (id: string) => {
       await confirmAndRun({
-        message: "Bạn có chắc muốn xóa phiếu nhập này?",
+        message:
+          "Bạn có chắc muốn hủy phiếu nhập này? Tồn kho sẽ được hoàn lại và phiếu sẽ chuyển sang trạng thái Đã hủy.",
         action: () => deleteStockIn(id),
       });
     },
@@ -88,12 +120,62 @@ export default function ImportSlipManagement() {
               Quản lý phiếu nhập theo CRUD: thêm, sửa, xóa, xem chi tiết
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm"
-          >
-            <Plus size={18} /> Tạo phiếu nhập
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white shadow-sm"
+            >
+              <option value="">Tất cả tháng</option>
+              {monthOptions.map((key) => {
+                const [year, month] = key.split("-");
+                return (
+                  <option key={key} value={key}>
+                    Tháng {parseInt(month)}/{year}
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm"
+            >
+              <Plus size={18} /> Tạo phiếu nhập
+            </button>
+          </div>
+        </div>
+
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+              <Package className="text-blue-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng phiếu nhập</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="text-emerald-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Đã hoàn thành</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+              <TrendingUp className="text-violet-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng giá trị nhập</p>
+              <p className="text-lg font-bold text-gray-900 truncate">
+                {formatNumberWithDong(stats.totalValue)}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* TABLE */}
@@ -158,13 +240,17 @@ export default function ImportSlipManagement() {
                           </button>
                           <button
                             onClick={() => openEditModal(slip)}
-                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                            disabled={slip.status === "CANCELLED"}
+                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={slip.status === "CANCELLED" ? "Phiếu đã hủy, không thể sửa" : undefined}
                           >
                             <Pencil size={18} />
                           </button>
                           <button
                             onClick={() => handleRemoveSlip(slip.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            disabled={slip.status === "CANCELLED"}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={slip.status === "CANCELLED" ? "Phiếu đã hủy" : "Hủy phiếu nhập"}
                           >
                             <Trash2 size={18} />
                           </button>

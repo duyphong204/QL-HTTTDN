@@ -54,6 +54,7 @@ export class ProductService {
       supplierId,
       minPrice,
       maxPrice,
+      inStock,
       sortBy = 'featured',
       sortOrder = 'asc',
       page = 1,
@@ -63,7 +64,7 @@ export class ProductService {
     const limitNumber = Number(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const where: Prisma.ProductWhereInput = {};
+    const where: Prisma.ProductWhereInput = { deletedAt: null };
     const normalizedSearch = search ? normalizeVietnamese(search) : '';
 
     if (categoryId) {
@@ -71,6 +72,9 @@ export class ProductService {
     }
     if (supplierId) {
       where.supplierId = supplierId;
+    }
+    if (typeof inStock === 'boolean') {
+      where.stockQuantity = inStock ? { gt: 0 } : { lte: 0 };
     }
 
     const priceFilter: Prisma.FloatFilter = {};
@@ -225,8 +229,8 @@ export class ProductService {
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
-      where: { id },
+    const product = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null },
       include: {
         category: true,
         supplier: true,
@@ -270,89 +274,57 @@ export class ProductService {
     });
   }
 
-  async remove(id: string) {
-    const product = await this.findOne(id);
+  async getStats() {
+    const [total, stockAgg, outOfStock, topSelling] = await Promise.all([
+      this.prisma.product.count({ where: { deletedAt: null } }),
+      this.prisma.product.aggregate({
+        where: { deletedAt: null },
+        _sum: { stockQuantity: true },
+      }),
+      this.prisma.product.count({
+        where: { deletedAt: null, stockQuantity: { lte: 0 } },
+      }),
+      this.prisma.orderDetail.findMany({
+        where: { order: { status: 'COMPLETED' } },
+        distinct: ['productId'],
+        select: { productId: true },
+      }),
+    ]);
 
-    const [
-      unpaidOrderCount,
-      paidOrderCount,
-      cartItemCount,
-      stockInDetailCount,
-      promotionLinkCount,
-    ] = await Promise.all([
+    return {
+      total,
+      totalStock: stockAgg._sum.stockQuantity ?? 0,
+      outOfStock,
+      topSelling: topSelling.length,
+    };
+  }
+
+  async remove(id: string) {
+    await this.findOne(id); // ném 404 nếu không tồn tại hoặc đã bị ẩn
+
+    const [unpaidOrderCount, cartItemCount] = await Promise.all([
       this.prisma.orderDetail.count({
-        where: {
-          productId: id,
-          order: {
-            paymentStatus: { not: 'PAID' },
-          },
-        },
+        where: { productId: id, order: { paymentStatus: { not: 'PAID' } } },
       }),
-      this.prisma.orderDetail.count({
-        where: {
-          productId: id,
-          order: {
-            paymentStatus: 'PAID',
-          },
-        },
-      }),
-      this.prisma.cartItem.count({
-        where: { productId: id },
-      }),
-      this.prisma.stockInDetail.count({
-        where: { productId: id },
-      }),
-      this.prisma.promotionProduct.count({
-        where: { productId: id },
-      }),
+      this.prisma.cartItem.count({ where: { productId: id } }),
     ]);
 
     if (unpaidOrderCount > 0) {
       throw new BadRequestException(
-        'Sản phẩm đang có trong đơn hàng chưa thanh toán, không thể xóa. Hãy thanh toán hoặc hủy các đơn này trước.',
-      );
-    }
-
-    if (paidOrderCount > 0) {
-      throw new BadRequestException(
-        'Sản phẩm đã phát sinh lịch sử bán hàng, không thể xóa. Bạn chỉ nên ngừng kinh doanh hoặc ẩn sản phẩm này.',
+        'Sản phẩm đang có trong đơn hàng chưa thanh toán. Hãy thanh toán hoặc hủy các đơn này trước.',
       );
     }
 
     if (cartItemCount > 0) {
       throw new BadRequestException(
-        'Sản phẩm đang có trong giỏ hàng của khách, không thể xóa. Vui lòng chờ người dùng xóa khỏi giỏ trước.',
+        'Sản phẩm đang có trong giỏ hàng của khách. Vui lòng chờ người dùng xóa khỏi giỏ trước.',
       );
     }
 
-    if (stockInDetailCount > 0) {
-      throw new BadRequestException(
-        'Sản phẩm đã có trong phiếu nhập kho, không thể xóa vì còn dữ liệu nhập hàng liên quan.',
-      );
-    }
-
-    if (promotionLinkCount > 0) {
-      throw new BadRequestException(
-        'Sản phẩm đang được gán vào chương trình khuyến mãi, hãy gỡ khuyến mãi trước khi xóa.',
-      );
-    }
-
-    if (product.imageUrl) {
-      try {
-        await this.cloudinary.deleteImage(product.imageUrl);
-      } catch (error) {
-        this.logger.warn(
-          `Delete Cloudinary image failed for product ${id}: ${String(error)}`,
-        );
-      }
-    }
-
-    try {
-      return await this.prisma.product.delete({ where: { id } });
-    } catch (error) {
-      throw new BadRequestException(
-        'Không thể xóa sản phẩm do còn dữ liệu liên quan trong đơn hàng, giỏ hàng, phiếu nhập hoặc khuyến mãi.',
-      );
-    }
+    // Soft delete — giữ nguyên FK relations (lịch sử đơn hàng, phiếu nhập, khuyến mãi)
+    return this.prisma.product.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }

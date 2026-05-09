@@ -26,6 +26,7 @@ model User {
   logs             SystemLog[]
   createdStockIns  StockIn[]   @relation("StockInCreatedBy")
   approvedStockIns StockIn[]   @relation("StockInApprovedBy")
+  approvedLeaves  LeaveRequest[] @relation("LeaveApprovedBy")
 }
 
 model Profile {
@@ -53,6 +54,8 @@ model Employee {
   leaveRequests LeaveRequest[]
   salaries      Salary[]
   attendances   Attendance[]
+
+  leaveBalances LeaveBalance[]
 }
 
 model JobHistory {
@@ -71,11 +74,12 @@ model Salary {
   employeeId String
   month      Int
   year       Int
-
+  
   baseSalary Float @default(0)
 
-  workingDays    Int @default(26)
-  actualWorkDays Int @default(0)
+  workingDays     Int            @default(26) // Số ngày công chuẩn của tháng đó
+  actualWorkDays  Float          @default(0)  // Số ngày đi làm thực tế + Nghỉ hưởng lương
+  unpaidDays      Float          @default(0)  // Số ngày nghỉ không lương (để trừ tiền)
 
   grossSalary    Float @default(0)
   totalBonus     Float @default(0)
@@ -150,12 +154,21 @@ model LeaveRequest {
   endDate         DateTime
   type            LeaveType
   reason          String
-  status          String   @default("PENDING")
+  status          LeaveStatus @default(PENDING)
   rejectionReason String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
+
+  totalDays       Float @default(0)
+
+  approvedBy      User?    @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
   approvedById    String?
   employee        Employee @relation(fields: [employeeId], references: [id])
+}
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 enum LeaveType {
   ANNUAL
@@ -164,6 +177,18 @@ enum LeaveType {
   MATERNITY
   RESIGNATION
 }
+
+model LeaveBalance {
+  id          String   @id @default(uuid())
+  employeeId  String
+  year        Int                  // Ví dụ: 2026
+  totalDays   Float    @default(12) // Số ngày được cấp
+  usedDays    Float    @default(0)  // Số ngày đã dùng
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  
+  @@unique([employeeId, year])   // Mỗi nhân viên chỉ có 1 bản ghi cho 1 năm
+}
+
 model Category {
   id       String    @id @default(uuid())
   name     String    @unique
@@ -270,6 +295,7 @@ model StockOut {
   createdAt    DateTime         @default(now())
   order        Order?           @relation(fields: [orderId], references: [id])
   details      StockOutDetail[]
+  costPrice      Float    @default(0) // Giá vốn tại thời điểm xuất để tính lợi nhuận chính xác
 }
 
 model StockOutDetail {

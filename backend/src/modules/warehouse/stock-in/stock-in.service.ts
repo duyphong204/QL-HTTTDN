@@ -4,7 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateStockInDto, UpdateStockInDto } from './dto/stock-in.dto';
+import {
+  CreateStockInDto,
+  QueryStockInDto,
+  UpdateStockInDto,
+} from './dto/stock-in.dto';
 import { Prisma, StockInStatus } from '@prisma/client';
 
 @Injectable()
@@ -84,6 +88,9 @@ export class StockInService {
         include: { details: true },
       });
       if (!oldStockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
+      if (oldStockIn.status === StockInStatus.CANCELLED) {
+        throw new BadRequestException('Không thể sửa phiếu nhập đã bị hủy');
+      }
 
       for (const oldItem of oldStockIn.details) {
         await this.applyStockChange(
@@ -135,7 +142,11 @@ export class StockInService {
         include: { details: true },
       });
       if (!stockIn) throw new NotFoundException('Phiếu nhập không tồn tại');
+      if (stockIn.status === StockInStatus.CANCELLED) {
+        throw new BadRequestException('Phiếu nhập đã bị hủy trước đó');
+      }
 
+      // Hoàn lại tồn kho (reverse weighted-average cost)
       for (const item of stockIn.details) {
         await this.applyStockChange(
           tx,
@@ -145,8 +156,12 @@ export class StockInService {
         );
       }
 
-      await tx.stockInDetail.deleteMany({ where: { stockInId: id } });
-      return tx.stockIn.delete({ where: { id } });
+      // Soft-cancel: giữ record cho lịch sử báo cáo, không hard-delete
+      return tx.stockIn.update({
+        where: { id },
+        data: { status: StockInStatus.CANCELLED },
+        include: { supplier: true, details: { include: { product: true } } },
+      });
     });
   }
 
@@ -168,16 +183,25 @@ export class StockInService {
     };
   }
 
-  async findAll(page = 1, limit = 20) {
+  async findAll(query: QueryStockInDto = {}) {
+    const { month, year, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
+
+    const where = month && year
+      ? { date: { gte: new Date(year, month - 1, 1), lte: new Date(year, month, 0, 23, 59, 59) } }
+      : year
+        ? { date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59) } }
+        : {};
+
     const [data, total] = await Promise.all([
       this.prisma.stockIn.findMany({
+        where,
         skip,
         take: limit,
         include: { supplier: true, details: { include: { product: true } } },
         orderBy: { date: 'desc' },
       }),
-      this.prisma.stockIn.count(),
+      this.prisma.stockIn.count({ where }),
     ]);
     return {
       data,

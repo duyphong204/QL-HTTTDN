@@ -261,6 +261,8 @@ export class OrdersService {
 
   async getOrders() {
     const orders = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 20,
       include: {
         user: {
           select: {
@@ -283,7 +285,6 @@ export class OrdersService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
     });
 
     return orders.map((order) => this.mapOrderForResponse(order));

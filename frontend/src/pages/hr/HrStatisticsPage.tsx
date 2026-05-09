@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useHrStatisticsStore } from "@/stores/hrStatistics.store";
 import { PageLoading } from "@/components/common/Loading";
+import type { LeaveDetail } from "@/types/hr.type";
 
 const MONTH_LABELS = [
   "T1", "T2", "T3", "T4", "T5", "T6",
@@ -271,6 +272,66 @@ export default function HrStatisticsPage() {
                   />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+
+            {/* Per-employee leave detail table */}
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-800 mb-4">
+                Chi tiết nghỉ phép nhân viên —{" "}
+                {filterMonth ? `Tháng ${filterMonth}/` : ""}{filterYear}
+              </h2>
+              {stats.leaveDetails.length === 0 ? (
+                <div className="flex items-center justify-center h-20 text-gray-400 text-sm">
+                  Không có đơn nào trong kỳ này
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <th className="px-4 py-2.5 text-left">Nhân viên</th>
+                        <th className="px-4 py-2.5 text-left">Loại nghỉ</th>
+                        <th className="px-4 py-2.5 text-center">Từ ngày</th>
+                        <th className="px-4 py-2.5 text-center">Đến ngày</th>
+                        <th className="px-4 py-2.5 text-center">Số ngày</th>
+                        <th className="px-4 py-2.5 text-center">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {stats.leaveDetails.map((d: LeaveDetail, i: number) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-4 py-2.5 font-medium text-gray-900">{d.employeeName}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${LEAVE_TYPE_COLORS[d.type] ?? "bg-gray-100 text-gray-700"}`}>
+                              {LEAVE_TYPE_LABELS[d.type] ?? d.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-center text-gray-500">
+                            {new Date(d.startDate).toLocaleDateString("vi-VN")}
+                          </td>
+                          <td className="px-4 py-2.5 text-center text-gray-500">
+                            {new Date(d.endDate).toLocaleDateString("vi-VN")}
+                          </td>
+                          <td className="px-4 py-2.5 text-center font-semibold text-gray-900">
+                            {d.totalDays}
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              d.status === "APPROVED" ? "bg-green-100 text-green-700"
+                              : d.status === "REJECTED" ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              {d.status === "APPROVED" ? "Đã duyệt"
+                                : d.status === "REJECTED" ? "Từ chối"
+                                : "Chờ duyệt"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Bottom row: avg salary + leave stats */}

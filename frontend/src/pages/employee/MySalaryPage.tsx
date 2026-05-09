@@ -1,11 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Printer } from "lucide-react";
 import { TableLoadingRow } from "@/components/common/Loading";
-import {
-  SALARY_STATUS_BADGE,
-  DETAIL_TYPE_BADGE,
-  WORKING_DAYS_DEFAULT,
-} from "@/utils/salary";
+import { SALARY_STATUS_BADGE, DETAIL_TYPE_BADGE } from "@/utils/salary";
 import { formatCurrencyVnd } from "@/utils/format";
 import type { SalaryDetail } from "@/types/salary.types";
 import { useMySalaryStore } from "@/stores/Salary.store";
@@ -39,15 +35,13 @@ export default function MySalaryPage() {
 
   const breakdown = useMemo(() => {
     if (!salary) return null;
-    const workingDays = salary.workingDays || WORKING_DAYS_DEFAULT;
-    const dailyRate = salary.baseSalary / workingDays;
-    const workedAmount = dailyRate * salary.actualWorkDays;
+    const dailyRate = salary.baseSalary / salary.workingDays;
     return {
       baseSalary: salary.baseSalary,
-      workingDays,
+      workingDays: salary.workingDays,
       actualWorkDays: salary.actualWorkDays,
+      unpaidDays: salary.unpaidDays ?? 0,
       dailyRate,
-      workedAmount,
       grossSalary: salary.grossSalary,
       totalBonus: salary.totalBonus,
       totalDeduction: salary.totalDeduction,
@@ -217,6 +211,14 @@ export default function MySalaryPage() {
                     {formatCurrencyVnd(breakdown.grossSalary)}
                   </span>
                 </p>
+                {breakdown.unpaidDays > 0 && (
+                  <p>
+                    <span className="font-medium text-orange-600">
+                      Nghỉ không lương
+                    </span>{" "}
+                    = {breakdown.unpaidDays} ngày (đã tính vào ngày công thực tế)
+                  </p>
+                )}
                 {breakdown.totalBonus > 0 && (
                   <p>
                     <span className="font-medium text-green-700">
@@ -473,6 +475,16 @@ export default function MySalaryPage() {
                     {formatCurrencyVnd(breakdown.dailyRate)}
                   </td>
                 </tr>
+                {breakdown.unpaidDays > 0 && (
+                  <tr>
+                    <td className="border border-black p-2 font-medium bg-gray-50">
+                      Ngày nghỉ không lương
+                    </td>
+                    <td className="border border-black p-2 text-right">
+                      {breakdown.unpaidDays} ngày
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td className="border border-black p-2 font-medium bg-gray-50">
                     Lương Gross (theo ngày công)

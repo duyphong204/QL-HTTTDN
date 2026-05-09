@@ -37,6 +37,10 @@ export class UpdateProfileDto {
 
 // DTO dành riêng cho thay đổi chức vụ — effectiveDate BẮT BUỘC để audit trail
 export class ChangePositionDto {
+  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
+  @IsOptional()
+  role?: Role;
+
   @IsString({ message: 'Chức vụ phải là chuỗi' })
   @IsOptional()
   position?: string;

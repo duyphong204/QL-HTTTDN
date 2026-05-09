@@ -47,7 +47,7 @@ interface StockInState {
     id: string,
     payload: { supplierId: string; details: StockInDetailForm[] }
   ) => Promise<void>;
-  deleteStockIn: (id: string) => Promise<void>;
+  deleteStockIn: (id: string) => Promise<void>; // hủy phiếu nhập (soft-cancel)
 
   // ================= FORM UI ACTIONS =================
   openCreateModal: () => void;
@@ -229,9 +229,12 @@ export const useStockInStore = create<StockInState>((set, get) => ({
 
   deleteStockIn: async (id) => {
     try {
-      await stockInService.deleteStockIn(id);
-      get().setStockIns(get().stockIns.filter((s) => s.id !== id));
-      toast.success("Xóa phiếu nhập thành công");
+      const cancelled = await stockInService.deleteStockIn(id);
+      // Cập nhật status thành CANCELLED trong list, giữ record để xem lịch sử
+      get().setStockIns(
+        get().stockIns.map((s) => (s.id === id ? cancelled : s)),
+      );
+      toast.success("Đã hủy phiếu nhập thành công");
     } catch (error: unknown) {
       const message = getErrorMessage(error);
       get().setError(message);

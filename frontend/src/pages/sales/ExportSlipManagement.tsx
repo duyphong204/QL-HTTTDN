@@ -1,4 +1,4 @@
-import { FileText, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { FileText, Plus, Pencil, Trash2, Eye, Package, CheckCircle2, TrendingUp } from "lucide-react";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { AppModal } from "@/components/common/AppModal";
@@ -32,12 +32,16 @@ export default function ExportSlipManagement() {
     type,
     filterStatus,
     filterType,
+    filterMonth,
+    monthOptions,
+    exportStats,
     items,
     totalAmount,
     table,
     setType,
     setFilterStatus,
     setFilterType,
+    setFilterMonth,
     openCreateModal,
     openEditModal,
     closeFormModal,
@@ -53,7 +57,7 @@ export default function ExportSlipManagement() {
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FileText className="text-blue-600" size={28} /> Phiếu xuất hàng
@@ -62,12 +66,62 @@ export default function ExportSlipManagement() {
               Quản lý phiếu xuất theo CRUD: thêm, sửa, xóa, xem chi tiết
             </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
-          >
-            <Plus size={18} /> Tạo phiếu xuất
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white shadow-sm"
+            >
+              <option value="">Tất cả tháng</option>
+              {monthOptions.map((key) => {
+                const [year, month] = key.split("-");
+                return (
+                  <option key={key} value={key}>
+                    Tháng {parseInt(month)}/{year}
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+            >
+              <Plus size={18} /> Tạo phiếu xuất
+            </button>
+          </div>
+        </div>
+
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+              <Package className="text-blue-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng phiếu xuất</p>
+              <p className="text-2xl font-bold text-gray-900">{exportStats.total}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="text-emerald-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Đã hoàn thành</p>
+              <p className="text-2xl font-bold text-gray-900">{exportStats.completed}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+              <TrendingUp className="text-violet-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng giá trị xuất</p>
+              <p className="text-lg font-bold text-gray-900 truncate">
+                {formatCurrencyVnd(exportStats.totalValue)}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">

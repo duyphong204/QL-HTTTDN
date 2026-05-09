@@ -2,21 +2,24 @@ import { create } from "zustand";
 import { leaveRequestService } from "@/services/hr.service";
 import { getErrorMessage } from "@/stores/store.helpers";
 import { toast } from "sonner";
-import type { LeaveRequest, CreateLeaveRequestDto } from "@/types/leave.types";
+import type {
+  LeaveRequest,
+  LeaveBalance,
+  CreateLeaveRequestDto,
+} from "@/types/leave.types";
 
 interface LeaveRequestState {
-  // Data
   myLeaveRequests: LeaveRequest[];
-  allLeaveRequests: LeaveRequest[]; // Dành cho quản lý
+  allLeaveRequests: LeaveRequest[];
+  leaveBalance: LeaveBalance | null;
   isLoading: boolean;
 
-  // Actions cho Nhân viên
   fetchMyRequests: () => Promise<void>;
+  fetchMyBalance: () => Promise<void>;
   createRequest: (payload: CreateLeaveRequestDto) => Promise<void>;
   deleteRequest: (id: string) => Promise<void>;
 
-  // Actions cho Quản lý
-  fetchAllRequests: () => Promise<void>;
+  fetchAllRequests: (params?: QueryLeaveRequestDto) => Promise<void>;
   approveRequest: (
     id: string,
     status: "APPROVED" | "REJECTED",
@@ -27,6 +30,7 @@ interface LeaveRequestState {
 export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
   myLeaveRequests: [],
   allLeaveRequests: [],
+  leaveBalance: null,
   isLoading: false,
 
   fetchMyRequests: async () => {
@@ -41,12 +45,23 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
     }
   },
 
+  fetchMyBalance: async () => {
+    try {
+      const data = await leaveRequestService.getMyLeaveBalance();
+      set({ leaveBalance: data });
+    } catch {
+      // Không hiện toast lỗi vì có thể user không có record employee
+    }
+  },
+
   createRequest: async (payload: CreateLeaveRequestDto) => {
     set({ isLoading: true });
     try {
       const newReq = await leaveRequestService.createLeaveRequest(payload);
       set({ myLeaveRequests: [newReq, ...get().myLeaveRequests] });
       toast.success("Gửi đơn nghỉ phép thành công!");
+      // Làm mới balance sau khi gửi đơn (nếu là ANNUAL sẽ kiểm tra balance)
+      get().fetchMyBalance();
     } catch (error) {
       toast.error(getErrorMessage(error));
       throw error;
@@ -67,10 +82,10 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
     }
   },
 
-  fetchAllRequests: async () => {
+  fetchAllRequests: async (params?: QueryLeaveRequestDto) => {
     set({ isLoading: true });
     try {
-      const data = await leaveRequestService.getLeaveRequests();
+      const data = await leaveRequestService.getLeaveRequests(params);
       set({ allLeaveRequests: data });
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể tải danh sách đơn"));

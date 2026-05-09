@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import { Plus, Trash2, CalendarX } from "lucide-react";
+import { Plus, Trash2, CalendarX, CalendarDays } from "lucide-react";
 import { useLeaveRequestStore } from "@/stores/leaveRequest.store";
 import { useClientTable } from "@/hooks/useClientTable";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -15,9 +15,10 @@ import {
 import { toast } from "sonner";
 
 const TYPE_LABEL: Record<string, string> = {
-  ANNUAL: "Nghỉ phép",
-  SICK: "Nghỉ bệnh",
+  ANNUAL: "Nghỉ phép năm",
+  SICK: "Nghỉ ốm",
   MATERNITY: "Thai sản",
+  UNPAID: "Nghỉ không lương",
   RESIGNATION: "Đơn nghỉ việc",
 };
 
@@ -27,11 +28,19 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-700 border border-red-200",
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  REJECTED: "Từ chối",
+};
+
 export default function EmployeeLeaveRequestPage() {
   const {
     myLeaveRequests,
+    leaveBalance,
     isLoading,
     fetchMyRequests,
+    fetchMyBalance,
     createRequest,
     deleteRequest,
   } = useLeaveRequestStore();
@@ -61,7 +70,8 @@ export default function EmployeeLeaveRequestPage() {
 
   useEffect(() => {
     fetchMyRequests();
-  }, [fetchMyRequests]);
+    fetchMyBalance();
+  }, [fetchMyRequests, fetchMyBalance]);
 
   const handleSubmit = async () => {
     if (hasEmptyRequiredValue([form.startDate, form.endDate, form.reason])) {
@@ -71,7 +81,12 @@ export default function EmployeeLeaveRequestPage() {
     try {
       await createRequest({
         ...form,
-        type: form.type as "SICK" | "ANNUAL" | "MATERNITY" | "RESIGNATION",
+        type: form.type as
+          | "ANNUAL"
+          | "SICK"
+          | "MATERNITY"
+          | "UNPAID"
+          | "RESIGNATION",
       });
       setForm({ type: "ANNUAL", startDate: "", endDate: "", reason: "" });
       setDialogOpen(false);
@@ -100,12 +115,30 @@ export default function EmployeeLeaveRequestPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setDialogOpen(true)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md"
-          >
-            <Plus size={18} /> Nộp đơn xin nghỉ
-          </button>
+          <div className="flex items-center gap-3">
+            {leaveBalance && (
+              <div className="flex items-center gap-2.5 bg-white border border-blue-100 rounded-xl px-4 py-2.5 shadow-sm">
+                <CalendarDays size={18} className="text-blue-500 shrink-0" />
+                <div className="text-sm">
+                  <span className="text-gray-500">Phép năm còn lại: </span>
+                  <span
+                    className={`font-bold ${leaveBalance.remainingDays <= 2 ? "text-red-600" : "text-blue-600"}`}
+                  >
+                    {leaveBalance.remainingDays}
+                  </span>
+                  <span className="text-gray-400">
+                    /{leaveBalance.totalDays} ngày
+                  </span>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md"
+            >
+              <Plus size={18} /> Nộp đơn xin nghỉ
+            </button>
+          </div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative">
@@ -157,17 +190,29 @@ export default function EmployeeLeaveRequestPage() {
                             <span className="text-[10px] text-gray-400 italic">
                               đến {dayjs(request.endDate).format("DD/MM/YYYY")}
                             </span>
+                            {request.totalDays != null && (
+                              <span className="text-[10px] text-blue-500 font-medium mt-0.5">
+                                {request.totalDays} ngày công
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-gray-500 max-w-xs truncate">
                           {request.reason}
                         </td>
                         <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[request.status]}`}
-                          >
-                            {request.status}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[request.status]}`}
+                            >
+                              {STATUS_LABEL[request.status] ?? request.status}
+                            </span>
+                            {request.status === "REJECTED" && request.rejectionReason && (
+                              <span className="text-[11px] text-red-500 italic max-w-45" title={request.rejectionReason}>
+                                Lý do: {request.rejectionReason}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-center">
                           {request.status === "PENDING" && (

@@ -52,6 +52,7 @@ export interface Salary extends BaseEntity {
   baseSalary: number;
   workingDays: number;
   actualWorkDays: number;
+  unpaidDays: number;
   grossSalary: number;
   totalBonus: number;
   totalDeduction: number;
@@ -90,34 +91,3 @@ export interface SalaryListResponse {
   pages: number;
 }
 
-export interface SalaryStatistics {
-  month: number;
-  year: number;
-  count: number;
-  totalSalary: number;
-  totalGross: number;
-  totalBonus: number;
-  totalDeduction: number;
-  avgSalary: number;
-  statusBreakdown: {
-    pending: number;
-    approved: number;
-    paid: number;
-    cancelled: number;
-  };
-}
-
-export interface MonthlyReport {
-  month: number;
-  year: number;
-  totalRecords: number;
-  salaries: Salary[];
-  summary: SalaryStatistics;
-}
-
-export interface YearlyReport {
-  year: number;
-  totalRecords: number;
-  byMonth: Record<number, Salary[]>;
-  monthlySummaries: SalaryStatistics[];
-}

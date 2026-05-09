@@ -10,7 +10,9 @@ import {
   calculateStandardWorkingDays,
   calculateUnpaidLeaveDays,
   calculateGrossSalary,
+  calculateProgressiveTax,
   getMonthDateRange,
+  countWeekdays,
 } from './salary.utils';
 import {
   CalculateSalaryDto,
@@ -25,7 +27,6 @@ import {
 
 const INSURANCE_RATE = 0.105;
 const TAX_ALLOWANCE = 11_000_000;
-const TAX_RATE = 0.1;
 
 @Injectable()
 export class SalariesService {
@@ -60,6 +61,17 @@ export class SalariesService {
     const { startDate, endDate } = getMonthDateRange(dto.month, dto.year);
     const standardDays = calculateStandardWorkingDays(dto.month, dto.year);
 
+    // Lấy mức lương có hiệu lực trong tháng từ JobHistory
+    const effectiveHistory = await this.prisma.jobHistory.findFirst({
+      where: {
+        employeeId: dto.employeeId,
+        startDate: { lte: startDate },
+        OR: [{ endDate: null }, { endDate: { gte: startDate } }],
+      },
+      orderBy: { startDate: 'desc' },
+    });
+    const baseSalary = effectiveHistory?.baseSalary ?? employee.baseSalary;
+
     const leaveRequests = await this.prisma.leaveRequest.findMany({
       where: {
         employeeId: dto.employeeId,
@@ -70,22 +82,38 @@ export class SalariesService {
       select: { startDate: true, endDate: true, type: true },
     });
 
-    const unpaidDays = calculateUnpaidLeaveDays(
+    // Ngày nghỉ không lương từ đơn UNPAID
+    const unpaidLeaveDays = calculateUnpaidLeaveDays(
       leaveRequests,
       dto.month,
       dto.year,
     );
-    const actualWorkDays = standardDays - unpaidDays;
+
+    // Nếu nhân viên nghỉ việc giữa tháng, các ngày sau resignDate không được trả lương
+    let postResignDays = 0;
+    if (employee.resignDate) {
+      const rd = new Date(employee.resignDate);
+      if (rd >= startDate && rd <= endDate) {
+        const dayAfterResign = new Date(rd);
+        dayAfterResign.setDate(dayAfterResign.getDate() + 1);
+        if (dayAfterResign <= endDate) {
+          postResignDays = countWeekdays(dayAfterResign, endDate);
+        }
+      }
+    }
+
+    const totalUnpaidDays = unpaidLeaveDays + postResignDays;
+    const actualWorkDays = Math.max(0, standardDays - totalUnpaidDays);
     const grossSalary = calculateGrossSalary(
-      employee.baseSalary,
+      baseSalary,
       standardDays,
-      unpaidDays,
+      totalUnpaidDays,
     );
 
-    const insuranceAmount = Math.round(grossSalary * INSURANCE_RATE);
+    // Bảo hiểm tính trên lương cơ bản (baseSalary), không phụ thuộc ngày nghỉ
+    const insuranceAmount = Math.round(baseSalary * INSURANCE_RATE);
     const taxableIncome = grossSalary - TAX_ALLOWANCE;
-    const taxAmount =
-      taxableIncome > 0 ? Math.round(taxableIncome * TAX_RATE) : 0;
+    const taxAmount = calculateProgressiveTax(taxableIncome);
 
     const autoDetails: SalaryDetailInput[] = [
       {
@@ -98,7 +126,7 @@ export class SalariesService {
       autoDetails.push({
         type: DetailType.TAX,
         amount: taxAmount,
-        description: 'Thuế TNCN (10%)',
+        description: 'Thuế TNCN (lũy tiến 5–35%)',
       });
     }
     const extraDetails = dto.details ?? [];
@@ -149,9 +177,10 @@ export class SalariesService {
           employeeId: dto.employeeId,
           month: dto.month,
           year: dto.year,
-          baseSalary: employee.baseSalary,
+          baseSalary,
           workingDays: standardDays,
           actualWorkDays,
+          unpaidDays: totalUnpaidDays,
           grossSalary,
           totalBonus,
           totalDeduction,

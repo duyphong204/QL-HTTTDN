@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  Layers,
+  TrendingUp,
+  EyeOff,
+} from "lucide-react";
 import { getCloudinaryThumbnailUrl } from "@/utils/cloudinary";
 import { ProductFormModal } from "@/components/forms/ProductFormModal";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
@@ -47,7 +55,6 @@ function ProductThumbnail({
       className="w-10 h-10 rounded-lg object-contain bg-gray-50 border border-gray-200"
       loading="lazy"
       onError={() => {
-        // If transformed URL fails, retry with original image URL before falling back.
         if (src !== imageUrl) {
           setSrc(imageUrl);
           return;
@@ -58,24 +65,60 @@ function ProductThumbnail({
   );
 }
 
+type StatCardProps = {
+  label: string;
+  value: number | string;
+  icon: React.ReactNode;
+  iconBg: string;
+  valueColor?: string;
+  loading?: boolean;
+};
+
+function StatCard({
+  label,
+  value,
+  icon,
+  iconBg,
+  valueColor = "text-gray-900",
+  loading,
+}: StatCardProps) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm px-5 py-4 flex items-center gap-4">
+      <div
+        className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
+      >
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-gray-500 font-medium">{label}</p>
+        {loading ? (
+          <div className="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+        ) : (
+          <p className={`text-xl font-bold mt-0.5 ${valueColor}`}>{value}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductManagement() {
-  // 1. Store State & Actions
   const {
     products,
     isLoading,
     meta,
+    stats,
     filters,
     categories,
     suppliers,
     setFilters,
     fetchProducts,
     fetchDependencies,
+    fetchStats,
     createProduct,
     updateProduct,
     deleteProduct,
   } = useProductStore();
 
-  // 2. UI Hooks
   const {
     modalOpen,
     editingEntity,
@@ -85,7 +128,6 @@ export default function ProductManagement() {
   } = useEntityModal<Product>();
   const { confirmAndRun } = useConfirmAction();
 
-  // 3. Search & Pagination Logic
   const { searchTerm, setSearchTerm, updateFilters, goToPage } =
     usePaginatedList({
       filters,
@@ -94,13 +136,12 @@ export default function ProductManagement() {
       debounceMs: 400,
     });
 
-  // Initial Fetch
   useEffect(() => {
     fetchProducts();
     fetchDependencies();
+    fetchStats();
   }, []);
 
-  // 4. Handlers
   const handleFormSubmit = async (
     data: CreateProductDto | UpdateProductDto,
   ) => {
@@ -109,19 +150,26 @@ export default function ProductManagement() {
     } else {
       await createProduct(data as CreateProductDto);
     }
+    fetchStats();
     closeModal();
   };
 
   const handleDelete = async (id: string, productName: string) => {
     await confirmAndRun({
       message: `Bạn có chắc muốn xoá sản phẩm "${productName}"?`,
-      action: () => deleteProduct(id),
+      action: async () => {
+        await deleteProduct(id);
+        fetchStats();
+      },
     });
   };
+
+  const statsLoading = stats === null;
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
@@ -139,36 +187,105 @@ export default function ProductManagement() {
           </button>
         </div>
 
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Tổng sản phẩm"
+            value={stats?.total ?? 0}
+            icon={<Package size={20} className="text-blue-600" />}
+            iconBg="bg-blue-50"
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Tổng tồn kho"
+            value={(stats?.totalStock ?? 0).toLocaleString("vi-VN")}
+            icon={<Layers size={20} className="text-emerald-600" />}
+            iconBg="bg-emerald-50"
+            valueColor="text-emerald-700"
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Sản phẩm bán chạy"
+            value={stats?.topSelling ?? 0}
+            icon={<TrendingUp size={20} className="text-orange-500" />}
+            iconBg="bg-orange-50"
+            valueColor="text-orange-600"
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Hết hàng"
+            value={stats?.outOfStock ?? 0}
+            icon={<EyeOff size={20} className="text-gray-400" />}
+            iconBg="bg-gray-100"
+            valueColor={
+              (stats?.outOfStock ?? 0) > 0 ? "text-red-500" : "text-gray-500"
+            }
+            loading={statsLoading}
+          />
+        </div>
+
+        {/* Table */}
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-2 overflow-hidden">
           <DataTableToolbar
             searchValue={searchTerm}
             onSearchChange={setSearchTerm}
             searchPlaceholder="Tìm theo tên sản phẩm..."
           >
+            {/* Lọc danh mục */}
             <select
               value={filters.categoryId ?? ""}
               onChange={(e) => updateFilters({ categoryId: e.target.value })}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">Danh mục: Tất cả</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
 
+            {/* Lọc nhà cung cấp */}
             <select
               value={filters.supplierId ?? ""}
               onChange={(e) => updateFilters({ supplierId: e.target.value })}
               className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             >
               <option value="">NCC: Tất cả</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
               ))}
+            </select>
+
+            {/* Lọc tồn kho */}
+            <select
+              value={filters.inStock === undefined ? "" : String(filters.inStock)}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateFilters({ inStock: v === "" ? undefined : v === "true" });
+              }}
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="">Tồn kho: Tất cả</option>
+              <option value="true">Còn hàng</option>
+              <option value="false">Hết hàng</option>
+            </select>
+
+            {/* Sắp xếp */}
+            <select
+              value={`${filters.sortBy ?? "name"}:${filters.sortOrder ?? "asc"}`}
+              onChange={(e) => {
+                const [sortBy, sortOrder] = e.target.value.split(":") as [string, "asc" | "desc"];
+                updateFilters({ sortBy, sortOrder });
+              }}
+              className="h-11 px-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            >
+              <option value="name:asc">Tên A → Z</option>
+              <option value="name:desc">Tên Z → A</option>
+              <option value="price:asc">Giá bán tăng dần</option>
+              <option value="price:desc">Giá bán giảm dần</option>
+              <option value="costPrice:asc">Giá nhập tăng dần</option>
+              <option value="costPrice:desc">Giá nhập giảm dần</option>
+              <option value="stockQuantity:desc">Tồn kho nhiều nhất</option>
+              <option value="stockQuantity:asc">Tồn kho ít nhất</option>
             </select>
           </DataTableToolbar>
 

@@ -141,8 +141,8 @@ export default function About() {
       </section>
 
       <section className="py-24 bg-slate-50">
-        <div className="container mx-auto px-6">
-          <SectionTitle>Dịch vụ của chúng tôi</SectionTitle>
+        <div className="container mx-auto px-6">  
+<SectionTitle subtitle="Thông tin chi tiết">Dịch vụ của chúng tôi</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {FEATURE_CARDS.map((card, i) => (
               <div

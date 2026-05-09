@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { toast } from "sonner";
-import { employeeApi, salaryApi } from "@/api/hr.api";
+import { employeeService, salaryService } from "@/services/hr.service";
 import type { HrStatisticsReport, Salary } from "@/types/hr.type";
 
 interface HrStoreState {
@@ -8,10 +8,7 @@ interface HrStoreState {
   salaries: Salary[];
   loadingStatistics: boolean;
   loadingSalaries: boolean;
-  fetchStatistics: (params?: {
-    month?: number;
-    year?: number;
-  }) => Promise<void>;
+  fetchStatistics: (params?: { month?: number; year?: number }) => Promise<void>;
   fetchSalaries: (params?: { month?: number; year?: number }) => Promise<void>;
 }
 
@@ -24,12 +21,10 @@ export const useHrStore = create<HrStoreState>((set) => ({
   fetchStatistics: async (params) => {
     set({ loadingStatistics: true });
     try {
-      const statistics = await employeeApi.getHrStatistics(params);
+      const statistics = await employeeService.getHrStatistics(params);
       set({ statistics });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Lỗi tải thống kê HR",
-      );
+      toast.error(error instanceof Error ? error.message : "Lỗi tải thống kê HR");
     } finally {
       set({ loadingStatistics: false });
     }
@@ -38,12 +33,11 @@ export const useHrStore = create<HrStoreState>((set) => ({
   fetchSalaries: async (params) => {
     set({ loadingSalaries: true });
     try {
-      const salaries = await salaryApi.getSalaries(params);
-      set({ salaries });
+      const salaries = await salaryService.getSalaries(params);
+      set({ salaries : salaries.data });
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Lỗi tải danh sách lương",
-      );
+      toast.error(error instanceof Error ? error.message : "Lỗi tải danh sách lương");
+      // Đã xóa dấu phẩy thừa ở đây
     } finally {
       set({ loadingSalaries: false });
     }

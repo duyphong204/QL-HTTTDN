@@ -41,6 +41,15 @@ export interface LeaveStatByType {
   _count: { id: number };
 }
 
+export interface LeaveDetail {
+  employeeName: string;
+  type: string;
+  totalDays: number;
+  status: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface HrStatisticsReport {
   totalEmployees: number;
   totalResigned: number;
@@ -56,6 +65,7 @@ export interface HrStatisticsReport {
   pendingLeaveRequests: number;
   monthlyBreakdown: MonthlyPayrollBreakdown[];
   leaveStatsByType: LeaveStatByType[];
+  leaveDetails: LeaveDetail[];
 }
 
 export type CreateSalaryDto = {

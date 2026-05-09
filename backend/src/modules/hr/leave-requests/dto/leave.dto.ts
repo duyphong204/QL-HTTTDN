@@ -48,4 +48,8 @@ export class QueryLeaveRequestDto {
   @IsOptional()
   @IsString()
   year?: string;
+
+  @IsOptional()
+  @IsString()
+  month?: string;
 }

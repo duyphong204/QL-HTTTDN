@@ -1,5 +1,3 @@
-export const WORKING_DAYS_DEFAULT = 26;
-
 export const SALARY_STATUS_BADGE = {
   PENDING: { label: "Chờ duyệt", color: "bg-yellow-100 text-yellow-700" },
   APPROVED: { label: "Đã duyệt", color: "bg-blue-100 text-blue-700" },

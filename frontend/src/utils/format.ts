@@ -8,3 +8,14 @@ export const formatNumberVi = (value: number): string =>
 
 export const formatNumberWithDong = (value: number, spaced = false): string =>
   `${formatNumberVi(value)}${spaced ? " đ" : "đ"}`;
+
+export const formatReportPeriod = (filters: {
+  type: string;
+  year: number;
+  month?: number;
+  quarter?: number;
+}): string => {
+  if (filters.type === "month") return `Tháng ${filters.month}/${filters.year}`;
+  if (filters.type === "quarter") return `Quý ${filters.quarter}/${filters.year}`;
+  return `Năm ${filters.year}`;
+};

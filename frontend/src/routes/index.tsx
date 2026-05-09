@@ -25,6 +25,7 @@ import AdminReportPage from "@/pages/admin/AdminReportPage";
 import SalesReportPage from "@/pages/sales/SalesReportPage";
 import WarehouseReportPage from "@/pages/warehouse/WarehouseReportPage";
 import HrReportPage from "@/pages/hr/HrReportPage";
+import HrStatisticsPage from "@/pages/hr/HrStatisticsPage";
 import { rolesFor } from "@/routes/routes.config";
 // IMPORT CUSTOMER PAGES
 import ShopHome from "@/pages/customer/ShopHome";
@@ -227,6 +228,14 @@ export const AppRouter = () => {
             element={
               <ProtectedRoute roles={rolesFor("/hr/reports")}>
                 <HrReportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/statistics"
+            element={
+              <ProtectedRoute roles={rolesFor("/hr/employees")}>
+                <HrStatisticsPage />
               </ProtectedRoute>
             }
           />

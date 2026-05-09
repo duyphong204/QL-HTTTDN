@@ -68,6 +68,7 @@ export interface ProductQuery {
   categoryId?: string;
   supplierId?: string;
   maxPrice?: number;
+  inStock?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;

@@ -54,6 +54,7 @@ export const useExportSlipPage = () => {
   const [type, setType] = useState<keyof typeof StockOutType>("SALE");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("");
+  const [filterMonth, setFilterMonth] = useState<string>("");
   const [items, setItems] = useState<StockOutItemForm[]>([emptyItem()]);
 
   const query = useMemo<StockOutQuery>(
@@ -64,6 +65,36 @@ export const useExportSlipPage = () => {
       ...(filterType ? { type: filterType as keyof typeof StockOutType } : {}),
     }),
     [filterStatus, filterType],
+  );
+
+  const monthOptions = useMemo(() => {
+    const seen = new Set<string>();
+    stockOuts.forEach((s) => {
+      const d = new Date(s.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      seen.add(key);
+    });
+    return Array.from(seen).sort().reverse();
+  }, [stockOuts]);
+
+  const filteredStockOuts = useMemo(() => {
+    if (!filterMonth) return stockOuts;
+    return stockOuts.filter((s) => {
+      const d = new Date(s.createdAt);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      return key === filterMonth;
+    });
+  }, [stockOuts, filterMonth]);
+
+  const exportStats = useMemo(
+    () => ({
+      total: filteredStockOuts.length,
+      completed: filteredStockOuts.filter(
+        (s) => s.status === StockOutStatus.COMPLETED,
+      ).length,
+      totalValue: filteredStockOuts.reduce((sum, s) => sum + s.totalAmount, 0),
+    }),
+    [filteredStockOuts],
   );
 
   const searchFn = useCallback((stockOut: StockOut, keyword: string) => {
@@ -78,7 +109,7 @@ export const useExportSlipPage = () => {
   }, []);
 
   const table = useClientTable<StockOut>({
-    data: stockOuts,
+    data: filteredStockOuts,
     pageSize: 10,
     searchFn,
   });
@@ -320,12 +351,16 @@ export const useExportSlipPage = () => {
     type,
     filterStatus,
     filterType,
+    filterMonth,
+    monthOptions,
+    exportStats,
     items,
     totalAmount,
     table,
     setType,
     setFilterStatus,
     setFilterType,
+    setFilterMonth,
     openCreateModal,
     openEditModal,
     closeFormModal,

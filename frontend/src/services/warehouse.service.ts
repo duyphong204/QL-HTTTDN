@@ -75,9 +75,20 @@ export const supplierService = {
   },
 };
 
+export type ProductStats = {
+  total: number;
+  totalStock: number;
+  outOfStock: number;
+  topSelling: number;
+};
+
 export const productService = {
   getProducts: async (params?: ProductQuery): Promise<ProductResponse> => {
     return apiGet<ProductResponse>("/products", params);
+  },
+
+  getStats: async (): Promise<ProductStats> => {
+    return apiGet<ProductStats>("/products/stats");
   },
 
   getProductById: async (id: string): Promise<Product> => {
@@ -126,7 +137,7 @@ export const stockInService = {
     return apiPatch<StockIn>(`/stock-ins/${id}`, data);
   },
 
-  deleteStockIn: async (id: string): Promise<void> => {
-    await apiDelete(`/stock-ins/${id}`);
+  deleteStockIn: async (id: string): Promise<StockIn> => {
+    return apiDelete<StockIn>(`/stock-ins/${id}`);
   },
 };
