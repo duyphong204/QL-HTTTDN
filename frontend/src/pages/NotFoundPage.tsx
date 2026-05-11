@@ -1,12 +1,10 @@
-import { Link } from "react-router-dom"
-import { Home, ArrowLeft } from "lucide-react"
+import { Link } from "react-router-dom";
+import { Home, ArrowLeft } from "lucide-react";
 
 const NotFoundPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
-      
       <div className="text-center">
-
         {/* 404 Text */}
         <h1 className="text-9xl font-bold text-gray-800">404</h1>
 
@@ -22,7 +20,6 @@ const NotFoundPage = () => {
 
         {/* Buttons */}
         <div className="mt-6 flex items-center justify-center gap-4">
-
           <Link
             to="/"
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-white shadow hover:bg-blue-700 transition"
@@ -38,13 +35,10 @@ const NotFoundPage = () => {
             <ArrowLeft size={18} />
             Quay lại
           </button>
-
         </div>
-
       </div>
-
     </div>
-  )
-}
+  );
+};
 
-export default NotFoundPage
+export default NotFoundPage;

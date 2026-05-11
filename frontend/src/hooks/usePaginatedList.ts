@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { BaseFilters } from '@/types/common.types';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { BaseFilters } from "@/types/common.types";
 
 type SetFiltersFn<TFilters> = (filters: Partial<TFilters>) => void;
 
@@ -16,14 +16,16 @@ export const usePaginatedList = <TFilters extends BaseFilters>({
   setFilters,
   fetchData,
   debounceMs = 400,
-  searchKey = 'search' as keyof TFilters,
+  searchKey = "search" as keyof TFilters,
 }: UsePaginatedListOptions<TFilters>) => {
-  const [searchTerm, setSearchTerm] = useState(String(filters[searchKey] ?? ''));
+  const [searchTerm, setSearchTerm] = useState(
+    String(filters[searchKey] ?? ""),
+  );
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       const nextValue = searchTerm.trim();
-      const currentValue = String(filters[searchKey] ?? '');
+      const currentValue = String(filters[searchKey] ?? "");
 
       if (nextValue === currentValue) {
         return;

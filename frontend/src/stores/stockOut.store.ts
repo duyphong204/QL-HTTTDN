@@ -1,7 +1,5 @@
 import { create } from "zustand";
-import type {
-  StockOut,
-} from "@/types/stockOut.types";
+import type { StockOut } from "@/types/stockOut.types";
 
 interface StockOutState {
   stockOuts: StockOut[];

@@ -1,40 +1,40 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { useForm } from "react-hook-form"
-import { useState } from "react"
-import { useAuthStore } from "@/stores/auth.store"
-import { useNavigate } from "react-router-dom"
-import { type RegisterValues } from "@/types/auth.types"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useAuthStore } from "@/stores/auth.store";
+import { useNavigate } from "react-router-dom";
+import { type RegisterValues } from "@/types/auth.types";
 import registerBg from "@/assets/auth-bg.png";
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate()
-  const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterValues>()
-  const { handleregister } = useAuthStore()
+  } = useForm<RegisterValues>();
+  const { handleregister } = useAuthStore();
   const onSubmit = async (data: RegisterValues) => {
     try {
       await handleregister(data);
-      navigate("/login")
+      navigate("/login");
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -56,10 +56,7 @@ export function SignupForm({
               {/* Full Name */}
               <Field>
                 <FieldLabel>Họ tên</FieldLabel>
-                <Input
-                  placeholder="Nguyễn Văn A"
-                  {...register("fullName")}
-                />
+                <Input placeholder="Nguyễn Văn A" {...register("fullName")} />
                 {errors.fullName && (
                   <p className="text-sm text-red-500">
                     {errors.fullName.message}
@@ -76,9 +73,7 @@ export function SignupForm({
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-500">
-                    {errors.email.message}
-                  </p>
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
                 )}
               </Field>
 
@@ -118,9 +113,7 @@ export function SignupForm({
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting
-                    ? "Đang tạo tài khoản..."
-                    : "Tạo tài khoản"}
+                  {isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
                 </Button>
               </Field>
 
@@ -156,5 +149,5 @@ export function SignupForm({
         .
       </FieldDescription>
     </div>
-  )
+  );
 }

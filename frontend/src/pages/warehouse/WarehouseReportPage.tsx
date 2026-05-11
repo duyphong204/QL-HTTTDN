@@ -1,133 +1,201 @@
-// frontend/src/pages/warehouse/WarehouseReportPage.tsx
-import { BarChart3, Package, AlertTriangle, TrendingDown, Printer } from 'lucide-react'
-import { useWarehouseReportPage } from '@/hooks/useWarehouseReportPage'
-import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
-import { InlineLoading, PageLoading } from '@/components/common/Loading'
+import { useEffect } from "react";
+import { Warehouse, Printer } from "lucide-react";
+import { ReportFilter, WarehouseReportSection } from "@/components/charts";
+import { useReportStore } from "@/stores/report.store";
+import { formatCurrencyVnd, formatReportPeriod } from "@/utils/format";
 
 export default function WarehouseReportPage() {
-    const {
-        report,
-        isLoadingReport,
-        month,
-        year,
-        years,
-        months,
-        statCards,
-        lowStockProducts,
-        analyticsReport,
-        isLoadingAnalytics,
-        setMonth,
-        setYear,
-        handlePrint,
-    } = useWarehouseReportPage()
+  const filters = useReportStore((s) => s.filters);
+  const setFilters = useReportStore((s) => s.setFilters);
+  const fetchWarehouse = useReportStore((s) => s.fetchWarehouse);
+  const loading = useReportStore((s) => s.loadingWarehouse);
+  const warehouse = useReportStore((s) => s.warehouse);
 
-    const shownLowStockProducts = analyticsReport?.lowStockProducts?.length
-        ? analyticsReport.lowStockProducts
-        : lowStockProducts
+  useEffect(() => {
+    fetchWarehouse();
+  }, [fetchWarehouse, filters.type, filters.year, filters.month, filters.quarter]);
 
-    return (
-        <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
-            <div className="max-w-7xl mx-auto space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            <BarChart3 className="text-blue-600 print:hidden" size={28} />
-                            Báo cáo thống kê kho
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-1 print:hidden">Thống kê tình hình kho theo tháng / năm</p>
-                    </div>
-                    <button onClick={handlePrint}
-                        className="print:hidden inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <Printer size={16} /> In báo cáo
-                    </button>
-                </div>
+  const handlePrint = () => {
+    document.body.classList.add("print-warehouse-report");
+    window.print();
+    document.body.classList.remove("print-warehouse-report");
+  };
 
-                <div className="flex gap-3 print:hidden">
-                    <select value={month} onChange={e => setMonth(e.target.value)}
-                        className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                        <option value="">Cả năm</option>
-                        {months.map(m => <option key={m} value={m}>Tháng {m}</option>)}
-                    </select>
-                    <select value={year} onChange={e => setYear(e.target.value)}
-                        className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                        {years.map(y => <option key={y} value={y}>Năm {y}</option>)}
-                    </select>
-                </div>
+  const periodLabel = formatReportPeriod(filters);
 
-                {isLoadingReport ? (
-                    <PageLoading text="Đang tải báo cáo..." />
-                ) : report && (
-                    <>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            {statCards.map(card => {
-                                const Icon = card.icon === 'importValue'
-                                    ? TrendingDown
-                                    : card.icon === 'types'
-                                        ? BarChart3
-                                        : Package
+  return (
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+      <style>{`
+        #print-warehouse-report { display: none; }
+        @media print {
+          body * { visibility: hidden !important; }
+          body.print-warehouse-report #print-warehouse-report,
+          body.print-warehouse-report #print-warehouse-report * { visibility: visible !important; }
+          body.print-warehouse-report #print-warehouse-report {
+            display: block !important; position: absolute;
+            left: 0; top: 0; width: 100%; background: white;
+          }
+        }
+      `}</style>
 
-                                return (
-                                <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                    <Icon size={20} className="text-blue-500 mb-3" />
-                                    <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-                                    <div className="text-sm text-gray-500 mt-1">{card.label}</div>
-                                </div>
-                                )
-                            })}
-                        </div>
-
-                        <div className="grid gap-4 xl:grid-cols-2">
-                            <RoleChartCard
-                                title="Tồn kho theo danh mục"
-                                chart={analyticsReport?.charts?.stockByCategory}
-                                type="bar"
-                            />
-                            <RoleChartCard
-                                title="Nhập/Xuất theo xu hướng thời gian"
-                                chart={analyticsReport?.charts?.movementTrend}
-                                type="line"
-                            />
-                        </div>
-
-                        {isLoadingAnalytics && (
-                            <InlineLoading text="Đang tải dữ liệu biểu đồ..." />
-                        )}
-
-                        {shownLowStockProducts.length > 0 && (
-                            <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
-                                <div className="p-4 border-b border-amber-50 flex items-center gap-2">
-                                    <AlertTriangle size={18} className="text-amber-500" />
-                                    <span className="font-semibold text-gray-800">
-                                        Sản phẩm sắp hết hàng ({shownLowStockProducts.length})
-                                    </span>
-                                </div>
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="text-gray-500 text-xs uppercase border-b border-gray-100">
-                                            <th className="px-6 py-3 text-left">Tên sản phẩm</th>
-                                            <th className="px-6 py-3 text-center">Tồn kho</th>
-                                            <th className="px-6 py-3 text-center">Tồn tối thiểu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {shownLowStockProducts.map(p => (
-                                            <tr key={p.id}>
-                                                <td className="px-6 py-3 text-gray-800">{p.name}</td>
-                                                <td className="px-6 py-3 text-center">
-                                                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
-                                                        {p.stockQuantity}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-3 text-center text-gray-500">{p.minStock}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </>
-                )}
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <Warehouse size={22} />
             </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                Báo cáo kho hàng
+              </h1>
+              <p className="text-sm text-gray-500">
+                Theo dõi tình hình nhập, xuất và tồn kho
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handlePrint}
+            disabled={!warehouse || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            <Printer size={16} /> In báo cáo
+          </button>
         </div>
-    )
+
+        <ReportFilter
+          filters={filters}
+          onChange={setFilters}
+          loading={loading}
+          typeOptions={["month", "year"]}
+        />
+
+        <WarehouseReportSection />
+      </div>
+
+      {/* Print section */}
+      <div id="print-warehouse-report" className="p-8 text-black text-sm">
+        <div className="text-center mb-6">
+          <h1 className="text-base font-bold uppercase">Báo cáo kho hàng — {periodLabel}</h1>
+          <p className="text-gray-500 mt-0.5 text-xs">Ngày in: {new Date().toLocaleDateString("vi-VN")}</p>
+        </div>
+
+        {warehouse && (
+          <>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {[
+                { label: "Tổng nhập kho", value: formatCurrencyVnd(warehouse.summary.totalImportAmount) },
+                { label: "Tổng xuất kho", value: formatCurrencyVnd(warehouse.summary.totalExportAmount) },
+                { label: "Tồn kho hiện tại", value: `${warehouse.summary.totalInventory} sp` },
+                { label: "SL nhập", value: `${warehouse.summary.totalImportQuantity} sp` },
+                { label: "SL xuất", value: `${warehouse.summary.totalExportQuantity} sp` },
+              ].map(({ label, value }) => (
+                <div key={label} className="border border-black p-3 text-center">
+                  <p className="text-xs text-gray-500">{label}</p>
+                  <p className="font-bold mt-1">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black p-2 text-left">Thời gian</th>
+                  <th className="border border-black p-2 text-right">Nhập kho (₫)</th>
+                  <th className="border border-black p-2 text-right">Xuất kho (₫)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {warehouse.breakdown.map((row) => (
+                  <tr key={row.time}>
+                    <td className="border border-black p-2">
+                      {filters.type === "month" ? `Ngày ${row.time}` : `Tháng ${row.time}`}
+                    </td>
+                    <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(row.import)}</td>
+                    <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(row.export)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {warehouse.topProducts?.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold uppercase mb-2">Top 10 sản phẩm bán chạy</h2>
+                <table className="w-full border-collapse border border-black text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-black p-2 text-center w-8">#</th>
+                      <th className="border border-black p-2 text-left">Sản phẩm</th>
+                      <th className="border border-black p-2 text-right">Số lượng (sp)</th>
+                      <th className="border border-black p-2 text-right">Doanh thu (₫)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {warehouse.topProducts.map((p, i) => (
+                      <tr key={p.productId}>
+                        <td className="border border-black p-2 text-center">{i + 1}</td>
+                        <td className="border border-black p-2">{p.productName}</td>
+                        <td className="border border-black p-2 text-right tabular-nums">{p.totalQuantity}</td>
+                        <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(p.totalRevenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {warehouse.topCategories?.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold uppercase mb-2">Top danh mục bán chạy</h2>
+                <table className="w-full border-collapse border border-black text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-black p-2 text-center w-8">#</th>
+                      <th className="border border-black p-2 text-left">Danh mục</th>
+                      <th className="border border-black p-2 text-right">Số lượng (sp)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {warehouse.topCategories.map((c, i) => (
+                      <tr key={c.categoryId}>
+                        <td className="border border-black p-2 text-center">{i + 1}</td>
+                        <td className="border border-black p-2">{c.categoryName}</td>
+                        <td className="border border-black p-2 text-right tabular-nums">{c.totalQuantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {warehouse.topSuppliers?.length > 0 && (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold uppercase mb-2">Top nhà cung cấp</h2>
+                <table className="w-full border-collapse border border-black text-xs">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-black p-2 text-center w-8">#</th>
+                      <th className="border border-black p-2 text-left">Nhà cung cấp</th>
+                      <th className="border border-black p-2 text-right">Số lượng (sp)</th>
+                      <th className="border border-black p-2 text-right">Doanh thu (₫)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {warehouse.topSuppliers.map((s, i) => (
+                      <tr key={s.supplierId}>
+                        <td className="border border-black p-2 text-center">{i + 1}</td>
+                        <td className="border border-black p-2">{s.supplierName}</td>
+                        <td className="border border-black p-2 text-right tabular-nums">{s.totalQuantity}</td>
+                        <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(s.totalRevenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

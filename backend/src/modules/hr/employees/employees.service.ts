@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
-  UpdateEmployeeDto,
   UpdateProfileDto,
   CreateEmployeeDto,
   QueryEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
 } from './dto/employee.dto';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -167,87 +168,80 @@ export class EmployeesService {
     });
   }
 
-  async updateEmployee(id: string, dto: UpdateEmployeeDto) {
+  async changePosition(id: string, dto: ChangePositionDto) {
     const current = await this.prisma.employee.findUnique({
       where: { id },
       include: { user: true },
     });
 
-    if (!current) {
-      throw new NotFoundException('Không tìm thấy nhân viên');
-    }
-
+    if (!current) throw new NotFoundException('Không tìm thấy nhân viên');
     await this.assertEmployeeNotAdminByUserId(current.userId);
 
-    return this.prisma.$transaction(async (tx) => {
-      if (dto.role && dto.role !== current.user.role) {
-        if (dto.role === Role.ADMIN) {
-          throw new ForbiddenException(
-            'Không được cấp quyền ADMIN cho nhân viên',
-          );
-        }
+    const effectiveDate = new Date(dto.effectiveDate);
 
+    return this.prisma.$transaction(async (tx) => {
+      await tx.jobHistory.updateMany({
+        where: { employeeId: id, endDate: null },
+        data: { endDate: effectiveDate },
+      });
+
+      await tx.jobHistory.create({
+        data: {
+          employeeId: id,
+          department: dto.department ?? current.department,
+          position: dto.position ?? current.position,
+          baseSalary: dto.baseSalary ?? current.baseSalary,
+          startDate: effectiveDate,
+        },
+      });
+
+      if (dto.role !== undefined) {
         await tx.user.update({
           where: { id: current.userId },
           data: { role: dto.role },
         });
       }
 
-      const hasJobChange =
-        (dto.department !== undefined &&
-          dto.department !== current.department) ||
-        (dto.position !== undefined && dto.position !== current.position) ||
-        (dto.baseSalary !== undefined && dto.baseSalary !== current.baseSalary);
+      await tx.employee.update({
+        where: { id },
+        data: {
+          ...(dto.department !== undefined && { department: dto.department }),
+          ...(dto.position !== undefined && { position: dto.position }),
+          ...(dto.baseSalary !== undefined && { baseSalary: dto.baseSalary }),
+        },
+      });
 
-      if (hasJobChange) {
-        const effectiveDate = dto.effectiveDate
-          ? new Date(dto.effectiveDate)
-          : new Date();
-
-        await tx.jobHistory.updateMany({
-          where: {
-            employeeId: id,
-            endDate: null,
-          },
-          data: { endDate: effectiveDate },
-        });
-
-        await tx.jobHistory.create({
-          data: {
-            employeeId: id,
-            department: dto.department ?? current.department,
-            position: dto.position ?? current.position,
-            baseSalary: dto.baseSalary ?? current.baseSalary,
-            startDate: effectiveDate,
-          },
-        });
-
-        await tx.employee.update({
-          where: { id },
-          data: {
-            department: dto.department,
-            position: dto.position,
-            baseSalary: dto.baseSalary,
-          },
-        });
-      }
       return tx.employee.findUnique({
         where: { id },
         include: {
           user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              profile: true,
-            },
+            select: { id: true, email: true, role: true, profile: true },
           },
-          jobHistories: {
-            orderBy: { startDate: 'desc' },
-            take: 5,
-          },
+          jobHistories: { orderBy: { startDate: 'desc' }, take: 5 },
         },
       });
+    });
+  }
+
+  async updateEmployeeProfile(id: string, dto: UpdateEmployeeProfileByHrDto) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    return this.prisma.profile.update({
+      where: { userId: employee.userId },
+      data: {
+        ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.address !== undefined && { address: dto.address }),
+        ...(dto.avatar !== undefined && { avatar: dto.avatar }),
+        ...(dto.dateOfBirth !== undefined && {
+          dateOfBirth: new Date(dto.dateOfBirth),
+        }),
+      },
     });
   }
 
@@ -342,8 +336,15 @@ export class EmployeesService {
           user: {
             select: {
               email: true,
+              role: true,
               profile: {
-                select: { fullName: true, phone: true, avatar: true },
+                select: {
+                  fullName: true,
+                  phone: true,
+                  avatar: true,
+                  address: true,
+                  dateOfBirth: true,
+                },
               },
             },
           },
@@ -411,28 +412,110 @@ export class EmployeesService {
     const currentMonth = month ?? new Date().getMonth() + 1;
     const currentYear = year ?? new Date().getFullYear();
 
-    const [totalEmployees, totalResigned, salaryAggregate, headcount] =
-      await Promise.all([
-        this.prisma.employee.count({ where: { resignDate: null } }),
-        this.prisma.employee.count({ where: { resignDate: { not: null } } }),
-        this.prisma.salary.aggregate({
-          where: { month: currentMonth, year: currentYear },
-          _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
-        }),
-        this.prisma.salary.count({
-          where: { month: currentMonth, year: currentYear },
-        }),
-      ]);
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+
+    const leaveFrom = month
+      ? new Date(currentYear, currentMonth - 1, 1)
+      : new Date(currentYear, 0, 1);
+    const leaveTo = month
+      ? new Date(currentYear, currentMonth, 0, 23, 59, 59)
+      : new Date(currentYear, 11, 31, 23, 59, 59);
+
+    const [
+      totalEmployees,
+      totalResigned,
+      newThisMonth,
+      resignedThisMonth,
+      salaryAggregate,
+      headcount,
+      pendingLeaveRequests,
+      monthlySalaries,
+      leaveStatsByType,
+      leaveDetails,
+    ] = await Promise.all([
+      this.prisma.employee.count({ where: { resignDate: null } }),
+      this.prisma.employee.count({ where: { resignDate: { not: null } } }),
+      this.prisma.employee.count({
+        where: { joinDate: { gte: startOfMonth, lte: endOfMonth } },
+      }),
+      this.prisma.employee.count({
+        where: {
+          resignDate: { gte: startOfMonth, lte: endOfMonth },
+        },
+      }),
+      this.prisma.salary.aggregate({
+        where: { month: currentMonth, year: currentYear },
+        _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
+        _avg: { netSalary: true },
+      }),
+      this.prisma.salary.count({
+        where: { month: currentMonth, year: currentYear },
+      }),
+      this.prisma.leaveRequest.count({ where: { status: 'PENDING' } }),
+      // Monthly breakdown (all 12 months of the year)
+      this.prisma.salary.groupBy({
+        by: ['month'],
+        where: { year: currentYear },
+        _sum: { netSalary: true, totalBonus: true },
+        _count: { id: true },
+        orderBy: { month: 'asc' },
+      }),
+      // Leave requests by type for the year/month
+      this.prisma.leaveRequest.groupBy({
+        by: ['type'],
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        _count: { id: true },
+      }),
+      // Per-employee leave detail for the year/month
+      this.prisma.leaveRequest.findMany({
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        orderBy: { startDate: 'desc' },
+        include: {
+          employee: {
+            select: {
+              code: true,
+              user: { select: { profile: { select: { fullName: true } } } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const monthlyBreakdown = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const found = monthlySalaries.find((s) => s.month === m);
+      return {
+        month: m,
+        totalNetSalary: found?._sum.netSalary ?? 0,
+        totalBonus: found?._sum.totalBonus ?? 0,
+        employeeCount: found?._count.id ?? 0,
+      };
+    });
 
     return {
       totalEmployees,
       totalResigned,
+      newThisMonth,
+      resignedThisMonth,
       headcount,
       salaryMonth: currentMonth,
       salaryYear: currentYear,
-      totalSalaryPaid: salaryAggregate._sum.netSalary || 0,
-      totalBonus: salaryAggregate._sum.totalBonus || 0,
-      totalDeduction: salaryAggregate._sum.totalDeduction || 0,
+      totalSalaryPaid: salaryAggregate._sum.netSalary ?? 0,
+      totalBonus: salaryAggregate._sum.totalBonus ?? 0,
+      totalDeduction: salaryAggregate._sum.totalDeduction ?? 0,
+      avgSalary: salaryAggregate._avg.netSalary ?? 0,
+      pendingLeaveRequests,
+      monthlyBreakdown,
+      leaveStatsByType,
+      leaveDetails: leaveDetails.map((l) => ({
+        employeeName: l.employee.user.profile?.fullName ?? l.employee.code,
+        type: l.type,
+        totalDays: l.totalDays,
+        status: l.status,
+        startDate: l.startDate,
+        endDate: l.endDate,
+      })),
     };
   }
 }

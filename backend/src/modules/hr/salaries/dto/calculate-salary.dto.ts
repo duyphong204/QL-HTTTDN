@@ -24,7 +24,17 @@ export class SalaryDetailInput {
   @IsOptional()
   description?: string;
 }
+export class CalculateAllDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month!: number;
 
+  @Type(() => Number)
+  @IsInt()
+  year!: number;
+}
 export class CalculateSalaryDto {
   @IsUUID()
   employeeId!: string;
@@ -42,4 +52,16 @@ export class CalculateSalaryDto {
   @Type(() => SalaryDetailInput)
   @IsOptional()
   details?: SalaryDetailInput[];
+}
+export class StatisticsQueryDto {
+  @Type(() => Number)
+  @IsInt()
+  year!: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month?: number;
 }

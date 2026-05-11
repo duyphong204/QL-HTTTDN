@@ -1,130 +1,125 @@
-import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Printer } from 'lucide-react'
-import { useSalesReportPage } from '@/hooks/useSalesReportPage'
-import { RoleChartCard } from '@/components/common/reports/RoleChartCard'
-import { InlineLoading, PageLoading } from '@/components/common/Loading'
-
-type PeriodType = 'month' | 'quarter' | 'year'
+import { useEffect } from "react";
+import { BarChart3, Printer } from "lucide-react";
+import { ReportFilter, SalesReportSection } from "@/components/charts";
+import { useReportStore } from "@/stores/report.store";
+import { formatCurrencyVnd, formatReportPeriod } from "@/utils/format";
 
 export default function SalesReportPage() {
-    const {
-        stats,
-        isLoadingStats,
-        periodType,
-        month,
-        quarter,
-        year,
-        years,
-        months,
-        statCards,
-        reportData,
-        isLoadingReport,
-        setPeriodType,
-        setMonth,
-        setQuarter,
-        setYear,
-        handlePrint,
-    } = useSalesReportPage()
+  const filters = useReportStore((s) => s.filters);
+  const setFilters = useReportStore((s) => s.setFilters);
+  const fetchSales = useReportStore((s) => s.fetchSales);
+  const loading = useReportStore((s) => s.loadingSales);
+  const sales = useReportStore((s) => s.sales);
 
-    return (
-        <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8 print:bg-white">
-            <div className="max-w-7xl mx-auto space-y-6">
-                <div className="flex items-center justify-between print:block">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            <BarChart3 className="text-blue-600 print:hidden" size={28} />
-                            Thống kê kinh doanh
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-1 print:hidden">Doanh thu và lợi nhuận theo kỳ</p>
-                    </div>
-                    <button onClick={handlePrint}
-                        className="print:hidden inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">
-                        <Printer size={16} /> In báo cáo
-                    </button>
-                </div>
+  useEffect(() => {
+    fetchSales();
+  }, [fetchSales, filters.type, filters.year, filters.month, filters.quarter]);
 
-                <div className="flex gap-3 flex-wrap print:hidden">
-                    <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-                        {(['month', 'quarter', 'year'] as PeriodType[]).map(t => (
-                            <button key={t} onClick={() => setPeriodType(t)}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${periodType === t ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                                    }`}>
-                                {t === 'month' ? 'Tháng' : t === 'quarter' ? 'Quý' : 'Năm'}
-                            </button>
-                        ))}
-                    </div>
+  const handlePrint = () => {
+    document.body.classList.add("print-sales-report");
+    window.print();
+    document.body.classList.remove("print-sales-report");
+  };
 
-                    {periodType === 'month' && (
-                        <select value={month} onChange={e => setMonth(e.target.value)}
-                            className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                            {months.map(m => <option key={m} value={m}>Tháng {m}</option>)}
-                        </select>
-                    )}
+  const periodLabel = formatReportPeriod(filters);
 
-                    {periodType === 'quarter' && (
-                        <select value={quarter} onChange={e => setQuarter(e.target.value)}
-                            className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                            <option value="1">Quý 1</option>
-                            <option value="2">Quý 2</option>
-                            <option value="3">Quý 3</option>
-                            <option value="4">Quý 4</option>
-                        </select>
-                    )}
+  return (
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+      <style>{`
+        #print-sales-report { display: none; }
+        @media print {
+          body * { visibility: hidden !important; }
+          body.print-sales-report #print-sales-report,
+          body.print-sales-report #print-sales-report * { visibility: visible !important; }
+          body.print-sales-report #print-sales-report {
+            display: block !important; position: absolute;
+            left: 0; top: 0; width: 100%; background: white;
+          }
+        }
+      `}</style>
 
-                    <select value={year} onChange={e => setYear(e.target.value)}
-                        className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white">
-                        {years.map(y => <option key={y} value={y}>Năm {y}</option>)}
-                    </select>
-                </div>
-
-                {isLoadingStats ? (
-                    <PageLoading text="Đang tải thống kê..." />
-                ) : stats && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            {statCards.map(card => {
-                                const Icon = card.icon === 'orders'
-                                    ? ShoppingCart
-                                    : card.icon === 'items'
-                                        ? BarChart3
-                                        : card.icon === 'revenue'
-                                            ? TrendingUp
-                                            : DollarSign
-
-                                return (
-                                <div key={card.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                    <Icon size={20} className="text-blue-500 mb-3" />
-                                    <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-                                    <div className="text-sm text-gray-500 mt-1">{card.label}</div>
-                                </div>
-                                )
-                            })}
-                        </div>
-
-                        <div className="grid gap-4 xl:grid-cols-2">
-                            <RoleChartCard
-                                title="Lợi nhuận theo kỳ"
-                                chart={reportData?.charts?.profitTrend}
-                                type="line"
-                            />
-                            <RoleChartCard
-                                title="Số lượng sản phẩm đã xuất"
-                                chart={reportData?.charts?.quantityTrend}
-                                type="line"
-                            />
-                            <RoleChartCard
-                                title="Doanh thu + lợi nhuận"
-                                chart={reportData?.charts?.revenueProfitComposed}
-                                type="composed"
-                                className="xl:col-span-2"
-                            />
-                        </div>
-
-                        {isLoadingReport && (
-                            <InlineLoading text="Đang tải dữ liệu biểu đồ..." />
-                        )}
-                    </div>
-                )}
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <BarChart3 size={22} />
             </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                Báo cáo bán hàng
+              </h1>
+              <p className="text-sm text-gray-500">
+                Theo dõi doanh thu, lợi nhuận và sản lượng tiêu thụ
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handlePrint}
+            disabled={!sales || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            <Printer size={16} /> In báo cáo
+          </button>
         </div>
-    )
+
+        <ReportFilter
+          filters={filters}
+          onChange={setFilters}
+          loading={loading}
+          typeOptions={["month", "quarter", "year"]}
+        />
+
+        <SalesReportSection />
+      </div>
+
+      {/* Print section */}
+      <div id="print-sales-report" className="p-8 text-black text-sm">
+        <div className="text-center mb-6">
+          <h1 className="text-base font-bold uppercase">Báo cáo bán hàng — {periodLabel}</h1>
+          <p className="text-gray-500 mt-0.5 text-xs">Ngày in: {new Date().toLocaleDateString("vi-VN")}</p>
+        </div>
+
+        {sales && (
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: "Doanh thu", value: formatCurrencyVnd(sales.summary.revenue) },
+                { label: "Lợi nhuận", value: formatCurrencyVnd(sales.summary.profit) },
+                { label: "Sản lượng bán", value: `${sales.summary.totalSoldQuantity} sp` },
+              ].map(({ label, value }) => (
+                <div key={label} className="border border-black p-3 text-center">
+                  <p className="text-xs text-gray-500">{label}</p>
+                  <p className="font-bold mt-1">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-black p-2 text-left">Thời gian</th>
+                  <th className="border border-black p-2 text-right">Doanh thu</th>
+                  <th className="border border-black p-2 text-right">Lợi nhuận</th>
+                  <th className="border border-black p-2 text-right">Sản lượng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.breakdown.map((row) => (
+                  <tr key={row.time}>
+                    <td className="border border-black p-2">
+                      {filters.type === "month" ? `Ngày ${row.time}` : `Tháng ${row.time}`}
+                    </td>
+                    <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(row.revenue)}</td>
+                    <td className="border border-black p-2 text-right tabular-nums">{formatCurrencyVnd(row.profit)}</td>
+                    <td className="border border-black p-2 text-right tabular-nums">{row.quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

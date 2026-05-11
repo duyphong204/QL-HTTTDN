@@ -1,5 +1,5 @@
 // backend/src/modules/warehouse/suppliers/suppliers.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CreateSupplierDto,
@@ -68,7 +68,17 @@ export class SuppliersService {
   }
 
   async remove(id: string) {
-    await this.findOne(id); // kiểm tra tồn tại
+    await this.findOne(id);
+
+    const stockInCount = await this.prisma.stockIn.count({
+      where: { supplierId: id },
+    });
+    if (stockInCount > 0) {
+      throw new BadRequestException(
+        `Không thể xóa nhà cung cấp vì đã có ${stockInCount} phiếu nhập liên quan. Vui lòng hủy các phiếu nhập này trước.`,
+      );
+    }
+
     return this.prisma.supplier.delete({ where: { id } });
   }
 }

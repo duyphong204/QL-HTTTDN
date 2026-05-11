@@ -24,12 +24,13 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Helper: Tìm user hoặc ném lỗi nếu không thấy
+   * Helper: Tìm customer hoặc ném lỗi nếu không thấy
    */
-  private async findUserOrThrow(id: string, includeDeleted = false) {
+  private async findCustomerOrThrow(id: string, includeDeleted = false) {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
+        role: Role.CUSTOMER,
         ...(includeDeleted ? {} : { deletedAt: null }),
       },
       include: this.defaultInclude,
@@ -105,7 +106,7 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    return this.findUserOrThrow(id);
+    return this.findCustomerOrThrow(id);
   }
 
   /**
@@ -119,17 +120,35 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        password: hashedPassword,
-        role: dto.role || Role.CUSTOMER,
-        profile: {
-          create: { ...dto.profile },
-        },
-      },
-      include: this.defaultInclude,
-    });
+    const user = existedUser?.deletedAt
+      ? await this.prisma.user.update({
+          where: { id: existedUser.id },
+          data: {
+            email: dto.email,
+            password: hashedPassword,
+            role: Role.CUSTOMER,
+            isActive: true,
+            deletedAt: null,
+            profile: {
+              upsert: {
+                update: { ...dto.profile },
+                create: { ...dto.profile },
+              },
+            },
+          },
+          include: this.defaultInclude,
+        })
+      : await this.prisma.user.create({
+          data: {
+            email: dto.email,
+            password: hashedPassword,
+            role: Role.CUSTOMER,
+            profile: {
+              create: { ...dto.profile },
+            },
+          },
+          include: this.defaultInclude,
+        });
 
     return new UserResponseDto(user);
   }
@@ -138,7 +157,7 @@ export class UsersService {
    * Cập nhật thông tin người dùng
    */
   async update(id: string, dto: UpdateUserDto) {
-    const currentUser = await this.findUserOrThrow(id);
+    const currentUser = await this.findCustomerOrThrow(id);
 
     // Kiểm tra trùng email nếu có thay đổi email
     if (dto.email && dto.email !== currentUser.email) {
@@ -152,7 +171,7 @@ export class UsersService {
       where: { id },
       data: {
         email: dto.email,
-        role: dto.role,
+        role: Role.CUSTOMER,
         profile: dto.profile ? { update: { ...dto.profile } } : undefined,
       },
       include: this.defaultInclude,
@@ -165,7 +184,7 @@ export class UsersService {
    * Xóa mềm người dùng
    */
   async remove(id: string) {
-    await this.findUserOrThrow(id);
+    await this.findCustomerOrThrow(id);
 
     const user = await this.prisma.user.update({
       where: { id },
@@ -183,7 +202,7 @@ export class UsersService {
    * Khôi phục người dùng đã xóa
    */
   async restore(id: string) {
-    const existingUser = await this.findUserOrThrow(id, true);
+    const existingUser = await this.findCustomerOrThrow(id, true);
 
     if (existingUser.deletedAt === null) {
       throw new ConflictException('Người dùng này không bị xóa');
@@ -195,21 +214,6 @@ export class UsersService {
         isActive: true,
         deletedAt: null,
       },
-      include: this.defaultInclude,
-    });
-
-    return new UserResponseDto(user);
-  }
-
-  /**
-   * Cập nhật riêng Role
-   */
-  async updateRole(id: string, role: Role) {
-    await this.findUserOrThrow(id);
-
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: { role },
       include: this.defaultInclude,
     });
 

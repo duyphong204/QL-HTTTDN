@@ -5,7 +5,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import type { PaginationMeta } from '@/types/common.types';
+import type { PaginationMeta } from "@/types/common.types";
 
 interface PaginationControlsProps {
   meta?: PaginationMeta | null;
@@ -19,7 +19,7 @@ export function PaginationControls({
   meta,
   currentPage,
   isLoading = false,
-  totalLabel = 'Tổng',
+  totalLabel = "Tổng",
   onPageChange,
 }: PaginationControlsProps) {
   const page = meta?.page ?? currentPage ?? 1;
@@ -38,7 +38,10 @@ export function PaginationControls({
       <div className="flex items-center gap-2">
         <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
         <p className="text-sm font-medium text-slate-500">
-          {totalLabel}: <span className="text-blue-600 font-bold">{total.toLocaleString()}</span>
+          {totalLabel}:{" "}
+          <span className="text-blue-600 font-bold">
+            {total.toLocaleString()}
+          </span>
         </p>
       </div>
 
@@ -48,8 +51,11 @@ export function PaginationControls({
           <PaginationItem>
             <PaginationPrevious
               href="#"
-              onClick={(e) => { e.preventDefault(); handlePageChange(page - 1); }}
-              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page <= 1 || isLoading ? 'pointer-events-none opacity-40' : 'cursor-pointer'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(page - 1);
+              }}
+              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page <= 1 || isLoading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
             />
           </PaginationItem>
 
@@ -63,8 +69,11 @@ export function PaginationControls({
           <PaginationItem>
             <PaginationNext
               href="#"
-              onClick={(e) => { e.preventDefault(); handlePageChange(page + 1); }}
-              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page >= totalPages || isLoading ? 'pointer-events-none opacity-40' : 'cursor-pointer'}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(page + 1);
+              }}
+              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page >= totalPages || isLoading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
             />
           </PaginationItem>
         </PaginationContent>

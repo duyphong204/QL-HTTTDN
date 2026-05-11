@@ -1,4 +1,4 @@
-import { axiosInstance } from './axios';
+import { axiosInstance } from "./axios";
 
 export const apiGet = async <T>(url: string, params?: object): Promise<T> => {
   const res = await axiosInstance.get<T>(url, { params });

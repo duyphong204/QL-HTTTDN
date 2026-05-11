@@ -5,19 +5,14 @@ import type {
   UpdateEmployeeDto,
   Employee,
 } from "@/types/employee.types";
-import {
-  EMPLOYEE_ROLE_OPTIONS,
-  ROLE_DEPARTMENT_MAP,
-} from "@/utils/role";
+import { EMPLOYEE_ROLE_OPTIONS, ROLE_DEPARTMENT_MAP } from "@/utils/role";
 import type { Role } from "@/types/auth.types";
 import { ROLE_POSITION_MAP, ROLE_SALARY_MAP } from "@/utils/role";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    data: CreateEmployeeDto | UpdateEmployeeDto
-  ) => Promise<void>;
+  onSubmit: (data: CreateEmployeeDto | UpdateEmployeeDto) => Promise<void>;
   editingEmployee?: Employee | null;
 };
 
@@ -53,14 +48,13 @@ export function EmployeeFormModal({
 
   // ================= HANDLE CHANGE =================
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
 
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "baseSalary" ? Number(value) || 0 : value,
+      [name]: name === "baseSalary" ? Number(value) || 0 : value,
     }));
 
     // clear error
@@ -70,9 +64,7 @@ export function EmployeeFormModal({
   };
 
   // ================= ROLE CHANGE =================
-  const handleRoleChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const role = e.target.value as Role;
 
     // Ensure role is valid
@@ -96,10 +88,8 @@ export function EmployeeFormModal({
 
     if (!editingEmployee) {
       if (!form.email) newErrors.email = "Email là bắt buộc";
-      if (!form.password)
-        newErrors.password = "Mật khẩu là bắt buộc";
-      if (!form.fullName)
-        newErrors.fullName = "Họ và tên là bắt buộc";
+      if (!form.password) newErrors.password = "Mật khẩu là bắt buộc";
+      if (!form.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
     }
 
     if (form.baseSalary <= 0) {
@@ -166,9 +156,7 @@ export function EmployeeFormModal({
       isOpen={isOpen}
       onClose={onClose}
       title={
-        editingEmployee
-          ? "Cập nhật thông tin nhân sự"
-          : "Thêm nhân viên mới"
+        editingEmployee ? "Cập nhật thông tin nhân sự" : "Thêm nhân viên mới"
       }
       maxWidthClassName="max-w-lg"
     >
@@ -194,9 +182,7 @@ export function EmployeeFormModal({
                   className={inputClass}
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                 )}
               </div>
 
@@ -212,9 +198,7 @@ export function EmployeeFormModal({
                   className={inputClass}
                 />
                 {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                 )}
               </div>
             </>
@@ -229,14 +213,10 @@ export function EmployeeFormModal({
               value={form.fullName}
               onChange={handleChange}
               disabled={!!editingEmployee}
-              className={
-                editingEmployee ? disabledClass : inputClass
-              }
+              className={editingEmployee ? disabledClass : inputClass}
             />
             {errors.fullName && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.fullName}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
             )}
           </div>
 
@@ -295,9 +275,7 @@ export function EmployeeFormModal({
               className={disabledClass}
             />
             {errors.baseSalary && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.baseSalary}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.baseSalary}</p>
             )}
           </div>
 
@@ -318,8 +296,8 @@ export function EmployeeFormModal({
               {isSubmitting
                 ? "Đang xử lý..."
                 : editingEmployee
-                ? "Lưu thay đổi"
-                : "Tạo nhân viên"}
+                  ? "Lưu thay đổi"
+                  : "Tạo nhân viên"}
             </button>
           </div>
         </form>

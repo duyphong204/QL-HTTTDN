@@ -1,177 +1,413 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Users, CreditCard, Wallet, ArrowUpRight, Calendar } from "lucide-react"
-import { useHrStatisticsPage } from "@/hooks/useHrStatisticsPage"
-import { RoleChartCard } from "@/components/common/reports/RoleChartCard"
-import { InlineLoading } from "@/components/common/Loading"
+import { useEffect } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import {
+  Users,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Clock,
+  UserCheck,
+} from "lucide-react";
+import { useHrStatisticsStore } from "@/stores/hrStatistics.store";
+import { PageLoading } from "@/components/common/Loading";
+import type { LeaveDetail } from "@/types/hr.type";
+
+const MONTH_LABELS = [
+  "T1", "T2", "T3", "T4", "T5", "T6",
+  "T7", "T8", "T9", "T10", "T11", "T12",
+];
+
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  ANNUAL: "Nghỉ phép năm",
+  SICK: "Nghỉ ốm",
+  MATERNITY: "Thai sản",
+  RESIGNATION: "Nghỉ việc",
+  UNPAID: "Nghỉ không lương",
+};
+
+const LEAVE_TYPE_COLORS: Record<string, string> = {
+  ANNUAL: "bg-blue-100 text-blue-700",
+  SICK: "bg-red-100 text-red-700",
+  MATERNITY: "bg-pink-100 text-pink-700",
+  RESIGNATION: "bg-gray-100 text-gray-700",
+  UNPAID: "bg-yellow-100 text-yellow-700",
+};
+
+function formatCurrency(value: number) {
+  if (value >= 1_000_000_000)
+    return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}tr`;
+  return value.toLocaleString("vi-VN");
+}
+
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  sub,
+  color,
+}: {
+  icon: React.ElementType;
+  title: string;
+  value: string | number;
+  sub?: string;
+  color: string;
+}) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex items-start gap-4">
+      <div className={`p-3 rounded-xl ${color}`}>
+        <Icon size={20} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-gray-500 font-medium uppercase tracking-wider truncate">
+          {title}
+        </p>
+        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-sm space-y-1">
+      <p className="font-semibold text-gray-700">{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <span
+            className="inline-block w-2 h-2 rounded-full"
+            style={{ background: p.color }}
+          />
+          <span className="text-gray-600">{p.name}:</span>
+          <span className="font-medium">
+            {formatCurrency(p.value)} ₫
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function HrStatisticsPage() {
-    const {
-        statistics,
-        salaries,
-        month,
-        year,
-        totalBonus,
-        totalBudget,
-        isLoading,
-        reportData,
-        loadingReport,
-        months,
-        years,
-        setMonth,
-        setYear,
-        formatCurrency,
-    } = useHrStatisticsPage()
+  const {
+    statistics: stats,
+    isLoading,
+    filterYear,
+    filterMonth,
+    setFilterYear,
+    setFilterMonth,
+    fetchStatistics,
+  } = useHrStatisticsStore();
 
-    return (
-        <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans antialiased text-slate-900">
-            {/* Upper Header: Navigation & Filters */}
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                <div>
-                    <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-1">
-                        <div className="h-1 w-4 bg-blue-600 rounded-full" />
-                        Analytics Dashboard
-                    </div>
-                    <h1 className="text-4xl font-black tracking-tight">HR Insights</h1>
-                </div>
+  useEffect(() => {
+    fetchStatistics();
+  }, [fetchStatistics]);
 
-                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-slate-200/60">
-                    <div className="p-2 bg-slate-50 rounded-xl">
-                        <Calendar className="h-4 w-4 text-slate-500" />
-                    </div>
-                    <Select value={month} onValueChange={setMonth}>
-                        <SelectTrigger className="w-30 border-none focus:ring-0 font-medium">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            {months.map(m => <SelectItem key={m} value={String(m)}>Tháng {m}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <Select value={year} onValueChange={setYear}>
-                        <SelectTrigger className="w-22.5 border-none focus:ring-0 font-medium">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                            {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1];
 
-            <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
-                {/* Highlight Stats: Left Column */}
-                <div className="col-span-12 lg:col-span-4 space-y-6">
-                    <Card className="bg-blue-600 border-none shadow-blue-200/50 shadow-xl overflow-hidden relative group">
-                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
-                            <Wallet className="h-32 w-32 text-white" />
-                        </div>
-                        <CardContent className="p-8 relative">
-                            <p className="text-blue-100 font-medium mb-1">Tổng chi ngân sách</p>
-                            <h2 className="text-3xl font-bold text-white mb-6">
-                                {isLoading ? "..." : formatCurrency(totalBudget)}
-                            </h2>
-                            <div className="flex items-center gap-2 text-sm text-blue-100 bg-blue-500/30 w-fit px-3 py-1 rounded-full border border-white/10">
-                                <ArrowUpRight className="h-4 w-4" />
-                                <span>Tháng {month}/{year}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
+  const chartData = stats?.monthlyBreakdown?.map((m) => ({
+    name: MONTH_LABELS[m.month - 1],
+    "Lương thực lĩnh": m.totalNetSalary,
+    "Thưởng": m.totalBonus,
+    "Số NV": m.employeeCount,
+  })) ?? [];
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Card className="border-none shadow-sm bg-white p-6">
-                            <Users className="h-6 w-6 text-blue-500 mb-4" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Nhân sự</p>
-                            <h3 className="text-2xl font-bold mt-1">{statistics?.totalEmployees || 0}</h3>
-                        </Card>
-                        <Card className="border-none shadow-sm bg-white p-6">
-                            <CreditCard className="h-6 w-6 text-emerald-500 mb-4" />
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Tiền thưởng</p>
-                            <h3 className="text-2xl font-bold mt-1 text-emerald-600">{formatCurrency(totalBonus)}</h3>
-                        </Card>
-                    </div>
-                </div>
+  if (isLoading && !stats) {
+    return <PageLoading text="Đang tải thống kê..." className="min-h-screen" />;
+  }
 
-                {/* Main Table: Right Column */}
-                <Card className="col-span-12 lg:col-span-8 border-none shadow-sm bg-white/70 backdrop-blur-sm">
-                    <CardContent className="p-0">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="font-bold text-lg">Danh sách chi trả lương</h3>
-                            <span className="text-xs font-medium text-slate-400">Tháng {month}/{year}</span>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-slate-400 border-b border-slate-50">
-                                        <th className="px-6 py-4 font-medium text-left">Nhân viên</th>
-                                        <th className="px-6 py-4 font-medium text-right">Thu nhập</th>
-                                        <th className="px-6 py-4 font-medium text-center">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50">
-                                    {salaries.map((s) => (
-                                        <tr key={s.id} className="group hover:bg-white transition-all">
-                                            <td className="px-6 py-5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-blue-600 border border-white shadow-sm">
-                                                        {s.employee?.user?.profile?.fullName?.charAt(0)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">
-                                                            {s.employee?.user?.profile?.fullName}
-                                                        </p>
-                                                        <p className="text-xs text-slate-400">Mã NV: {s.id.slice(-5)}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-5 text-right">
-                                                <p className="font-bold text-slate-900">{formatCurrency(s.netSalary || 0)}</p>
-                                                <p className="text-[10px] text-emerald-500 font-medium">Thưởng: +{formatCurrency(s.totalBonus || 0)}</p>
-                                            </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <Badge className={`rounded-lg px-3 py-1 border-none shadow-none font-semibold ${
-                                                    s.status === "PAID"
-                                                    ? "bg-blue-50 text-blue-600"
-                                                    : "bg-orange-50 text-orange-600"
-                                                }`}>
-                                                    {s.status === "PAID" ? "Hoàn tất" : "Đang xử lý"}
-                                                </Badge>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
+  return (
+    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+              Thống kê nhân sự
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Tổng quan tình hình lương, thưởng và nhân sự theo năm
+            </p>
+          </div>
 
-                <div className="col-span-12 grid gap-6 lg:grid-cols-2">
-                    <RoleChartCard
-                        title="Lương theo phòng ban"
-                        chart={reportData?.charts?.salaryByDepartment}
-                        type="bar"
-                    />
-                    <RoleChartCard
-                        title="Tăng trưởng nhân sự"
-                        chart={reportData?.charts?.headcountGrowth}
-                        type="line"
-                    />
-                    <RoleChartCard
-                        title="Tỷ lệ nghỉ phép"
-                        chart={reportData?.charts?.leaveRatio}
-                        type="pie"
-                    />
-                    <RoleChartCard
-                        title="Tổng lương theo tháng/năm"
-                        chart={reportData?.charts?.monthlySalarySummary}
-                        type="line"
-                    />
-                </div>
+          {/* Filters */}
+          <div className="flex gap-3">
+            <select
+              value={filterMonth ?? ""}
+              onChange={(e) =>
+                setFilterMonth(
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+              className="h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Cả năm</option>
+              {MONTH_LABELS.map((label, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {label}
+                </option>
+              ))}
+            </select>
 
-                {loadingReport && (
-                    <InlineLoading text="Đang tải dữ liệu biểu đồ HR..." className="col-span-12" />
-                )}
-            </div>
+            <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(Number(e.target.value))}
+              className="h-9 px-3 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              {yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-    )
+
+        {/* Stats cards */}
+        {stats && (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              <StatCard
+                icon={Users}
+                title="Đang làm việc"
+                value={stats.totalEmployees}
+                sub={`${stats.totalResigned} đã nghỉ`}
+                color="bg-blue-50 text-blue-600"
+              />
+              <StatCard
+                icon={UserCheck}
+                title="Mới trong tháng"
+                value={stats.newThisMonth}
+                color="bg-emerald-50 text-emerald-600"
+              />
+              <StatCard
+                icon={TrendingDown}
+                title="Nghỉ việc tháng này"
+                value={stats.resignedThisMonth}
+                color="bg-red-50 text-red-600"
+              />
+              <StatCard
+                icon={Wallet}
+                title="Tổng lương chi"
+                value={formatCurrency(stats.totalSalaryPaid) + " ₫"}
+                sub={`Tháng ${stats.salaryMonth}/${stats.salaryYear}`}
+                color="bg-purple-50 text-purple-600"
+              />
+              <StatCard
+                icon={TrendingUp}
+                title="Tổng thưởng"
+                value={formatCurrency(stats.totalBonus) + " ₫"}
+                color="bg-amber-50 text-amber-600"
+              />
+              <StatCard
+                icon={Clock}
+                title="Đơn xin nghỉ chờ"
+                value={stats.pendingLeaveRequests}
+                color="bg-orange-50 text-orange-600"
+              />
+            </div>
+
+            {/* Monthly payroll chart */}
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-800 mb-4">
+                Biểu đồ lương & thưởng theo tháng — {filterYear}
+              </h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+                  barGap={4}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 12, fill: "#9ca3af" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v) => formatCurrency(v)}
+                    tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={70}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: 12 }}
+                  />
+                  <Bar
+                    dataKey="Lương thực lĩnh"
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
+                  <Bar
+                    dataKey="Thưởng"
+                    fill="#f59e0b"
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Per-employee leave detail table */}
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+              <h2 className="text-base font-bold text-gray-800 mb-4">
+                Chi tiết nghỉ phép nhân viên —{" "}
+                {filterMonth ? `Tháng ${filterMonth}/` : ""}{filterYear}
+              </h2>
+              {stats.leaveDetails.length === 0 ? (
+                <div className="flex items-center justify-center h-20 text-gray-400 text-sm">
+                  Không có đơn nào trong kỳ này
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <th className="px-4 py-2.5 text-left">Nhân viên</th>
+                        <th className="px-4 py-2.5 text-left">Loại nghỉ</th>
+                        <th className="px-4 py-2.5 text-center">Từ ngày</th>
+                        <th className="px-4 py-2.5 text-center">Đến ngày</th>
+                        <th className="px-4 py-2.5 text-center">Số ngày</th>
+                        <th className="px-4 py-2.5 text-center">Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {stats.leaveDetails.map((d: LeaveDetail, i: number) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-4 py-2.5 font-medium text-gray-900">{d.employeeName}</td>
+                          <td className="px-4 py-2.5">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${LEAVE_TYPE_COLORS[d.type] ?? "bg-gray-100 text-gray-700"}`}>
+                              {LEAVE_TYPE_LABELS[d.type] ?? d.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-center text-gray-500">
+                            {new Date(d.startDate).toLocaleDateString("vi-VN")}
+                          </td>
+                          <td className="px-4 py-2.5 text-center text-gray-500">
+                            {new Date(d.endDate).toLocaleDateString("vi-VN")}
+                          </td>
+                          <td className="px-4 py-2.5 text-center font-semibold text-gray-900">
+                            {d.totalDays}
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              d.status === "APPROVED" ? "bg-green-100 text-green-700"
+                              : d.status === "REJECTED" ? "bg-red-100 text-red-700"
+                              : "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              {d.status === "APPROVED" ? "Đã duyệt"
+                                : d.status === "REJECTED" ? "Từ chối"
+                                : "Chờ duyệt"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom row: avg salary + leave stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Average salary */}
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                <h2 className="text-base font-bold text-gray-800 mb-4">
+                  Bảng lương tháng {stats.salaryMonth}/{stats.salaryYear}
+                </h2>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-500">Số nhân viên có lương</span>
+                    <span className="font-semibold text-gray-900">
+                      {stats.headcount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-500">Tổng lương chi trả</span>
+                    <span className="font-semibold text-blue-600">
+                      {stats.totalSalaryPaid.toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                    <span className="text-gray-500">Tổng khấu trừ</span>
+                    <span className="font-semibold text-red-500">
+                      {stats.totalDeduction.toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-500">Lương trung bình</span>
+                    <span className="font-bold text-gray-900 text-base">
+                      {stats.avgSalary.toLocaleString("vi-VN")} ₫
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leave stats by type */}
+              <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                <h2 className="text-base font-bold text-gray-800 mb-4">
+                  Đơn xin nghỉ theo loại — {filterYear}
+                </h2>
+                {stats.leaveStatsByType.length === 0 ? (
+                  <div className="flex items-center justify-center h-28 text-gray-400 text-sm">
+                    Chưa có đơn nào trong năm {filterYear}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stats.leaveStatsByType.map((s) => (
+                      <div
+                        key={s.type}
+                        className="flex items-center justify-between"
+                      >
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${LEAVE_TYPE_COLORS[s.type] ?? "bg-gray-100 text-gray-700"}`}
+                        >
+                          {LEAVE_TYPE_LABELS[s.type] ?? s.type}
+                        </span>
+                        <span className="font-bold text-gray-700">
+                          {s._count.id} đơn
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!stats && !isLoading && (
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center text-gray-400">
+            <p>Không có dữ liệu thống kê</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

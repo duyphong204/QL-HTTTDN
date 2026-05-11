@@ -1,35 +1,330 @@
 import { create } from "zustand";
-import type { StockIn } from "@/types/stockIn.types";
+import { toast } from "sonner";
+import {
+  stockInService,
+  productService,
+  supplierService,
+} from "@/services/warehouse.service";
+import { getErrorMessage } from "@/stores/store.helpers";
+import type { StockIn, StockInDetailInput, StockInDetailForm } from "@/types/stockIn.types";
+import type { Product, Supplier } from "@/types/warehouse.type";
+
+const emptyDetail = (): StockInDetailForm => ({
+  productId: "",
+  quantity: 1,
+  price: 0,
+  _uid: Math.random().toString(36).slice(2),
+});
 
 interface StockInState {
-    stockIns: StockIn[];
-    selectedStockIn: StockIn | null;
-    isLoading: boolean;
-    isLoadingDetail: boolean;
-    error: string | null;
+  // ================= DATA STATE =================
+  stockIns: StockIn[];
+  selectedStockIn: StockIn | null;
+  products: Product[];
+  suppliers: Supplier[];
 
-    setStockIns: (stockIns: StockIn[]) => void;
-    setSelectedStockIn: (stockIn: StockIn | null) => void;
-    setLoading: (isLoading: boolean) => void;
-    setLoadingDetail: (isLoadingDetail: boolean) => void;
-    setError: (error: string | null) => void;
-    clearSelectedStockIn: () => void;
+  // ================= UI STATE =================
+  formOpen: boolean;
+  editingId: string | null;
+  supplierId: string;
+  details: StockInDetailForm[];
+
+  // ================= LOADING/ERROR STATE =================
+  isLoading: boolean;
+  isLoadingDetail: boolean;
+  error: string | null;
+
+  // ================= FETCHING ACTIONS =================
+  fetchStockIns: () => Promise<void>;
+  fetchReferenceData: () => Promise<void>;
+  fetchStockInById: (id: string) => Promise<void>;
+
+  // ================= CRUD ACTIONS =================
+  createStockIn: (
+    payload: { supplierId: string; details: StockInDetailForm[] }
+  ) => Promise<void>;
+  updateStockIn: (
+    id: string,
+    payload: { supplierId: string; details: StockInDetailForm[] }
+  ) => Promise<void>;
+  deleteStockIn: (id: string) => Promise<void>; // hủy phiếu nhập (soft-cancel)
+
+  // ================= FORM UI ACTIONS =================
+  openCreateModal: () => void;
+  openEditModal: (stockIn: StockIn) => void;
+  closeFormModal: () => void;
+  openDetailModal: (id: string) => Promise<void>;
+  closeDetailModal: () => void;
+  resetForm: () => void;
+
+  // ================= FORM STATE ACTIONS =================
+  setSupplierId: (id: string) => void;
+  addDetail: () => void;
+  removeDetail: (index: number) => void;
+  updateDetail: (
+    index: number,
+    field: keyof StockInDetailInput,
+    value: string | number
+  ) => void;
+
+  // ================= INTERNAL HELPERS =================
+  setLoading: (loading: boolean) => void;
+  setLoadingDetail: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setStockIns: (stockIns: StockIn[]) => void;
+  setSelectedStockIn: (stockIn: StockIn | null) => void;
+  clearSelectedStockIn: () => void;
 }
 
-export const useStockInStore = create<StockInState>((set) => ({
-    stockIns: [],
-    selectedStockIn: null,
-    isLoading: false,
-    isLoadingDetail: false,
-    error: null,
+export const useStockInStore = create<StockInState>((set, get) => ({
+  // ================= INITIAL STATE =================
+  stockIns: [],
+  selectedStockIn: null,
+  products: [],
+  suppliers: [],
+  formOpen: false,
+  editingId: null,
+  supplierId: "",
+  details: [emptyDetail()],
+  isLoading: false,
+  isLoadingDetail: false,
+  error: null,
 
-    setStockIns: (stockIns) => set({ stockIns }),
-    setSelectedStockIn: (selectedStockIn) => set({ selectedStockIn }),
-    setLoading: (isLoading) => set({ isLoading }),
-    setLoadingDetail: (isLoadingDetail) => set({ isLoadingDetail }),
-    setError: (error) => set({ error }),
+  // ================= FETCHING ACTIONS =================
+  fetchStockIns: async () => {
+    get().setLoading(true);
+    get().setError(null);
+    try {
+      const data = await stockInService.getStockIns();
+      get().setStockIns(data);
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      get().setError(message);
+      toast.error(message);
+    } finally {
+      get().setLoading(false);
+    }
+  },
 
-    clearSelectedStockIn: () => {
-        set({ selectedStockIn: null });
-    },
+  fetchReferenceData: async () => {
+    try {
+      const [productResponse, supplierResponse] = await Promise.all([
+        productService.getProducts(),
+        supplierService.getSuppliers(),
+      ]);
+      set({
+        products: productResponse.data,
+        suppliers: supplierResponse.data,
+      });
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      toast.error(message);
+    }
+  },
+
+  fetchStockInById: async (id: string) => {
+    get().setLoadingDetail(true);
+    try {
+      const data = await stockInService.getStockInById(id);
+      get().setSelectedStockIn(data);
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      toast.error(message);
+    } finally {
+      get().setLoadingDetail(false);
+    }
+  },
+
+  // ================= CRUD ACTIONS =================
+  createStockIn: async (payload) => {
+    const { supplierId, details } = payload;
+
+    // Validation
+    if (!supplierId) {
+      toast.error("Vui lòng chọn nhà cung cấp");
+      return;
+    }
+
+    if (!details || details.length === 0) {
+      toast.error("Vui lòng thêm ít nhất 1 sản phẩm");
+      return;
+    }
+
+    // Validate each detail
+    const hasInvalidDetail = details.some(
+      (detail) =>
+        !detail.productId || detail.quantity <= 0 || detail.price < 0
+    );
+
+    if (hasInvalidDetail) {
+      toast.error("Vui lòng kiểm tra lại: sản phẩm, số lượng > 0, giá >= 0");
+      return;
+    }
+
+    try {
+      const apiPayload = {
+        supplierId,
+        details: details.map((d) => ({
+          productId: d.productId,
+          quantity: d.quantity,
+          price: d.price,
+        })),
+      };
+      const newStockIn = await stockInService.createStockIn(apiPayload);
+      get().setStockIns([newStockIn, ...get().stockIns]);
+      get().resetForm();
+      toast.success("Tạo phiếu nhập thành công");
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      get().setError(message);
+      toast.error(message);
+    }
+  },
+
+  updateStockIn: async (id, payload) => {
+    const { supplierId, details } = payload;
+
+    // Validation
+    if (!supplierId) {
+      toast.error("Vui lòng chọn nhà cung cấp");
+      return;
+    }
+
+    if (!details || details.length === 0) {
+      toast.error("Vui lòng thêm ít nhất 1 sản phẩm");
+      return;
+    }
+
+    const hasInvalidDetail = details.some(
+      (detail) =>
+        !detail.productId || detail.quantity <= 0 || detail.price < 0
+    );
+
+    if (hasInvalidDetail) {
+      toast.error("Vui lòng kiểm tra lại: sản phẩm, số lượng > 0, giá >= 0");
+      return;
+    }
+
+    try {
+      const apiPayload = {
+        supplierId,
+        details: details.map((d) => ({
+          productId: d.productId,
+          quantity: d.quantity,
+          price: d.price,
+        })),
+      };
+      const updated = await stockInService.updateStockIn(id, apiPayload);
+      get().setStockIns(
+        get().stockIns.map((s) => (s.id === id ? updated : s))
+      );
+      get().resetForm();
+      toast.success("Cập nhật phiếu nhập thành công");
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      get().setError(message);
+      toast.error(message);
+    }
+  },
+
+  deleteStockIn: async (id) => {
+    try {
+      const cancelled = await stockInService.deleteStockIn(id);
+      // Cập nhật status thành CANCELLED trong list, giữ record để xem lịch sử
+      get().setStockIns(
+        get().stockIns.map((s) => (s.id === id ? cancelled : s)),
+      );
+      toast.success("Đã hủy phiếu nhập thành công");
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      get().setError(message);
+      toast.error(message);
+    }
+  },
+
+  // ================= FORM UI ACTIONS =================
+  openCreateModal: () => {
+    set({
+      formOpen: true,
+      editingId: null,
+      supplierId: "",
+      details: [emptyDetail()],
+      error: null,
+    });
+  },
+
+  openEditModal: (stockIn: StockIn) => {
+    set({
+      formOpen: true,
+      editingId: stockIn.id,
+      supplierId: stockIn.supplierId,
+      details: (stockIn.details ?? []).map((detail) => ({
+        productId: detail.productId,
+        quantity: detail.quantity,
+        price: detail.price,
+        _uid: Math.random().toString(36).slice(2),
+      })),
+      error: null,
+    });
+  },
+
+  closeFormModal: () => {
+    get().resetForm();
+  },
+
+  openDetailModal: async (id: string) => {
+    await get().fetchStockInById(id);
+  },
+
+  closeDetailModal: () => {
+    get().clearSelectedStockIn();
+  },
+
+  resetForm: () => {
+    set({
+      formOpen: false,
+      editingId: null,
+      supplierId: "",
+      details: [emptyDetail()],
+      error: null,
+    });
+  },
+
+  // ================= FORM STATE ACTIONS =================
+  setSupplierId: (id: string) => {
+    set({ supplierId: id });
+  },
+
+  addDetail: () => {
+    set({
+      details: [...get().details, emptyDetail()],
+    });
+  },
+
+  removeDetail: (index: number) => {
+    const currentDetails = get().details;
+    // Always keep at least 1 detail
+    if (currentDetails.length <= 1) return;
+
+    set({
+      details: currentDetails.filter((_, i) => i !== index),
+    });
+  },
+
+  updateDetail: (index, field, value) => {
+    const currentDetails = get().details;
+    set({
+      details: currentDetails.map((detail, i) =>
+        i === index ? { ...detail, [field]: value } : detail
+      ),
+    });
+  },
+
+  // ================= INTERNAL HELPERS =================
+  setLoading: (loading) => set({ isLoading: loading }),
+  setLoadingDetail: (loading) => set({ isLoadingDetail: loading }),
+  setError: (error) => set({ error }),
+  setStockIns: (stockIns) => set({ stockIns }),
+  setSelectedStockIn: (stockIn) => set({ selectedStockIn: stockIn }),
+  clearSelectedStockIn: () => set({ selectedStockIn: null }),
 }));

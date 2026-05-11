@@ -27,7 +27,10 @@ interface PageLoadingProps {
   className?: string;
 }
 
-export const PageLoading = ({ text = "Đang tải dữ liệu...", className }: PageLoadingProps) => {
+export const PageLoading = ({
+  text = "Đang tải dữ liệu...",
+  className,
+}: PageLoadingProps) => {
   return (
     <div
       className={cn(
@@ -45,7 +48,10 @@ interface OverlayLoadingProps {
   className?: string;
 }
 
-export const OverlayLoading = ({ text = "Đang tải dữ liệu...", className }: OverlayLoadingProps) => {
+export const OverlayLoading = ({
+  text = "Đang tải dữ liệu...",
+  className,
+}: OverlayLoadingProps) => {
   return (
     <div
       className={cn(
@@ -63,7 +69,10 @@ interface TableLoadingRowProps {
   text?: string;
 }
 
-export const TableLoadingRow = ({ colSpan, text = "Đang tải dữ liệu..." }: TableLoadingRowProps) => {
+export const TableLoadingRow = ({
+  colSpan,
+  text = "Đang tải dữ liệu...",
+}: TableLoadingRowProps) => {
   return (
     <tr>
       <td colSpan={colSpan} className="px-6 py-10 text-center">
@@ -78,6 +87,14 @@ interface InlineLoadingProps {
   className?: string;
 }
 
-export const InlineLoading = ({ text = "Đang tải dữ liệu...", className }: InlineLoadingProps) => {
-  return <Loading text={text} className={cn("justify-center text-sm text-slate-400", className)} />;
+export const InlineLoading = ({
+  text = "Đang tải dữ liệu...",
+  className,
+}: InlineLoadingProps) => {
+  return (
+    <Loading
+      text={text}
+      className={cn("justify-center text-sm text-slate-400", className)}
+    />
+  );
 };

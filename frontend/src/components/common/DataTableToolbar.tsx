@@ -1,5 +1,5 @@
-import { Search } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Search } from "lucide-react";
+import type { ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ interface DataTableToolbarProps {
 export function DataTableToolbar({
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Tìm kiếm...',
+  searchPlaceholder = "Tìm kiếm...",
   children,
   className,
 }: DataTableToolbarProps) {
@@ -34,7 +34,7 @@ export function DataTableToolbar({
             className={cn(
               "pl-10 h-10 border-input bg-background rounded-md transition-all",
               "focus-visible:ring-ring focus-visible:ring-offset-0",
-              "hover:bg-slate-50/50 hover:border-slate-300 dark:hover:bg-slate-900/50 dark:hover:border-slate-700"
+              "hover:bg-slate-50/50 hover:border-slate-300 dark:hover:bg-slate-900/50 dark:hover:border-slate-700",
             )}
           />
         </div>

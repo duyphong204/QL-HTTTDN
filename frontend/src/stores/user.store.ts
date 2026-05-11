@@ -1,14 +1,19 @@
 import { create } from "zustand";
 import { userService } from "@/services/user.service";
-import { getErrorMessage, mergeFiltersWithPageReset } from "@/stores/store.helpers";
+import {
+  getErrorMessage,
+  mergeFiltersWithPageReset,
+} from "@/stores/store.helpers";
 import { toast } from "sonner";
-import type { Role } from "@/types/auth.types";
 import type { User } from "@/types/user.types";
-import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
+import type {
+  BaseFilters,
+  PaginationMeta,
+  SortOrder,
+} from "@/types/common.types";
 
 type UserFilters = BaseFilters & {
-  role?: Role;
-  sortBy: "createdAt" | "email" | "role";
+  sortBy: "createdAt" | "email";
   sortOrder: SortOrder;
   isActive?: boolean;
 };
@@ -17,7 +22,7 @@ type UserFilters = BaseFilters & {
 type UserFormValues = {
   email: string;
   password?: string;
-  role: Role;
+  // role: Role;
   profile: {
     fullName: string;
   };
@@ -79,7 +84,6 @@ export const useUserStore = create<UserState>((set, get) => ({
       await userService.createUser({
         email: data.email,
         password: data.password || "",
-        role: data.role,
         profile: { fullName: data.profile.fullName },
       });
       toast.success("Thêm người dùng thành công");
@@ -94,7 +98,6 @@ export const useUserStore = create<UserState>((set, get) => ({
     try {
       await userService.updateUser(id, {
         email: data.email,
-        role: data.role,
         profile: { fullName: data.profile.fullName },
       });
       toast.success("Cập nhật người dùng thành công");

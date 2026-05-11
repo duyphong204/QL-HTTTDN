@@ -4,10 +4,16 @@ export const getCloudinaryThumbnailUrl = (
   height = 300,
 ): string => {
   if (!imageUrl) {
-    return '';
+    return "";
   }
 
-  const marker = '/upload/';
+  // Only transform Cloudinary URLs. Other CDN URLs may break if we inject /upload transforms.
+  const isCloudinaryUrl = imageUrl.includes("res.cloudinary.com");
+  if (!isCloudinaryUrl) {
+    return imageUrl;
+  }
+
+  const marker = "/upload/";
   const index = imageUrl.indexOf(marker);
 
   if (index === -1) {

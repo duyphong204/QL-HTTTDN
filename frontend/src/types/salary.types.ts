@@ -1,21 +1,20 @@
 import type { BaseEntity } from "./common.types";
 
 export const SalaryStatus = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  PAID: 'PAID',
-  CANCELLED: 'CANCELLED',
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  PAID: "PAID",
 } as const;
 
 export type SalaryStatus = (typeof SalaryStatus)[keyof typeof SalaryStatus];
 
 export const DetailType = {
-  BONUS: 'BONUS',
-  OT: 'OT',
-  ALLOWANCE: 'ALLOWANCE',
-  DEDUCTION: 'DEDUCTION',
-  INSURANCE: 'INSURANCE',
-  TAX: 'TAX',
+  BONUS: "BONUS",
+  OT: "OT",
+  ALLOWANCE: "ALLOWANCE",
+  DEDUCTION: "DEDUCTION",
+  INSURANCE: "INSURANCE",
+  TAX: "TAX",
 } as const;
 
 export type DetailType = (typeof DetailType)[keyof typeof DetailType];
@@ -53,6 +52,7 @@ export interface Salary extends BaseEntity {
   baseSalary: number;
   workingDays: number;
   actualWorkDays: number;
+  unpaidDays: number;
   grossSalary: number;
   totalBonus: number;
   totalDeduction: number;
@@ -81,6 +81,8 @@ export interface QuerySalaryParams {
   limit?: number;
 }
 
+export type QuerySalaryDto = QuerySalaryParams;
+
 export interface SalaryListResponse {
   data: Salary[];
   total: number;
@@ -89,34 +91,3 @@ export interface SalaryListResponse {
   pages: number;
 }
 
-export interface SalaryStatistics {
-  month: number;
-  year: number;
-  count: number;
-  totalSalary: number;
-  totalGross: number;
-  totalBonus: number;
-  totalDeduction: number;
-  avgSalary: number;
-  statusBreakdown: {
-    pending: number;
-    approved: number;
-    paid: number;
-    cancelled: number;
-  };
-}
-
-export interface MonthlyReport {
-  month: number;
-  year: number;
-  totalRecords: number;
-  salaries: Salary[];
-  summary: SalaryStatistics;
-}
-
-export interface YearlyReport {
-  year: number;
-  totalRecords: number;
-  byMonth: Record<number, Salary[]>;
-  monthlySummaries: SalaryStatistics[];
-}

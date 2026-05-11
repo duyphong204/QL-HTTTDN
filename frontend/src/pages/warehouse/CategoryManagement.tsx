@@ -15,8 +15,14 @@ import type { Category } from "@/types/product.types";
 
 export default function CategoryManagement() {
   // 1. Store State & Actions
-  const { categories, isLoading, fetchCategories, createCategory, updateCategory, deleteCategory } =
-    useCategoryStore();
+  const {
+    categories,
+    isLoading,
+    fetchCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  } = useCategoryStore();
 
   // 2. Local State cho Form
   const [name, setName] = useState("");
@@ -29,15 +35,17 @@ export default function CategoryManagement() {
     openEditModal: baseOpenEditModal,
     closeModal,
   } = useEntityModal<Category>();
-  
+
   const { confirmAndRun } = useConfirmAction();
 
   // 4. Client-side Table Logic (Phân trang & Tìm kiếm tại client)
-  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } = useClientTable({
-    data: categories,
-    pageSize: 10,
-    searchFn: (item, query) => item.name.toLowerCase().includes(query.toLowerCase()),
-  });
+  const { searchTerm, setSearchTerm, page, setPage, pagedData, meta } =
+    useClientTable({
+      data: categories,
+      pageSize: 10,
+      searchFn: (item, query) =>
+        item.name.toLowerCase().includes(query.toLowerCase()),
+    });
 
   // Initial Fetch
   useEffect(() => {
@@ -87,8 +95,12 @@ export default function CategoryManagement() {
               <Layers size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Danh mục sản phẩm</h1>
-              <p className="text-sm text-gray-500 mt-1">Quản lý các nhóm ngành hàng trong hệ thống</p>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                Danh mục sản phẩm
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Quản lý các nhóm ngành hàng trong hệ thống
+              </p>
             </div>
           </div>
           <Button
@@ -121,19 +133,27 @@ export default function CategoryManagement() {
                   <TableLoadingRow colSpan={3} text="Đang tải dữ liệu..." />
                 ) : pagedData.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-10 text-center text-gray-400">
+                    <td
+                      colSpan={3}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
                       Không tìm thấy danh mục nào.
                     </td>
                   </tr>
                 ) : (
                   pagedData.map((cat) => (
-                    <tr key={cat.id} className="hover:bg-gray-50/70 transition-colors group">
+                    <tr
+                      key={cat.id}
+                      className="hover:bg-gray-50/70 transition-colors group"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
                             <Tag size={18} className="text-gray-400" />
                           </div>
-                          <span className="font-medium text-gray-800">{cat.name}</span>
+                          <span className="font-medium text-gray-800">
+                            {cat.name}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -184,7 +204,9 @@ export default function CategoryManagement() {
       >
         <form onSubmit={handleFormSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Tên danh mục *</label>
+            <label className="text-sm font-semibold text-gray-700">
+              Tên danh mục *
+            </label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}

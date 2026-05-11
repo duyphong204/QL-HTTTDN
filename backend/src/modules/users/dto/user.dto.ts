@@ -47,9 +47,6 @@ export class CreateUserDto {
   @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
   password!: string;
 
-  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
-  role!: Role;
-
   @ValidateNested({ message: 'Thông tin profile không hợp lệ' })
   @Type(() => ProfileDto)
   profile!: ProfileDto;
@@ -59,10 +56,6 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEmail({}, { message: 'Email không hợp lệ' })
   email?: string;
-
-  @IsOptional()
-  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
-  role?: Role;
 
   @IsOptional()
   @ValidateNested()
@@ -109,10 +102,6 @@ export class QueryUsersDto {
   @IsString()
   search?: string;
 
-  @IsOptional()
-  @IsEnum(Role, { message: 'Vai trò không hợp lệ' })
-  role?: Role;
-
   @Type(() => Number)
   @IsOptional()
   @IsInt()
@@ -126,10 +115,10 @@ export class QueryUsersDto {
   limit?: number = 10;
 
   @IsOptional()
-  @IsIn(['createdAt', 'email', 'role'], {
+  @IsIn(['createdAt', 'email'], {
     message: 'Trường sắp xếp không hợp lệ',
   })
-  sortBy?: 'createdAt' | 'email' | 'role' = 'createdAt';
+  sortBy?: 'createdAt' | 'email' = 'createdAt';
 
   @IsOptional()
   @IsIn(['asc', 'desc'], { message: 'Hướng sắp xếp phải là asc hoặc desc' })
@@ -138,10 +127,6 @@ export class QueryUsersDto {
   @Type(() => Boolean)
   @IsOptional()
   isActive?: boolean;
-}
-export class ChangeRoleDto {
-  @IsEnum(Role, { message: 'Quyền hạn không hợp lệ' })
-  role!: Role;
 }
 export class ToggleActiveDto {
   @Type(() => Boolean)

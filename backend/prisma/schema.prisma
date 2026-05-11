@@ -7,6 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Cleaned single-schema: canonical models and enums
+
 model User {
   id               String      @id @default(uuid())
   email            String      @unique
@@ -22,8 +24,9 @@ model User {
   orders           Order[]
   profile          Profile?
   logs             SystemLog[]
-  createdStockIns  StockIn[]  @relation("StockInCreatedBy")
-  approvedStockIns StockIn[]  @relation("StockInApprovedBy")
+  createdStockIns  StockIn[]   @relation("StockInCreatedBy")
+  approvedStockIns StockIn[]   @relation("StockInApprovedBy")
+  approvedLeaves  LeaveRequest[] @relation("LeaveApprovedBy")
 }
 
 model Profile {
@@ -50,7 +53,9 @@ model Employee {
   jobHistories  JobHistory[]
   leaveRequests LeaveRequest[]
   salaries      Salary[]
-  attendances  Attendance[]
+  attendances   Attendance[]
+
+  leaveBalances LeaveBalance[]
 }
 
 model JobHistory {
@@ -65,33 +70,34 @@ model JobHistory {
 }
 
 model Salary {
-  id            String   @id @default(uuid())
-  employeeId    String
-  month         Int
-  year          Int
+  id         String @id @default(uuid())
+  employeeId String
+  month      Int
+  year       Int
+  
+  baseSalary Float @default(0)
 
-  baseSalary    Float    @default(0)
+  workingDays     Int            @default(26) // Số ngày công chuẩn của tháng đó
+  actualWorkDays  Float          @default(0)  // Số ngày đi làm thực tế + Nghỉ hưởng lương
+  unpaidDays      Float          @default(0)  // Số ngày nghỉ không lương (để trừ tiền)
 
-  workingDays   Int      @default(26)
-  actualWorkDays Int     @default(0)
+  grossSalary    Float @default(0)
+  totalBonus     Float @default(0)
+  totalDeduction Float @default(0)
 
-  grossSalary   Float    @default(0)
-  totalBonus    Float    @default(0)
-  totalDeduction Float   @default(0)
+  netSalary Float @default(0)
 
-  netSalary     Float   @default(0)
+  status SalaryStatus @default(PENDING)
+  note   String?
 
-  status        SalaryStatus @default(PENDING)
-  note          String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
-  createdAt     DateTime @default(now())  
-  updatedAt     DateTime @updatedAt @default(now())
-
-  employee      Employee @relation(fields: [employeeId], references: [id])
-  details       SalaryDetail[]
+  employee Employee       @relation(fields: [employeeId], references: [id])
+  details  SalaryDetail[]
 
   paidAt DateTime?
-  
+
   @@unique([employeeId, month, year])
   @@index([month, year])
   @@index([employeeId])
@@ -102,38 +108,38 @@ model SalaryDetail {
   salaryId    String
   type        DetailType
   amount      Float
-  description String?    // Ví dụ: "Thưởng dự án A", "Trừ BHXH 10.5%"
+  description String?
   salary      Salary     @relation(fields: [salaryId], references: [id], onDelete: Cascade)
 }
 
 model Attendance {
-  id         String   @id @default(uuid())
+  id         String           @id @default(uuid())
   employeeId String
   date       DateTime
   checkIn    DateTime?
   checkOut   DateTime?
-  status     AttendanceStatus @default(PRESENT) // PRESENT, ABSENT, LEAVE, LATE
+  status     AttendanceStatus @default(PRESENT)
 
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  @@unique([employeeId, date])   // Một ngày chỉ chấm công một lần
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
 }
 
 enum DetailType {
-  BONUS        // +
-  OT           // +
-  ALLOWANCE    // +
-
-  DEDUCTION    // -
-  INSURANCE    // -
-  TAX          // -
+  BONUS
+  OT
+  ALLOWANCE
+  DEDUCTION
+  INSURANCE
+  TAX
 }
 
 enum SalaryStatus {
   PENDING
   APPROVED
   PAID
-  CANCELLED
 }
+
 enum AttendanceStatus {
   PRESENT
   ABSENT
@@ -146,14 +152,41 @@ model LeaveRequest {
   employeeId      String
   startDate       DateTime
   endDate         DateTime
-  type            String
+  type            LeaveType
   reason          String
-  status          String   @default("PENDING")
+  status          LeaveStatus @default(PENDING)
   rejectionReason String?
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  totalDays       Float @default(0)
+
+  approvedBy      User?    @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
   approvedById    String?
   employee        Employee @relation(fields: [employeeId], references: [id])
+}
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+enum LeaveType {
+  ANNUAL
+  UNPAID
+  SICK
+  MATERNITY
+  RESIGNATION
+}
+
+model LeaveBalance {
+  id          String   @id @default(uuid())
+  employeeId  String
+  year        Int                  // Ví dụ: 2026
+  totalDays   Float    @default(12) // Số ngày được cấp
+  usedDays    Float    @default(0)  // Số ngày đã dùng
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  
+  @@unique([employeeId, year])   // Mỗi nhân viên chỉ có 1 bản ghi cho 1 năm
 }
 
 model Category {
@@ -173,22 +206,23 @@ model Supplier {
 }
 
 model Product {
-  id             String          @id @default(uuid())
-  name           String
-  description    String?
-  price          Float
-  costPrice      Float
-  stockQuantity  Int             @default(0)
-  categoryId     String
-  supplierId     String
-  minStock       Int             @default(10)
-  imageUrl       String?
-  deletedAt      DateTime?
-  cartItems      CartItem[]
-  orderDetails   OrderDetail[]
-  category       Category        @relation(fields: [categoryId], references: [id])
-  supplier       Supplier        @relation(fields: [supplierId], references: [id])
-  stockInDetails StockInDetail[]
+  id              String             @id @default(uuid())
+  name            String
+  description     String?
+  price           Float
+  costPrice       Float
+  stockQuantity   Int                @default(0)
+  categoryId      String
+  supplierId      String
+  minStock        Int                @default(10)
+  imageUrl        String?
+  deletedAt       DateTime?
+  cartItems       CartItem[]
+  orderDetails    OrderDetail[]
+  promotionLinks  PromotionProduct[]
+  category        Category           @relation(fields: [categoryId], references: [id])
+  supplier        Supplier           @relation(fields: [supplierId], references: [id])
+  stockInDetails  StockInDetail[]
   stockOutDetails StockOutDetail[]
 }
 
@@ -261,6 +295,7 @@ model StockOut {
   createdAt    DateTime         @default(now())
   order        Order?           @relation(fields: [orderId], references: [id])
   details      StockOutDetail[]
+  costPrice      Float    @default(0) // Giá vốn tại thời điểm xuất để tính lợi nhuận chính xác
 }
 
 model StockOutDetail {
@@ -319,4 +354,33 @@ enum Role {
   SALES_MANAGER
   EMPLOYEE
   CUSTOMER
+}
+
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+
+model Promotion {
+  id        String        @id @default(uuid())
+  name      String
+  type      PromotionType
+  value     Float
+  startAt   DateTime?
+  endAt     DateTime?
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  products PromotionProduct[]
+}
+
+model PromotionProduct {
+  id          String    @id @default(uuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id])
+  productId   String    @unique
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([promotionId, productId])
 }

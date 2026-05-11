@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiDelete, toFormData } from '@/api/client';
+import { apiGet, apiPost, apiPatch, apiDelete, toFormData } from "@/api/client";
 import type {
   Product,
   CreateProductDto,
@@ -6,11 +6,22 @@ import type {
   ProductQuery,
   ProductResponse,
   Category,
-} from '@/types/product.types';
-import type { Supplier, CreateSupplierDto, UpdateSupplierDto } from '@/types/supplier.types';
-import type { StockIn, CreateStockInDto, UpdateStockInDto } from '@/types/stockIn.types';
-import type { WarehouseReport } from '@/types/report.types';
-import type { BaseFilters, PaginatedResponse, SortOrder } from '@/types/common.types';
+} from "@/types/product.types";
+import type {
+  Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
+} from "@/types/supplier.types";
+import type {
+  StockIn,
+  CreateStockInDto,
+  UpdateStockInDto,
+} from "@/types/stockIn.types";
+import type {
+  BaseFilters,
+  PaginatedResponse,
+  SortOrder,
+} from "@/types/common.types";
 
 const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
   return toFormData(data as Record<string, unknown>);
@@ -18,11 +29,11 @@ const toProductFormData = (data: CreateProductDto | UpdateProductDto) => {
 
 export const categoryService = {
   getAll: async (): Promise<Category[]> => {
-    return apiGet<Category[]>('/categories');
+    return apiGet<Category[]>("/categories");
   },
 
   create: async (name: string): Promise<Category> => {
-    return apiPost<Category>('/categories', { name });
+    return apiPost<Category>("/categories", { name });
   },
 
   update: async (id: string, name: string): Promise<Category> => {
@@ -31,15 +42,17 @@ export const categoryService = {
 
   delete: async (id: string): Promise<void> => {
     await apiDelete(`/categories/${id}`);
-  }
+  },
 };
 
 export const supplierService = {
-  getSuppliers: async (params?: Partial<BaseFilters> & {
-    sortBy?: string;
-    sortOrder?: SortOrder;
-  }): Promise<PaginatedResponse<Supplier>> => {
-    return apiGet<PaginatedResponse<Supplier>>('/suppliers', params);
+  getSuppliers: async (
+    params?: Partial<BaseFilters> & {
+      sortBy?: string;
+      sortOrder?: SortOrder;
+    },
+  ): Promise<PaginatedResponse<Supplier>> => {
+    return apiGet<PaginatedResponse<Supplier>>("/suppliers", params);
   },
 
   getSupplierById: async (id: string): Promise<Supplier> => {
@@ -47,10 +60,13 @@ export const supplierService = {
   },
 
   createSupplier: async (data: CreateSupplierDto): Promise<Supplier> => {
-    return apiPost<Supplier>('/suppliers', data);
+    return apiPost<Supplier>("/suppliers", data);
   },
 
-  updateSupplier: async (id: string, data: UpdateSupplierDto): Promise<Supplier> => {
+  updateSupplier: async (
+    id: string,
+    data: UpdateSupplierDto,
+  ): Promise<Supplier> => {
     return apiPatch<Supplier>(`/suppliers/${id}`, data);
   },
 
@@ -59,9 +75,20 @@ export const supplierService = {
   },
 };
 
+export type ProductStats = {
+  total: number;
+  totalStock: number;
+  outOfStock: number;
+  topSelling: number;
+};
+
 export const productService = {
   getProducts: async (params?: ProductQuery): Promise<ProductResponse> => {
-    return apiGet<ProductResponse>('/products', params);
+    return apiGet<ProductResponse>("/products", params);
+  },
+
+  getStats: async (): Promise<ProductStats> => {
+    return apiGet<ProductStats>("/products/stats");
   },
 
   getProductById: async (id: string): Promise<Product> => {
@@ -70,10 +97,13 @@ export const productService = {
 
   createProduct: async (data: CreateProductDto): Promise<Product> => {
     const formData = toProductFormData(data);
-    return apiPost<Product>('/products', formData);
+    return apiPost<Product>("/products", formData);
   },
 
-  updateProduct: async (id: string, data: UpdateProductDto): Promise<Product> => {
+  updateProduct: async (
+    id: string,
+    data: UpdateProductDto,
+  ): Promise<Product> => {
     const formData = toProductFormData(data);
     return apiPatch<Product>(`/products/${id}`, formData);
   },
@@ -84,8 +114,12 @@ export const productService = {
 };
 
 export const stockInService = {
-  getStockIns: async (params?: { productId?: string; startDate?: string; endDate?: string }): Promise<StockIn[]> => {
-    return apiGet<StockIn[]>('/stock-ins', params);
+  getStockIns: async (params?: {
+    productId?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<StockIn[]> => {
+    return apiGet<StockIn[]>("/stock-ins", params);
   },
 
   getStockInById: async (id: string): Promise<StockIn> => {
@@ -93,20 +127,17 @@ export const stockInService = {
   },
 
   createStockIn: async (data: CreateStockInDto): Promise<StockIn> => {
-    return apiPost<StockIn>('/stock-ins', data);
+    return apiPost<StockIn>("/stock-ins", data);
   },
 
-  updateStockIn: async (id: string, data: UpdateStockInDto): Promise<StockIn> => {
+  updateStockIn: async (
+    id: string,
+    data: UpdateStockInDto,
+  ): Promise<StockIn> => {
     return apiPatch<StockIn>(`/stock-ins/${id}`, data);
   },
 
-  deleteStockIn: async (id: string): Promise<void> => {
-    await apiDelete(`/stock-ins/${id}`);
-  },
-};
-
-export const warehouseReportService = {
-  getReport: async (params?: { month?: number; year?: number }): Promise<WarehouseReport> => {
-    return apiGet<WarehouseReport>('/warehouse/report', params);
+  deleteStockIn: async (id: string): Promise<StockIn> => {
+    return apiDelete<StockIn>(`/stock-ins/${id}`);
   },
 };

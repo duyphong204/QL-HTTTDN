@@ -1,19 +1,22 @@
-import { useCallback } from 'react'
+import { useCallback } from "react";
 
 interface ConfirmActionOptions {
-  message: string
-  action: () => Promise<void> | void
+  message: string;
+  action: () => Promise<void> | void;
 }
 
 export const useConfirmAction = () => {
-  const confirmAndRun = useCallback(async ({ message, action }: ConfirmActionOptions) => {
-    if (!window.confirm(message)) {
-      return false
-    }
+  const confirmAndRun = useCallback(
+    async ({ message, action }: ConfirmActionOptions) => {
+      if (!window.confirm(message)) {
+        return false;
+      }
 
-    await action()
-    return true
-  }, [])
+      await action();
+      return true;
+    },
+    [],
+  );
 
-  return { confirmAndRun }
-}
+  return { confirmAndRun };
+};

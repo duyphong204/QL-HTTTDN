@@ -30,7 +30,7 @@ export function AppModal({
       <DialogContent
         className={cn(
           "p-0 gap-0 border-none outline-none sm:rounded-xl overflow-hidden shadow-2xl bg-background",
-          maxWidthClassName
+          maxWidthClassName,
         )}
       >
         {(title || subtitle) && (
@@ -47,9 +47,7 @@ export function AppModal({
         )}
 
         {/* Nội dung bên trong: Tăng padding-top một chút để cân đối */}
-        <div className="p-6 pt-4 max-h-[80vh] overflow-y-auto">
-          {children}
-        </div>
+        <div className="p-6 pt-4 max-h-[80vh] overflow-y-auto">{children}</div>
       </DialogContent>
     </Dialog>
   );

@@ -1,18 +1,22 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/api/client";
 import { endpoints } from "@/api/endpoints";
 import type { User, CreateUserDto, UpdateUserDto } from "@/types/user.types";
-import type { Role } from "@/types/auth.types";
-import type { BaseFilters, PaginatedResponse, SortOrder } from "@/types/common.types";
+import type {
+  BaseFilters,
+  PaginatedResponse,
+  SortOrder,
+} from "@/types/common.types";
 
 export interface GetUsersParams extends Partial<BaseFilters> {
-  role?: Role;
-  sortBy?: "createdAt" | "email" | "role";
+  sortBy?: "createdAt" | "email";
   sortOrder?: SortOrder;
   isActive?: boolean;
 }
 
 export const userService = {
-  getUsers: async (params?: GetUsersParams): Promise<PaginatedResponse<User>> => {
+  getUsers: async (
+    params?: GetUsersParams,
+  ): Promise<PaginatedResponse<User>> => {
     return apiGet<PaginatedResponse<User>>(endpoints.users.root, params);
   },
 
@@ -30,9 +34,5 @@ export const userService = {
 
   deleteUser: async (id: string): Promise<void> => {
     await apiDelete(endpoints.users.byId(id));
-  },
-
-  changeRole: async (id: string, role: string): Promise<User> => {
-    return apiPatch<User>(endpoints.users.role(id), { role });
   },
 };

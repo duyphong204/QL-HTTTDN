@@ -1,23 +1,23 @@
-import { FileText, Plus, Pencil, Trash2, Eye } from 'lucide-react'
-import { DataTableToolbar } from '@/components/common/DataTableToolbar'
-import { PaginationControls } from '@/components/common/PaginationControls'
-import { AppModal } from '@/components/common/AppModal'
-import { InlineLoading, TableLoadingRow } from '@/components/common/Loading'
-import { StockOutStatus, StockOutType } from '@/types/stockOut.types'
-import { useExportSlipPage } from '@/hooks/useExportSlipPage'
-import { formatCurrencyVnd } from '@/utils/format'
+import { FileText, Plus, Pencil, Trash2, Eye, Package, CheckCircle2, TrendingUp } from "lucide-react";
+import { DataTableToolbar } from "@/components/common/DataTableToolbar";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { AppModal } from "@/components/common/AppModal";
+import { InlineLoading, TableLoadingRow } from "@/components/common/Loading";
+import { StockOutStatus, StockOutType } from "@/types/stockOut.types";
+import { useExportSlipPage } from "@/hooks/useExportSlipPage";
+import { formatCurrencyVnd } from "@/utils/format";
 
 const statusBadgeClass: Record<string, string> = {
-  PENDING: 'bg-amber-100 text-amber-700',
-  COMPLETED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-rose-100 text-rose-700',
-}
+  PENDING: "bg-amber-100 text-amber-700",
+  COMPLETED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-rose-100 text-rose-700",
+};
 
 const typeLabel: Record<string, string> = {
-  SALE: 'Bán hàng',
-  INTERNAL: 'Nội bộ',
-  TRANSFER: 'Điều chuyển',
-}
+  SALE: "Bán hàng",
+  INTERNAL: "Nội bộ",
+  TRANSFER: "Điều chuyển",
+};
 
 export default function ExportSlipManagement() {
   const {
@@ -32,12 +32,16 @@ export default function ExportSlipManagement() {
     type,
     filterStatus,
     filterType,
+    filterMonth,
+    monthOptions,
+    exportStats,
     items,
     totalAmount,
     table,
     setType,
     setFilterStatus,
     setFilterType,
+    setFilterMonth,
     openCreateModal,
     openEditModal,
     closeFormModal,
@@ -48,24 +52,76 @@ export default function ExportSlipManagement() {
     updateItem,
     submitForm,
     removeStockOut,
-  } = useExportSlipPage()
+  } = useExportSlipPage();
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FileText className="text-blue-600" size={28} /> Phiếu xuất hàng
             </h1>
-            <p className="text-sm text-gray-500 mt-1">Quản lý phiếu xuất theo CRUD: thêm, sửa, xóa, xem chi tiết</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Quản lý phiếu xuất theo CRUD: thêm, sửa, xóa, xem chi tiết
+            </p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
-          >
-            <Plus size={18} /> Tạo phiếu xuất
-          </button>
+          <div className="flex items-center gap-3">
+            <select
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white shadow-sm"
+            >
+              <option value="">Tất cả tháng</option>
+              {monthOptions.map((key) => {
+                const [year, month] = key.split("-");
+                return (
+                  <option key={key} value={key}>
+                    Tháng {parseInt(month)}/{year}
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm"
+            >
+              <Plus size={18} /> Tạo phiếu xuất
+            </button>
+          </div>
+        </div>
+
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+              <Package className="text-blue-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng phiếu xuất</p>
+              <p className="text-2xl font-bold text-gray-900">{exportStats.total}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="text-emerald-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Đã hoàn thành</p>
+              <p className="text-2xl font-bold text-gray-900">{exportStats.completed}</p>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+              <TrendingUp className="text-violet-600" size={22} />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Tổng giá trị xuất</p>
+              <p className="text-lg font-bold text-gray-900 truncate">
+                {formatCurrencyVnd(exportStats.totalValue)}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
@@ -115,45 +171,69 @@ export default function ExportSlipManagement() {
                 {isLoading ? (
                   <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
                 ) : table.pagedData.length === 0 ? (
-                  <tr><td colSpan={6} className="px-6 py-10 text-center text-gray-400">Chưa có phiếu xuất nào.</td></tr>
-                ) : table.pagedData.map((stockOut) => (
-                  <tr key={stockOut.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="px-6 py-4 font-mono text-gray-900">{stockOut.id.slice(0, 8).toUpperCase()}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{typeLabel[stockOut.type] ?? stockOut.type}</td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(stockOut.createdAt).toLocaleDateString('vi-VN')}</td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900">{formatCurrencyVnd(stockOut.totalAmount)}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeClass[stockOut.status] ?? 'bg-slate-100 text-slate-700'}`}>
-                        {stockOut.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openDetailModal(stockOut.id)}
-                          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(stockOut)}
-                          className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-md"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeStockOut(stockOut.id)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-gray-400"
+                    >
+                      Chưa có phiếu xuất nào.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  table.pagedData.map((stockOut) => (
+                    <tr
+                      key={stockOut.id}
+                      className="hover:bg-gray-50/70 transition-colors"
+                    >
+                      <td className="px-6 py-4 font-mono text-gray-900">
+                        {stockOut.id.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-800">
+                        {typeLabel[stockOut.type] ?? stockOut.type}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(stockOut.createdAt).toLocaleDateString(
+                          "vi-VN",
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-gray-900">
+                        {formatCurrencyVnd(stockOut.totalAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusBadgeClass[stockOut.status] ?? "bg-slate-100 text-slate-700"}`}
+                        >
+                          {stockOut.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openDetailModal(stockOut.id)}
+                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(stockOut)}
+                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-md"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeStockOut(stockOut.id)}
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -170,15 +250,19 @@ export default function ExportSlipManagement() {
       <AppModal
         isOpen={formOpen}
         onClose={closeFormModal}
-        title={editingId ? 'Cập nhật phiếu xuất' : 'Tạo phiếu xuất hàng'}
+        title={editingId ? "Cập nhật phiếu xuất" : "Tạo phiếu xuất hàng"}
         maxWidthClassName="max-w-2xl"
       >
         <form onSubmit={submitForm} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Loại phiếu xuất *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Loại phiếu xuất *
+            </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as keyof typeof StockOutType)}
+              onChange={(e) =>
+                setType(e.target.value as keyof typeof StockOutType)
+              }
               className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white"
             >
               <option value={StockOutType.SALE}>Bán hàng</option>
@@ -189,7 +273,9 @@ export default function ExportSlipManagement() {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Sản phẩm xuất *</label>
+              <label className="text-sm font-medium text-gray-700">
+                Sản phẩm xuất *
+              </label>
               <button
                 type="button"
                 onClick={addItem}
@@ -201,10 +287,13 @@ export default function ExportSlipManagement() {
 
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="grid grid-cols-[1fr_96px_128px_auto] gap-2 items-center">
+                <div
+                  key={item._uid}
+                  className="grid grid-cols-[1fr_96px_128px_auto] gap-2 items-center"
+                >
                   <select
                     value={item.productId}
-                    onChange={(e) => updateItem(i, 'productId', e.target.value)}
+                    onChange={(e) => updateItem(i, "productId", e.target.value)}
                     required
                     className="h-9 px-2 text-sm border border-gray-200 rounded-lg bg-white"
                   >
@@ -220,7 +309,9 @@ export default function ExportSlipManagement() {
                     type="number"
                     min={1}
                     value={item.quantity}
-                    onChange={(e) => updateItem(i, 'quantity', Number(e.target.value))}
+                    onChange={(e) =>
+                      updateItem(i, "quantity", Number(e.target.value))
+                    }
                     required
                     className="h-9 px-2 text-sm border border-gray-200 rounded-lg text-center"
                   />
@@ -230,7 +321,9 @@ export default function ExportSlipManagement() {
                     min={0}
                     step="1000"
                     value={item.price}
-                    onChange={(e) => updateItem(i, 'price', Number(e.target.value))}
+                    onChange={(e) =>
+                      updateItem(i, "price", Number(e.target.value))
+                    }
                     required
                     className="h-9 px-2 text-sm border border-gray-200 rounded-lg text-right"
                   />
@@ -250,11 +343,20 @@ export default function ExportSlipManagement() {
           </div>
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <span className="text-sm font-medium text-gray-700">Tổng giá trị xuất:</span>
-            <span className="text-xl font-bold text-blue-600">{formatCurrencyVnd(totalAmount)}</span>
+            <span className="text-sm font-medium text-gray-700">
+              Tổng giá trị xuất:
+            </span>
+            <span className="text-xl font-bold text-blue-600">
+              {formatCurrencyVnd(totalAmount)}
+            </span>
           </div>
 
-          {isLoadingProducts && <InlineLoading text="Đang tải danh sách sản phẩm..." className="justify-start text-xs text-gray-500" />}
+          {isLoadingProducts && (
+            <InlineLoading
+              text="Đang tải danh sách sản phẩm..."
+              className="justify-start text-xs text-gray-500"
+            />
+          )}
 
           <div className="flex justify-end gap-3">
             <button
@@ -269,7 +371,11 @@ export default function ExportSlipManagement() {
               disabled={isSubmitting}
               className="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-lg font-medium"
             >
-              {isSubmitting ? 'Đang lưu...' : editingId ? 'Lưu thay đổi' : 'Tạo phiếu xuất'}
+              {isSubmitting
+                ? "Đang lưu..."
+                : editingId
+                  ? "Lưu thay đổi"
+                  : "Tạo phiếu xuất"}
             </button>
           </div>
         </form>
@@ -286,11 +392,15 @@ export default function ExportSlipManagement() {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <div className="text-gray-500">Mã phiếu</div>
-                <div className="font-medium">{selectedStockOut.id.slice(0, 8).toUpperCase()}</div>
+                <div className="font-medium">
+                  {selectedStockOut.id.slice(0, 8).toUpperCase()}
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Loại phiếu</div>
-                <div className="font-medium">{typeLabel[selectedStockOut.type] ?? selectedStockOut.type}</div>
+                <div className="font-medium">
+                  {typeLabel[selectedStockOut.type] ?? selectedStockOut.type}
+                </div>
               </div>
             </div>
 
@@ -307,10 +417,18 @@ export default function ExportSlipManagement() {
                 <tbody>
                   {selectedStockOut.details.map((detail) => (
                     <tr key={detail.id} className="border-t">
-                      <td className="px-4 py-2">{detail.product?.name ?? detail.productId}</td>
-                      <td className="px-4 py-2 text-center">{detail.quantity}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrencyVnd(detail.price)}</td>
-                      <td className="px-4 py-2 text-right font-semibold">{formatCurrencyVnd(detail.price * detail.quantity)}</td>
+                      <td className="px-4 py-2">
+                        {detail.product?.name ?? detail.productId}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        {detail.quantity}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {formatCurrencyVnd(detail.price)}
+                      </td>
+                      <td className="px-4 py-2 text-right font-semibold">
+                        {formatCurrencyVnd(detail.price * detail.quantity)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -324,5 +442,5 @@ export default function ExportSlipManagement() {
         )}
       </AppModal>
     </div>
-  )
+  );
 }

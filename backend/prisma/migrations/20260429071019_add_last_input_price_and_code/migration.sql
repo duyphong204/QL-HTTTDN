@@ -1,0 +1,2 @@
+-- Migration placeholder (original file was missing)
+-- This migration was registered but never applied.

@@ -1,131 +1,151 @@
-import { create } from 'zustand'
-import { toast } from 'sonner'
-import { salaryService } from '@/services/hr.service'
-import { getErrorMessage } from '@/stores/store.helpers'
-import type { AddSalaryDetailDto, Salary, SalaryStatus } from '@/types/salary.types'
+import { create } from "zustand";
+import { toast } from "sonner";
+import { salaryService } from "@/services/hr.service";
+import { getErrorMessage } from "@/stores/store.helpers";
+import type {
+  Salary,
+  AddSalaryDetailDto,
+  SalaryStatus,
+} from "@/types/salary.types";
 
-interface HrSalaryFilters {
-  page: number
-  limit: number
-  month?: number
-  year?: number
-  employeeId?: string
-  status?: SalaryStatus
+interface Filters {
+  page: number;
+  limit: number;
+  month?: number;
+  year?: number;
+  employeeId?: string;
+  status?: SalaryStatus;
+  search?: string;
 }
 
-interface HrSalaryState {
-  salaries: Salary[]
-  filters: HrSalaryFilters
-  isLoading: boolean
-  selectedSalary: Salary | null
-  isLoadingDetail: boolean
-
-  setFilters: (filters: Partial<HrSalaryFilters>) => void
-  setSelectedSalary: (salary: Salary | null) => void
-
-  fetchSalaries: () => Promise<void>
-  calculateAllSalaries: (month: number, year: number) => Promise<void>
-  approveSalary: (id: string) => Promise<void>
-  markAsPaid: (id: string) => Promise<void>
-  cancelSalary: (id: string) => Promise<void>
-  addSalaryDetail: (salaryId: string, detail: AddSalaryDetailDto) => Promise<void>
-  fetchSalaryById: (id: string) => Promise<Salary | null>
+export interface HrSalaryStatistics {
+  totalEmployees: number;
+  totalNetSalary: number;
+  totalBonus: number;
+  totalDeduction: number;
+  totalInsurance: number;
+  avgNetSalary: number;
+  byStatus: {
+    PENDING: number;
+    APPROVED: number;
+    PAID: number;
+  };
+  monthlyBreakdown: { month: number; total: number; count: number }[];
 }
 
-export const useHrSalaryStore = create<HrSalaryState>((set, get) => ({
+interface State {
+  salaries: Salary[];
+  total: number;
+  isLoading: boolean;
+  isCalculating: boolean;
+  filters: Filters;
+
+  statistics: HrSalaryStatistics | null;
+  isLoadingStats: boolean;
+
+  setFilters: (f: Partial<Filters>) => void;
+  fetch: () => Promise<void>;
+  calculateAll: (month: number, year: number) => Promise<void>;
+  approve: (id: string) => Promise<void>;
+  pay: (id: string) => Promise<void>;
+  addDetail: (id: string, data: AddSalaryDetailDto) => Promise<void>;
+  deleteDetail: (salaryId: string, detailId: string) => Promise<void>;
+  fetchStatistics: (year: number, month?: number) => Promise<void>;
+}
+
+export const useHrSalaryStore = create<State>((set, get) => ({
   salaries: [],
-  filters: { page: 1, limit: 10 },
+  total: 0,
   isLoading: false,
-  selectedSalary: null,
-  isLoadingDetail: false,
+  isCalculating: false,
+  statistics: null,
+  isLoadingStats: false,
 
-  setFilters: (filters) =>
-    set((state) => ({ filters: { ...state.filters, ...filters } })),
+  filters: {
+    page: 1,
+    limit: 10,
+  },
 
-  setSelectedSalary: (selectedSalary) => set({ selectedSalary }),
+  setFilters: (f) =>
+    set((state) => ({
+      filters: { ...state.filters, ...f, page: f.page ?? 1 },
+    })),
 
-  fetchSalaries: async () => {
-    const { filters } = get()
-    set({ isLoading: true })
+  fetch: async () => {
+    set({ isLoading: true });
     try {
-      const data = await salaryService.getSalaries({
-        month: filters.month,
-        year: filters.year,
-        employeeId: filters.employeeId,
-        status: filters.status,
-      })
-      set({ salaries: data })
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể tải danh sách lương'))
+      const res = await salaryService.getSalaries(get().filters);
+      set({ salaries: res.data, total: res.meta?.total ?? 0 });
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     } finally {
-      set({ isLoading: false })
+      set({ isLoading: false });
     }
   },
 
-  calculateAllSalaries: async (month, year) => {
-    set({ isLoading: true })
+  fetchStatistics: async (year, month) => {
+    set({ isLoadingStats: true });
     try {
-      await salaryService.calculateAllSalaries({ month, year })
-      toast.success(`Đã tính lương tháng ${month}/${year}`)
-      await get().fetchSalaries()
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Tính lương thất bại'))
+      const res = await salaryService.getStatistics({ year, month });
+      set({ statistics: res as HrSalaryStatistics });
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     } finally {
-      set({ isLoading: false })
+      set({ isLoadingStats: false });
     }
   },
 
-  approveSalary: async (id) => {
+  calculateAll: async (month, year) => {
+    set({ isCalculating: true });
     try {
-      await salaryService.approveSalary(id)
-      toast.success('Đã duyệt lương')
-      await get().fetchSalaries()
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Duyệt lương thất bại'))
-    }
-  },
-
-  markAsPaid: async (id) => {
-    try {
-      await salaryService.markAsPaid(id)
-      toast.success('Đã thanh toán lương')
-      await get().fetchSalaries()
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Thanh toán thất bại'))
-    }
-  },
-
-  cancelSalary: async (id) => {
-    try {
-      await salaryService.cancelSalary(id)
-      toast.success('Đã hủy lương')
-      await get().fetchSalaries()
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Hủy lương thất bại'))
-    }
-  },
-
-  addSalaryDetail: async (salaryId, detail) => {
-    try {
-      await salaryService.addSalaryDetail(salaryId, detail)
-      toast.success('Đã thêm chi tiết lương')
-      await get().fetchSalaries()
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Thêm chi tiết thất bại'))
-    }
-  },
-
-  fetchSalaryById: async (id) => {
-    set({ isLoadingDetail: true })
-    try {
-      const salary = await salaryService.getSalaryById(id)
-      set({ selectedSalary: salary })
-      return salary
-    } catch (error) {
-      toast.error(getErrorMessage(error, 'Không thể tải chi tiết lương'))
-      return null
+      const res = await salaryService.calculateAll({ month, year });
+      toast.success(res.message ?? "Tính lương thành công");
+      await get().fetch();
+      await get().fetchStatistics(year, month);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
     } finally {
-      set({ isLoadingDetail: false })
+      set({ isCalculating: false });
     }
   },
-}))
+
+  approve: async (id) => {
+    try {
+      await salaryService.approve(id);
+      toast.success("Đã duyệt bảng lương");
+      await get().fetch();
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  },
+
+  pay: async (id) => {
+    try {
+      await salaryService.pay(id);
+      toast.success("Đã đánh dấu thanh toán");
+      await get().fetch();
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  },
+
+  addDetail: async (id, data) => {
+    try {
+      await salaryService.addDetail(id, data);
+      toast.success("Thêm chi tiết thành công");
+      await get().fetch();
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  },
+
+  deleteDetail: async (salaryId, detailId) => {
+    try {
+      await salaryService.deleteDetail(salaryId, detailId);
+      toast.success("Đã xóa chi tiết lương");
+      await get().fetch();
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    }
+  },
+}));

@@ -3,14 +3,16 @@ import {
   Post,
   Get,
   Body,
+  Patch,
+  Param,
   UseGuards,
   Request,
   Query,
-  Param,
-  Patch,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -31,54 +33,41 @@ export class OrdersController {
   }
 
   @Post()
-  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
+  @Roles(Role.CUSTOMER)
   createOrder(@Body() dto: CreateOrderDto, @Request() req: any) {
     return this.ordersService.createOrder(req.user.id, dto);
   }
 
-  @Get('my')
-  @Roles(Role.CUSTOMER)
+  @Post(':id/retry-payment')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
+  retryPayment(@Param('id') id: string, @Request() req: any) {
+    return this.ordersService.retryOrderPayment(req.user.id, id);
+  }
+
+  @Get('me')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
   getMyOrders(@Request() req: any) {
     return this.ordersService.getMyOrders(req.user.id);
   }
 
-  @Patch(':id/status')
+  @Get('stats')
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  updateOrderStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    return this.ordersService.updateOrderStatus(id, body.status);
-  }
-
-  @Patch(':id/cancel')
-  @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  cancelOrder(@Param('id') id: string, @Body() body: { reason?: string }) {
-    return this.ordersService.cancelOrder(id, body.reason);
-  }
-
-  @Get('statistics/report')
-  @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  getSalesStatistics(
-    @Query('month') month?: string,
-    @Query('year') year?: string,
-  ) {
+  getSalesStats(@Query('month') month?: string, @Query('year') year?: string) {
     return this.ordersService.getSalesStatistics(
       month ? +month : undefined,
       year ? +year : undefined,
     );
   }
-  @Get('stats')
+
+  @Get('stats/period')
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  getStats(@Query('month') month?: string, @Query('year') year?: string) {
-    return this.ordersService.getSalesStatistics(
-      month ? Number(month) : undefined,
-      year ? Number(year) : undefined,
-    );
-  }
-  @Get('period')
-  @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  getByPeriod(@Query('year') year: string, @Query('quarter') quarter?: string) {
-    return this.ordersService.getOrdersByPeriod(
-      Number(year),
-      quarter ? Number(quarter) : undefined,
+  getSalesStatsByPeriod(
+    @Query('year') year?: string,
+    @Query('quarter') quarter?: string,
+  ) {
+    return this.ordersService.getSalesStatisticsByPeriod(
+      year ? +year : undefined,
+      quarter ? +quarter : undefined,
     );
   }
 
@@ -86,5 +75,20 @@ export class OrdersController {
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
   getOrderById(@Param('id') id: string) {
     return this.ordersService.getOrderById(id);
+  }
+
+  @Patch(':id/status')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
+  updateOrderStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.ordersService.updateOrderStatus(id, dto);
+  }
+
+  @Patch(':id/cancel')
+  @Roles(Role.ADMIN, Role.SALES_MANAGER)
+  cancelOrder(@Param('id') id: string, @Body() _dto: CancelOrderDto) {
+    return this.ordersService.cancelOrder(id);
   }
 }

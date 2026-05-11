@@ -1,5 +1,6 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsIn,
   IsNotEmpty,
   IsNumber,
@@ -93,15 +94,44 @@ export class QueryProductDto {
 
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
+
+  @IsOptional()
+  @IsIn([
+    'featured',
+    'price-low',
+    'price-high',
+    'newest',
+    'name',
+    'price',
+    'costPrice',
+    'stockQuantity',
+  ])
+  sortBy?:
+    | 'featured'
+    | 'price-low'
+    | 'price-high'
+    | 'newest'
+    | 'name'
+    | 'price'
+    | 'costPrice'
+    | 'stockQuantity' = 'featured';
+
+  @IsOptional()
+  @Type(() => Number)
   page?: number = 1;
 
   @IsOptional()
   @Type(() => Number)
   limit?: number = 10;
-
-  @IsOptional()
-  @IsIn(['name', 'price', 'costPrice', 'stockQuantity'])
-  sortBy?: 'name' | 'price' | 'costPrice' | 'stockQuantity' = 'name';
 
   @IsOptional()
   @IsIn(['asc', 'desc'])
@@ -110,4 +140,13 @@ export class QueryProductDto {
   @IsOptional()
   @Type(() => Boolean)
   minStock?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return undefined;
+  })
+  @IsBoolean()
+  inStock?: boolean;
 }
