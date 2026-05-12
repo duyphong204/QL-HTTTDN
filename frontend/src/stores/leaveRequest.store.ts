@@ -6,6 +6,7 @@ import type {
   LeaveRequest,
   LeaveBalance,
   CreateLeaveRequestDto,
+  QueryLeaveRequestDto,
 } from "@/types/leave.types";
 
 interface LeaveRequestState {

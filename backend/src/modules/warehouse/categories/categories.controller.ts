@@ -11,13 +11,11 @@ import {
 } from '@nestjs/common';
 import { CategoryService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
-import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 
-@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoryService: CategoryService) {}

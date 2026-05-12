@@ -14,10 +14,8 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtPayload } from './constants/jwt.constants';
 
-@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -39,16 +37,12 @@ export class AuthController {
   }
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user profile' })
   getProfile(@Req() req: Request & { user: JwtPayload }) {
     return this.authService.getProfile(req.user.id);
   }
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Logout' })
   logout(
     @Req() req: Request & { user: JwtPayload },
     @Res({ passthrough: true }) res: Response,

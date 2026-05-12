@@ -24,9 +24,6 @@ export type {
   QuerySalaryParams,
   QuerySalaryDto,
   SalaryListResponse,
-  SalaryStatistics,
-  MonthlyReport,
-  YearlyReport,
 } from "./salary.types";
 
 export interface MonthlyPayrollBreakdown {

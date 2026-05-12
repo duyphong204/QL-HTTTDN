@@ -19,13 +19,10 @@ import {
   UpdateLeaveStatusDto,
   QueryLeaveRequestDto,
 } from './dto/leave.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ValidationPipe } from '@nestjs/common';
 import { LeaveStatus } from '@prisma/client';
-@ApiTags('HR - Leave Requests')
-@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('leave-requests')

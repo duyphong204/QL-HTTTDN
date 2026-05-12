@@ -17,10 +17,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiTags('Sales - Orders')
-@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('orders')
 export class OrdersController {
@@ -88,7 +85,7 @@ export class OrdersController {
 
   @Patch(':id/cancel')
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  cancelOrder(@Param('id') id: string, @Body() _dto: CancelOrderDto) {
+  cancelOrder(@Param('id') id: string, @Body() dto: CancelOrderDto) {
     return this.ordersService.cancelOrder(id);
   }
 }

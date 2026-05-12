@@ -1,45 +1,53 @@
+import { lazy, Suspense, useLayoutEffect } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { Toaster } from "sonner";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleLayout from "@/layouts/RoleLayout";
-import HomePage from "@/pages/admin/HomePage";
-import PromotionManagement from "@/pages/admin/PromotionManagement";
-import UserManagement from "@/pages/admin/UserManagement";
-import SupplierManagement from "@/pages/admin/SupplierManagement";
-import ProductManagement from "@/pages/warehouse/ProductManagement";
-import CategoryManagement from "@/pages/warehouse/CategoryManagement";
-import LoginPage from "@/pages/auth/login";
-import RegisterPage from "@/pages/auth/register";
-import { Route, Routes, useLocation } from "react-router-dom";
-import { useLayoutEffect } from "react";
-import { Toaster } from "sonner";
 import NotFoundPage from "@/pages/NotFoundPage";
-import SalaryManagement from "@/pages/hr/SalaryManagement";
-import LeaveRequestPage from "@/pages/employee/EmployeeLeaveRequestPage";
-import EmployeeManagement from "@/pages/hr/EmployeeManagement";
-import LeaveRequestManagement from "@/pages/hr/LeaveRequestManagement";
-import MySalaryPage from "@/pages/employee/MySalaryPage";
-import ProfilePage from "@/pages/employee/ProfilePage";
-import SalesOrderManagement from "@/pages/sales/SalesOrderManagement";
-import ExportSlipManagement from "@/pages/sales/ExportSlipManagement";
-import ImportSlipManagement from "@/pages/warehouse/ImportSlipManagement";
-import AdminReportPage from "@/pages/admin/AdminReportPage";
-import SalesReportPage from "@/pages/sales/SalesReportPage";
-import WarehouseReportPage from "@/pages/warehouse/WarehouseReportPage";
-import HrReportPage from "@/pages/hr/HrReportPage";
-import HrStatisticsPage from "@/pages/hr/HrStatisticsPage";
 import { rolesFor } from "@/routes/routes.config";
-// IMPORT CUSTOMER PAGES
-import ShopHome from "@/pages/customer/ShopHome";
-import ProductList from "@/pages/customer/ProductList";
-import ProductDetail from "@/pages/customer/ProductDetail";
-import CartPage from "@/pages/customer/CartPage";
-import CheckoutPage from "@/pages/customer/CheckoutPage";
-import CustomerOrders from "@/pages/customer/CustomerOrders";
 import ShopLayout from "@/layouts/ShopLayout";
-import OrderSuccess from "@/pages/customer/OrderSuccess";
-import PaymentReturn from "@/pages/customer/PaymentReturn";
-import Profile from "@/pages/customer/Profile";
-import About from "@/pages/customer/About";
-import Contact from "@/pages/customer/Contact";
+
+const HomePage = lazy(() => import("@/pages/admin/HomePage"));
+const PromotionManagement = lazy(() => import("@/pages/admin/PromotionManagement"));
+const UserManagement = lazy(() => import("@/pages/admin/UserManagement"));
+const SupplierManagement = lazy(() => import("@/pages/admin/SupplierManagement"));
+const ProductManagement = lazy(() => import("@/pages/warehouse/ProductManagement"));
+const CategoryManagement = lazy(() => import("@/pages/warehouse/CategoryManagement"));
+const LoginPage = lazy(() => import("@/pages/auth/login"));
+const RegisterPage = lazy(() => import("@/pages/auth/register"));
+const SalaryManagement = lazy(() => import("@/pages/hr/SalaryManagement"));
+const LeaveRequestPage = lazy(() => import("@/pages/employee/EmployeeLeaveRequestPage"));
+const EmployeeManagement = lazy(() => import("@/pages/hr/EmployeeManagement"));
+const LeaveRequestManagement = lazy(() => import("@/pages/hr/LeaveRequestManagement"));
+const MySalaryPage = lazy(() => import("@/pages/employee/MySalaryPage"));
+const ProfilePage = lazy(() => import("@/pages/employee/ProfilePage"));
+const SalesOrderManagement = lazy(() => import("@/pages/sales/SalesOrderManagement"));
+const ExportSlipManagement = lazy(() => import("@/pages/sales/ExportSlipManagement"));
+const ImportSlipManagement = lazy(() => import("@/pages/warehouse/ImportSlipManagement"));
+const AdminReportPage = lazy(() => import("@/pages/admin/AdminReportPage"));
+const SalesReportPage = lazy(() => import("@/pages/sales/SalesReportPage"));
+const WarehouseReportPage = lazy(() => import("@/pages/warehouse/WarehouseReportPage"));
+const HrReportPage = lazy(() => import("@/pages/hr/HrReportPage"));
+const HrStatisticsPage = lazy(() => import("@/pages/hr/HrStatisticsPage"));
+const ShopHome = lazy(() => import("@/pages/customer/ShopHome"));
+const ProductList = lazy(() => import("@/pages/customer/ProductList"));
+const ProductDetail = lazy(() => import("@/pages/customer/ProductDetail"));
+const CartPage = lazy(() => import("@/pages/customer/CartPage"));
+const CheckoutPage = lazy(() => import("@/pages/customer/CheckoutPage"));
+const CustomerOrders = lazy(() => import("@/pages/customer/CustomerOrders"));
+const OrderSuccess = lazy(() => import("@/pages/customer/OrderSuccess"));
+const PaymentReturn = lazy(() => import("@/pages/customer/PaymentReturn"));
+const Profile = lazy(() => import("@/pages/customer/Profile"));
+const About = lazy(() => import("@/pages/customer/About"));
+const Contact = lazy(() => import("@/pages/customer/Contact"));
+
+function RouteLoading() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500">
+      Đang tải trang...
+    </div>
+  );
+}
 export const AppRouter = () => {
   const location = useLocation();
 
@@ -49,21 +57,22 @@ export const AppRouter = () => {
 
   return (
     <>
-      <Routes>
-        {/* Auth Routes - không protected */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          {/* Auth Routes - không protected */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Admin Routes - bọc với ProtectedRoute để check auth trước khi render layout */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <RoleLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/admin" element={<HomePage />} />
-          <Route path="/admin/dashboard" element={<HomePage />} />
+          {/* Admin Routes - bọc với ProtectedRoute để check auth trước khi render layout */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <RoleLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/admin" element={<HomePage />} />
+            <Route path="/admin/dashboard" element={<HomePage />} />
 
           <Route
             path="/admin/users"
@@ -239,60 +248,61 @@ export const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-        </Route>
-        {/* Customer Routes */}
-        <Route path="/" element={<ShopLayout />}>
-          <Route index element={<ShopHome />} />
-          <Route path="products" element={<ProductList />} />
-          <Route path="products/:id" element={<ProductDetail />} />
-          <Route path="cart" element={<CartPage />} />
-          <Route
-            path="checkout"
-            element={
-              <ProtectedRoute roles={["CUSTOMER"]}>
-                <CheckoutPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="orders"
-            element={
-              <ProtectedRoute roles={["CUSTOMER"]}>
-                <CustomerOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="orders/:id"
-            element={
-              <ProtectedRoute roles={["CUSTOMER"]}>
-                <CustomerOrders />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="profile"
-            element={
-              <ProtectedRoute roles={["CUSTOMER"]}>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="order-success/:id"
-            element={
-              <ProtectedRoute roles={["CUSTOMER"]}>
-                <OrderSuccess />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="payment-return" element={<PaymentReturn />} />
-          <Route path="about" element={<About />} />
-          <Route path="contact" element={<Contact />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      <Toaster position="top-right" richColors />
+          </Route>
+          {/* Customer Routes */}
+          <Route path="/" element={<ShopLayout />}>
+            <Route index element={<ShopHome />} />
+            <Route path="products" element={<ProductList />} />
+            <Route path="products/:id" element={<ProductDetail />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route
+              path="checkout"
+              element={
+                <ProtectedRoute roles={["CUSTOMER"]}>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <ProtectedRoute roles={["CUSTOMER"]}>
+                  <CustomerOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="orders/:id"
+              element={
+                <ProtectedRoute roles={["CUSTOMER"]}>
+                  <CustomerOrders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute roles={["CUSTOMER"]}>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="order-success/:id"
+              element={
+                <ProtectedRoute roles={["CUSTOMER"]}>
+                  <OrderSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="payment-return" element={<PaymentReturn />} />
+            <Route path="about" element={<About />} />
+            <Route path="contact" element={<Contact />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+      <Toaster position="top-left" richColors />
     </>
   );
 };

@@ -11,14 +11,12 @@ import {
 } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/supplier.dto';
-import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { QuerySupplierDto } from './dto/supplier.dto';
 
-@ApiTags('Suppliers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('suppliers')
 export class SuppliersController {

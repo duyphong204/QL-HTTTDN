@@ -9,7 +9,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -21,8 +20,6 @@ import {
 } from './dto/promotion.dto';
 import { PromotionsService } from './promotions.service';
 
-@ApiTags('Sales - Promotions')
-@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('promotions')
 export class PromotionsController {
