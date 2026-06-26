@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { PaginationMeta } from "@/types/common.types";
 
 interface UseClientTableOptions<T> {
@@ -36,15 +36,14 @@ export function useClientTable<T>({
     };
   }, [filteredData.length, page, pageSize]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm]);
+  const [prevSearchTerm, setPrevSearchTerm] = useState("");
 
-  useEffect(() => {
-    if (page > meta.totalPages) {
-      setPage(meta.totalPages);
-    }
-  }, [meta.totalPages, page]);
+  if (searchTerm !== prevSearchTerm) {
+    setPrevSearchTerm(searchTerm);
+    setPage(1);
+  } else if (meta.totalPages > 0 && page > meta.totalPages) {
+    setPage(meta.totalPages);
+  }
 
   const pagedData = useMemo(() => {
     const start = (page - 1) * pageSize;

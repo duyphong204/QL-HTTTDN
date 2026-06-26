@@ -24,7 +24,7 @@ export default function HrReportPage() {
   const periodLabel = formatReportPeriod(filters);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8">
       <style>{`
         #print-hr-report { display: none; }
         @media print {
@@ -39,16 +39,16 @@ export default function HrReportPage() {
       `}</style>
 
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <Users size={22} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
+              <Users size={24} strokeWidth={2} />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-gray-900">
                 Báo cáo nhân sự
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500">
                 Tổng hợp chi phí nhân sự và biến động nhân lực
               </p>
             </div>
@@ -57,9 +57,9 @@ export default function HrReportPage() {
           <button
             onClick={handlePrint}
             disabled={!hr || loading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-700/20 transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-slate-700/30 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:scale-100"
           >
-            <Printer size={16} /> In báo cáo
+            <Printer size={18} strokeWidth={2.5} /> In báo cáo
           </button>
         </div>
 
@@ -70,7 +70,9 @@ export default function HrReportPage() {
           typeOptions={["month", "year"]}
         />
 
-        <HrReportSection />
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <HrReportSection />
+        </div>
       </div>
 
       {/* Print section */}

@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const profile = await authService.getProfile();
       set({ user: profile, isAuthenticated: true });
-    } catch (error) {
+    } catch {
       set({ user: null, isAuthenticated: false });
     }
   },

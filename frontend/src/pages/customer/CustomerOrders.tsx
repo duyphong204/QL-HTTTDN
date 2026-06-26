@@ -143,7 +143,7 @@ export default function CustomerOrders() {
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8 min-h-[calc(100vh-220px)]">
+      <div className="max-w-4xl mx-auto px-4 py-6 min-h-[calc(100vh-220px)]">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Lịch sử đơn hàng
         </h1>
@@ -175,7 +175,7 @@ export default function CustomerOrders() {
 
   if (!orders.length) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-16 text-center min-h-[calc(100vh-220px)] flex flex-col items-center justify-center">
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center min-h-[calc(100vh-220px)] flex flex-col items-center justify-center">
         <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <Package size={48} className="text-gray-400" />
         </div>
@@ -198,7 +198,7 @@ export default function CustomerOrders() {
 
   if (isDetailView && !filteredOrders.length) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-12 min-h-[calc(100vh-220px)] flex items-center">
+      <div className="max-w-4xl mx-auto px-4 py-10 min-h-[calc(100vh-220px)] flex items-center">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
             Không tìm thấy đơn hàng
@@ -219,9 +219,9 @@ export default function CustomerOrders() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-120px)]">
-      <div className="flex items-center justify-between gap-3 mb-10">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 min-h-[calc(100vh-120px)] animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 lg:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
           {isDetailView ? "Chi tiết đơn hàng" : "Lịch sử đơn hàng"}
         </h1>
         {isDetailView && (
@@ -237,28 +237,30 @@ export default function CustomerOrders() {
 
       <div className="space-y-6">
         {!isDetailView ? (
-          <div className="flex flex-wrap gap-3 pb-1">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
-                  activeTab === tab
-                    ? "bg-blue-100 border-blue-300 text-blue-800"
-                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {STATUS_LABEL_MAP[tab]} ({statusCounts[tab]})
-              </button>
-            ))}
+          <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2 -mx-2 px-2 snap-x">
+            <div className="flex gap-2">
+              {STATUS_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-all snap-start ${
+                    activeTab === tab
+                      ? "bg-blue-600 border-blue-600 text-white shadow-md"
+                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {STATUS_LABEL_MAP[tab]} <span className={activeTab === tab ? "text-blue-100 font-normal ml-1" : "text-gray-400 font-normal ml-1"}>({statusCounts[tab]})</span>
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
         {!isDetailView && visibleOrders.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600">
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 p-8 text-center text-gray-500">
             Không có đơn nào ở trạng thái{" "}
-            {STATUS_LABEL_MAP[activeTab].toLowerCase()}.
+            <span className="font-semibold text-gray-700">{STATUS_LABEL_MAP[activeTab].toLowerCase()}</span>.
           </div>
         ) : null}
 
@@ -307,7 +309,7 @@ export default function CustomerOrders() {
               return (
                 <>
                   {/* Header đơn hàng */}
-                  <div className="p-6 sm:p-8 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="p-4 sm:p-5 md:p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-gray-500">
@@ -356,7 +358,7 @@ export default function CustomerOrders() {
 
                   {/* Thông tin chi tiết - hiện khi ở detail view */}
                   {isDetailView && (
-                    <div className="p-6 sm:p-8 border-b border-gray-200 space-y-6">
+                    <div className="p-4 sm:p-5 md:p-6 border-b border-gray-100 space-y-4 md:space-y-6">
                       {/* Thông tin giao hàng */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
@@ -465,12 +467,12 @@ export default function CustomerOrders() {
                   )}
 
                   {/* Danh sách sản phẩm trong đơn */}
-                  <div className="p-6 sm:p-8 border-b border-gray-200">
+                  <div className="p-4 sm:p-5 md:p-6 border-b border-gray-100">
                     <h3 className="font-semibold text-gray-900 mb-6">
                       Danh sách sản phẩm ({normalizedItems.length})
                     </h3>
                     {normalizedItems.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {normalizedItems.map((item, idx) => (
                           <Link
                             key={idx}
@@ -491,7 +493,7 @@ export default function CustomerOrders() {
                                 : "cursor-default pointer-events-none"
                             }`}
                           >
-                            <div className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
                               <img
                                 src={
                                   item.imageUrl ||
@@ -499,10 +501,11 @@ export default function CustomerOrders() {
                                 }
                                 alt={item.productName}
                                 className="w-full h-full object-contain"
+                                loading="lazy"
                               />
                             </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900 line-clamp-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 text-sm sm:text-base line-clamp-2 leading-snug">
                                 {item.productName}
                               </h4>
                               <p className="text-sm text-gray-500 mt-1">
@@ -528,7 +531,7 @@ export default function CustomerOrders() {
                   </div>
 
                   {/* Tóm tắt chi phí */}
-                  <div className="p-6 sm:p-8 bg-gray-50 rounded-b-2xl">
+                  <div className="p-4 sm:p-5 md:p-6 bg-gray-50/50 rounded-b-2xl">
                     <div className="max-w-sm ml-auto space-y-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Tổng sản phẩm:</span>

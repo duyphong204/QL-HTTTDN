@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Eye, Pencil, Package, CheckCircle2, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Eye, Pencil, Package, CheckCircle2, TrendingUp, FileText } from "lucide-react";
 import { DataTableToolbar } from "@/components/common/DataTableToolbar";
 import { TableLoadingRow } from "@/components/common/Loading";
 import { PaginationControls } from "@/components/common/PaginationControls";
@@ -98,7 +98,7 @@ export default function ImportSlipManagement() {
   // ================= DELETE HANDLER =================
   const handleRemoveSlip = useCallback(
     async (id: string) => {
-      await confirmAndRun({
+      void confirmAndRun({
         message:
           "Bạn có chắc muốn hủy phiếu nhập này? Tồn kho sẽ được hoàn lại và phiếu sẽ chuyển sang trạng thái Đã hủy.",
         action: () => deleteStockIn(id),
@@ -107,24 +107,115 @@ export default function ImportSlipManagement() {
     [confirmAndRun, deleteStockIn]
   );
 
+  const renderTableBody = () => {
+    if (isLoading && table.pagedData.length === 0) {
+      return <TableLoadingRow colSpan={6} text="Đang tải dữ liệu phiếu nhập..." />;
+    }
+
+    if (table.pagedData.length === 0) {
+      return (
+        <tr>
+          <td colSpan={6} className="px-6 py-16 text-center text-gray-500 bg-gray-50/30">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <span className="text-4xl">📄</span>
+              <p className="font-medium text-gray-600">Chưa có phiếu nhập nào.</p>
+              <p className="text-sm">Hãy thử thêm phiếu mới hoặc thay đổi bộ lọc.</p>
+            </div>
+          </td>
+        </tr>
+      );
+    }
+
+    return table.pagedData.map((slip) => (
+      <tr
+        key={slip.id}
+        className="group border-b border-gray-50 last:border-0 transition-colors hover:bg-blue-50/40"
+      >
+        <td className="px-6 py-4 font-mono text-gray-900 font-bold">
+          <span className="bg-gray-100 px-2 py-1 rounded border border-gray-200 shadow-sm text-xs">
+            #{slip.id.slice(0, 8).toUpperCase()}
+          </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="font-semibold text-gray-800">
+            {slip.supplier?.name || "—"}
+          </div>
+        </td>
+        <td className="px-6 py-4 text-gray-500 font-medium">
+          {new Date(slip.date).toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+          })}
+        </td>
+        <td className="px-6 py-4">
+          <span
+            className={cn(
+              "px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm border",
+              statusStyle[slip.status] ??
+                "bg-gray-50 text-gray-700 border-gray-200"
+            )}
+          >
+            {statusLabel[slip.status] ?? slip.status}
+          </span>
+        </td>
+        <td className="px-6 py-4 text-right font-bold text-gray-900 text-base">
+          {formatNumberWithDong(slip.totalAmount)}
+        </td>
+        <td className="px-6 py-4 text-center">
+          <div className="flex items-center justify-center gap-2 opacity-50 transition-opacity duration-200 group-hover:opacity-100">
+            <button
+              onClick={() => openDetailModal(slip.id)}
+              className="rounded-lg p-2 text-gray-500 bg-white shadow-sm border border-gray-100 transition-all hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 active:scale-95"
+              title="Xem chi tiết"
+            >
+              <Eye size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => openEditModal(slip)}
+              disabled={slip.status === "CANCELLED"}
+              className="rounded-lg p-2 text-gray-500 bg-white shadow-sm border border-gray-100 transition-all hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:bg-gray-50"
+              title={slip.status === "CANCELLED" ? "Phiếu đã hủy, không thể sửa" : "Sửa phiếu nhập"}
+            >
+              <Pencil size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => handleRemoveSlip(slip.id)}
+              disabled={slip.status === "CANCELLED"}
+              className="rounded-lg p-2 text-gray-500 bg-white shadow-sm border border-gray-100 transition-all hover:bg-red-50 hover:text-red-600 hover:border-red-200 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:bg-gray-50"
+              title={slip.status === "CANCELLED" ? "Phiếu đã hủy" : "Hủy phiếu nhập"}
+            >
+              <Trash2 size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+        </td>
+      </tr>
+    ));
+  };
+
   return (
-    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Quản lý nhập kho
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Quản lý phiếu nhập theo CRUD: thêm, sửa, xóa, xem chi tiết
-            </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+              <FileText size={24} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                Quản lý nhập kho
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Quản lý phiếu nhập theo CRUD: thêm, sửa, xóa, xem chi tiết
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <select
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white shadow-sm"
+              className="h-10 min-w-[120px] px-3 text-sm font-medium border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 cursor-pointer transition-all"
             >
               <option value="">Tất cả tháng</option>
               {monthOptions.map((key) => {
@@ -138,137 +229,82 @@ export default function ImportSlipManagement() {
             </select>
             <button
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/30 active:translate-y-0 active:scale-95"
             >
-              <Plus size={18} /> Tạo phiếu nhập
+              <Plus size={18} strokeWidth={2.5} /> Tạo phiếu nhập
             </button>
           </div>
         </div>
 
         {/* STATS CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Package className="text-blue-600" size={22} />
-            </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md hover:border-blue-100/50">
             <div>
-              <p className="text-sm text-gray-500">Tổng phiếu nhập</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tổng phiếu nhập</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-          </div>
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="text-emerald-600" size={22} />
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-inner">
+              <Package className="text-blue-600" size={22} strokeWidth={2.5} />
             </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md hover:border-emerald-100/50">
             <div>
-              <p className="text-sm text-gray-500">Đã hoàn thành</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Đã hoàn thành</p>
               <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
             </div>
-          </div>
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-              <TrendingUp className="text-violet-600" size={22} />
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-inner">
+              <CheckCircle2 className="text-emerald-600" size={22} strokeWidth={2.5} />
             </div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md hover:border-violet-100/50">
             <div>
-              <p className="text-sm text-gray-500">Tổng giá trị nhập</p>
-              <p className="text-lg font-bold text-gray-900 truncate">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tổng giá trị nhập</p>
+              <p className="text-2xl font-bold text-violet-700 truncate">
                 {formatNumberWithDong(stats.totalValue)}
               </p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shadow-inner">
+              <TrendingUp className="text-violet-600" size={22} strokeWidth={2.5} />
             </div>
           </div>
         </div>
 
         {/* TABLE */}
-        <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-          <DataTableToolbar
-            searchValue={table.searchTerm}
-            onSearchChange={table.setSearchTerm}
-            searchPlaceholder="Tìm mã phiếu hoặc nhà cung cấp..."
-          />
+        <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-sm overflow-hidden relative">
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <DataTableToolbar
+              searchValue={table.searchTerm}
+              onSearchChange={table.setSearchTerm}
+              searchPlaceholder="Tìm mã phiếu hoặc tên nhà cung cấp..."
+            />
+          </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-gray-50/50 text-gray-600 font-semibold border-b border-gray-100">
+              <thead className="bg-gray-50/80 text-gray-600 font-semibold border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-4">Mã phiếu</th>
-                  <th className="px-6 py-4">Nhà cung cấp</th>
-                  <th className="px-6 py-4">Ngày tạo</th>
-                  <th className="px-6 py-4">Trạng thái</th>
-                  <th className="px-6 py-4 text-right">Tổng tiền</th>
-                  <th className="px-6 py-4 text-center">Thao tác</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Mã phiếu</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Nhà cung cấp</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Ngày tạo</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs">Trạng thái</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs text-right">Tổng tiền</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-xs text-center">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
-                {isLoading && table.pagedData.length === 0 ? (
-                  <TableLoadingRow colSpan={6} text="Đang tải dữ liệu..." />
-                ) : (
-                  table.pagedData.map((slip) => (
-                    <tr
-                      key={slip.id}
-                      className="hover:bg-gray-50/70 transition-colors group"
-                    >
-                      <td className="px-6 py-4 font-mono text-blue-600 font-medium">
-                        #{slip.id.slice(0, 8).toUpperCase()}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700 font-medium">
-                        {slip.supplier?.name || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        {new Date(slip.date).toLocaleDateString("vi-VN")}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={cn(
-                            "px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                            statusStyle[slip.status] ??
-                              "bg-gray-50 text-gray-700 border-gray-100"
-                          )}
-                        >
-                          {statusLabel[slip.status] ?? slip.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-bold text-gray-900">
-                        {formatNumberWithDong(slip.totalAmount)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => openDetailModal(slip.id)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(slip)}
-                            disabled={slip.status === "CANCELLED"}
-                            className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={slip.status === "CANCELLED" ? "Phiếu đã hủy, không thể sửa" : undefined}
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveSlip(slip.id)}
-                            disabled={slip.status === "CANCELLED"}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                            title={slip.status === "CANCELLED" ? "Phiếu đã hủy" : "Hủy phiếu nhập"}
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+              <tbody className="divide-y divide-gray-50/50 bg-white">
+                {renderTableBody()}
               </tbody>
             </table>
           </div>
 
-          <PaginationControls
-            meta={table.meta}
-            currentPage={table.page}
-            isLoading={isLoading}
-            onPageChange={table.setPage}
-          />
+          <div className="border-t border-gray-100 bg-white p-4">
+            <PaginationControls
+              meta={table.meta}
+              currentPage={table.page}
+              isLoading={isLoading}
+              onPageChange={table.setPage}
+            />
+          </div>
         </div>
       </div>
 
@@ -280,63 +316,67 @@ export default function ImportSlipManagement() {
         isOpen={Boolean(selectedStockIn)}
         onClose={closeDetailModal}
         title="Chi tiết phiếu nhập"
-        maxWidthClassName="max-w-2xl"
+        maxWidthClassName="max-w-3xl"
       >
         {selectedStockIn && (
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 bg-white">
             {/* DETAIL INFO */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
               <div>
-                <div className="text-gray-500">Người lập</div>
-                <div className="font-semibold text-gray-900">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Người lập</div>
+                <div className="font-bold text-gray-900">
                   {selectedStockIn.creatorName || "N/A"}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">Trạng thái</div>
-                <div className="font-semibold text-gray-900">
-                  {statusLabel[selectedStockIn.status] ??
-                    selectedStockIn.status}
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Trạng thái</div>
+                <div className="font-bold text-gray-900">
+                  <span className={cn(
+                    "inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm",
+                    statusStyle[selectedStockIn.status] ?? "bg-gray-50 text-gray-700 border-gray-200"
+                  )}>
+                    {statusLabel[selectedStockIn.status] ?? selectedStockIn.status}
+                  </span>
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">Ngày tạo</div>
-                <div className="font-semibold text-gray-900">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Ngày tạo</div>
+                <div className="font-bold text-gray-900">
                   {new Date(selectedStockIn.date).toLocaleString("vi-VN")}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">Nhà cung cấp</div>
-                <div className="font-semibold text-gray-900">
+                <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Nhà cung cấp</div>
+                <div className="font-bold text-gray-900">
                   {selectedStockIn.supplier?.name || "N/A"}
                 </div>
               </div>
             </div>
 
             {/* ITEMS TABLE */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500">
+            <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium">
+                    <th className="px-4 py-3">
                       Sản phẩm
                     </th>
-                    <th className="px-4 py-3 text-center font-medium">SL</th>
-                    <th className="px-4 py-3 text-right font-medium">
+                    <th className="px-4 py-3 text-center">SL</th>
+                    <th className="px-4 py-3 text-right">
                       Đơn giá
                     </th>
-                    <th className="px-4 py-3 text-right font-medium">
+                    <th className="px-4 py-3 text-right">
                       Thành tiền
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                   {selectedStockIn.details?.map((detail) => (
-                    <tr key={detail.id}>
-                      <td className="px-4 py-3 font-medium text-gray-700">
+                    <tr key={detail.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">
                         {detail.product?.name}
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-600">
+                      <td className="px-4 py-3 text-center font-semibold text-gray-700">
                         {detail.quantity}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-600">
@@ -348,29 +388,26 @@ export default function ImportSlipManagement() {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-blue-50/30">
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-4 py-4 font-bold text-gray-700"
-                    >
-                      Tổng cộng
-                    </td>
-                    <td className="px-4 py-4 text-right font-black text-blue-600 text-lg">
-                      {formatNumberWithDong(selectedStockIn.totalAmount)}
-                    </td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
 
+            {/* TOTAL */}
+            <div className="flex justify-end items-center bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4">
+              <span className="text-[13px] font-semibold text-gray-700 uppercase tracking-wider mr-4">
+                Tổng cộng
+              </span>
+              <span className="text-2xl font-bold text-blue-700">
+                {formatNumberWithDong(selectedStockIn.totalAmount)}
+              </span>
+            </div>
+
             {/* CLOSE BUTTON */}
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2">
               <button
                 onClick={closeDetailModal}
-                className="px-6 py-2 text-sm font-medium text-gray-500 border rounded-xl hover:bg-gray-50"
+                className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Đóng
+                Đóng chi tiết
               </button>
             </div>
           </div>

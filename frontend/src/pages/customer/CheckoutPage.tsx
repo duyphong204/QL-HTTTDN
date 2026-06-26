@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ArrowLeft, MapPin, ShieldCheck, Lock } from "lucide-react";
 import { useOrderStore } from "@/stores/order.store";
+import { getEffectiveProductPrice } from "@/lib/pricing";
+import { useMemo } from "react";
 
 type CheckoutErrors = {
   fullName?: string;
@@ -64,12 +66,13 @@ export default function CheckoutPage() {
 
   const [loading, setLoading] = useState(false);
 
-  const getUnitPrice = (price: number, salePrice?: number) =>
-    typeof salePrice === "number" ? salePrice : price;
-
-  const subtotal = items.reduce(
-    (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
-    0,
+  const subtotal = useMemo(
+    () =>
+      items.reduce(
+        (sum, i) => sum + getEffectiveProductPrice(i) * i.quantity,
+        0,
+      ),
+    [items]
   );
   const total = subtotal;
 
@@ -174,28 +177,29 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[90vh]">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[90vh] animate-in fade-in duration-500">
       {/* Back link */}
       <Link
         to="/cart"
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-8 text-sm font-medium transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider mb-6"
       >
-        <ArrowLeft size={18} />
-        Back to Cart
+        <ArrowLeft size={16} strokeWidth={2.5} />
+        Quay lại Giỏ hàng
       </Link>
 
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-10 tracking-tight">
-        Checkout
-      </h1>
+      <div className="mb-10">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">Thanh toán</h1>
+        <p className="text-gray-500 font-medium mt-2">Vui lòng điền thông tin giao hàng của bạn</p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
         {/* ==================== LEFT: SHIPPING INFORMATION ==================== */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="p-6 sm:p-8 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
                 <MapPin size={22} className="text-blue-600" />
-                Shipping Information
+                Thông tin giao hàng
               </h2>
             </div>
 
@@ -312,37 +316,38 @@ export default function CheckoutPage() {
 
         {/* ==================== RIGHT: ORDER SUMMARY ==================== */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Order Summary
+          <div className="bg-white rounded-[2rem] shadow-2xl shadow-gray-200/50 border border-gray-100 p-6 sm:p-8 sticky top-28">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 tracking-tight">
+              Tóm tắt đơn hàng
             </h2>
 
             <div className="space-y-6 mb-8">
               {items.map((item) => (
                 <div key={item.id} className="flex gap-4">
-                  <div className="w-16 h-16 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                  <div className="w-16 h-16 flex-shrink-0 bg-white rounded-xl overflow-hidden border border-gray-100 p-1 shadow-sm">
                     <img
                       src={item.imageUrl || "https://via.placeholder.com/150"}
                       alt={item.name}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain mix-blend-multiply"
+                      loading="lazy"
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 line-clamp-2">
+                    <h3 className="font-bold text-gray-900 line-clamp-2">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
-                      Qty: {item.quantity}
+                    <p className="text-sm text-gray-500 font-medium">
+                      SL: {item.quantity}
                     </p>
-                    <p className="text-sm font-medium text-blue-600 mt-1">
+                    <p className="text-sm font-bold text-blue-600 mt-1 tabular-nums">
                       {(
-                        getUnitPrice(item.price, item.salePrice) * item.quantity
+                        getEffectiveProductPrice(item) * item.quantity
                       ).toLocaleString("vi-VN")}{" "}
                       đ
                     </p>
                     {typeof item.salePrice === "number" &&
                     item.salePrice < item.price ? (
-                      <p className="text-xs text-gray-400 line-through">
+                      <p className="text-xs text-gray-400 line-through font-medium tabular-nums">
                         {(item.price * item.quantity).toLocaleString("vi-VN")} đ
                       </p>
                     ) : null}
@@ -351,18 +356,18 @@ export default function CheckoutPage() {
               ))}
             </div>
 
-            <div className="space-y-4 pt-6 border-t border-gray-200">
-              <div className="flex justify-between text-gray-700">
-                <span>Subtotal</span>
-                <span>{subtotal.toLocaleString("vi-VN")} đ</span>
+            <div className="space-y-4 pt-6 border-t-2 border-gray-100">
+              <div className="flex justify-between text-gray-600 font-medium">
+                <span>Tạm tính</span>
+                <span className="font-bold text-gray-900 tabular-nums">{subtotal.toLocaleString("vi-VN")} đ</span>
               </div>
-              <div className="flex justify-between text-gray-700">
-                <span>Shipping</span>
-                <span className="text-green-600 font-medium">FREE</span>
+              <div className="flex justify-between text-gray-600 font-medium">
+                <span>Phí vận chuyển</span>
+                <span className="text-emerald-600 font-bold uppercase tracking-wider text-sm">Miễn phí</span>
               </div>
-              <div className="flex justify-between text-2xl font-bold text-gray-900 pt-4 border-t border-gray-200">
-                <span>Total</span>
-                <span>{total.toLocaleString("vi-VN")} đ</span>
+              <div className="flex justify-between items-end pt-6 mt-4 border-t-2 border-gray-100">
+                <span className="text-lg font-bold text-gray-900">Tổng cộng</span>
+                <span className="text-3xl font-black text-blue-600 tabular-nums">{total.toLocaleString("vi-VN")} <span className="text-lg text-blue-600/70">đ</span></span>
               </div>
             </div>
 
@@ -370,20 +375,20 @@ export default function CheckoutPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className={`mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition disabled:opacity-70 ${
+              className={`mt-8 w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-70 disabled:active:scale-100 ${
                 loading ? "animate-pulse" : ""
               }`}
             >
-              <Lock size={18} />
+              <Lock size={20} strokeWidth={2.5} />
               {loading
                 ? "Đang xử lý..."
-                : `Place Order - ${total.toLocaleString("vi-VN")} đ`}
+                : `Đặt hàng`}
             </button>
 
             {/* Secure badge */}
-            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-700 bg-green-50 py-3 rounded-lg">
+            <div className="mt-6 flex items-center justify-center gap-2 text-[13px] font-medium text-emerald-700 bg-emerald-50 py-3 rounded-lg border border-emerald-100">
               <ShieldCheck size={18} />
-              Secure SSL encrypted checkout
+              Thanh toán an toàn với mã hoá SSL
             </div>
           </div>
         </div>

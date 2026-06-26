@@ -12,10 +12,10 @@ export default function Footer() {
   return (
     <footer className="bg-gray-950 text-gray-300">
       {/* Main Footer - Thu gọn */}
-      <div className="max-w-7xl mx-auto px-6 pt-12 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-12 gap-x-8">
           {/* Column 1: Brand + Newsletter */}
-          <div className="space-y-6">
+          <div className="col-span-2 lg:col-span-2 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-md">
                 N
@@ -68,7 +68,7 @@ export default function Footer() {
           </div>
 
           {/* Column 2: Cửa hàng */}
-          <div>
+          <div className="col-span-1">
             <h3 className="text-white font-bold text-lg mb-5 tracking-wide">
               Cửa hàng
             </h3>
@@ -117,7 +117,7 @@ export default function Footer() {
           </div>
 
           {/* Column 3: Hỗ trợ */}
-          <div>
+          <div className="col-span-1">
             <h3 className="text-white font-bold text-lg mb-5 tracking-wide">
               Hỗ trợ
             </h3>
@@ -166,7 +166,7 @@ export default function Footer() {
           </div>
 
           {/* Column 4: Công ty */}
-          <div>
+          <div className="col-span-2 sm:col-span-1">
             <h3 className="text-white font-bold text-lg mb-5 tracking-wide">
               Công ty
             </h3>

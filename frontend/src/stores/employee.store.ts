@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { toast } from "sonner";
 import { employeeService } from "@/services/hr.service";
 import { getErrorMessage } from "@/stores/store.helpers";
+import type { Employee } from "@/types/employee.types";
 
 interface ProfileFormData {
   fullName?: string;
@@ -12,7 +13,7 @@ interface ProfileFormData {
 }
 
 interface EmployeeState {
-  myProfile: any | null;
+  myProfile: Employee | null;
   isLoadingProfile: boolean;
   isEditing: boolean;
   formData: ProfileFormData;

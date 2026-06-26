@@ -34,7 +34,7 @@ interface ImportExportChartProps {
 }
 
 export const ImportExportChart = ({ data }: ImportExportChartProps) => (
-  <ResponsiveContainer width="100%" height="100%">
+  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
     <BarChart data={data} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
       <XAxis dataKey="time" tick={{ fontSize: 12, fill: "#64748b" }} />
@@ -93,7 +93,7 @@ export const InventoryPieChart = ({ data }: InventoryPieChartProps) => {
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
       <PieChart>
         <Pie
           data={chartData}
@@ -163,7 +163,7 @@ export const TopCategoriesChart = ({ data }: TopCategoriesChartProps) => {
   if (!data.length) return <p className="text-sm text-gray-400 italic text-center py-4">Chưa có dữ liệu</p>;
   const chartData = data.map((d) => ({ name: d.categoryName, value: d.totalQuantity }));
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
       <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
         <XAxis type="number" tick={{ fontSize: 11, fill: "#64748b" }} tickFormatter={(v) => `${formatNumberVi(v)}`} />

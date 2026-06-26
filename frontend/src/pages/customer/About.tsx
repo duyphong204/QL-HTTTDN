@@ -64,17 +64,17 @@ const SectionTitle = ({ children, subtitle }) => (
 export default function About() {
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative py-20 md:py-32 bg-slate-50 overflow-hidden">
+      <section className="relative py-12 sm:py-20 md:py-32 bg-slate-50 overflow-hidden">
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider">
               Chào mừng đến với TechStore
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-6 sm:mb-8 tracking-tight">
               Công nghệ dẫn đầu <br />
               <span className="text-blue-600">Trải nghiệm khác biệt</span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 mb-8 sm:mb-10 leading-relaxed">
               Chúng tôi không chỉ cung cấp thiết bị, chúng tôi mang đến những
               giải pháp công nghệ tối ưu giúp nâng tầm cuộc sống của bạn mỗi
               ngày.
@@ -96,7 +96,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-12 sm:py-24">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="grid grid-cols-2 gap-4">
@@ -140,7 +140,7 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24 bg-slate-50">
+      <section className="py-12 sm:py-24 bg-slate-50">
         <div className="container mx-auto px-6">  
 <SectionTitle subtitle="Thông tin chi tiết">Dịch vụ của chúng tôi</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -162,9 +162,9 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-24">
+      <section className="py-12 sm:py-24">
         <div className="container mx-auto px-6">
-          <div className="bg-slate-900 rounded-3xl p-10 md:p-16 flex flex-col md:flex-row gap-12 justify-between items-center">
+          <div className="bg-slate-900 rounded-3xl p-6 sm:p-10 md:p-16 flex flex-col md:flex-row gap-12 justify-between items-center">
             {COMMITMENTS.map((item, i) => (
               <div
                 key={i}
@@ -190,9 +190,9 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-20 px-6">
         <div className="container mx-auto max-w-5xl">
-          <div className="bg-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div className="bg-blue-600 rounded-3xl p-8 sm:p-12 text-center text-white relative overflow-hidden">
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
                 Nâng cấp công nghệ ngay hôm nay

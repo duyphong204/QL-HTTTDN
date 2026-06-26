@@ -105,70 +105,78 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 animate-in fade-in duration-500">
       {/* Header phần profile */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">
             Tài khoản của bạn
           </h1>
-          <p className="text-gray-600 mt-2">
-            Quản lý thông tin cá nhân và đơn hàng
+          <p className="text-gray-500 text-lg mt-3 font-medium">
+            Quản lý thông tin cá nhân và theo dõi đơn hàng
           </p>
         </div>
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium px-5 py-2.5 rounded-lg border border-red-200 transition-all shadow-sm hover:shadow"
+          className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white font-bold px-6 py-3 rounded-xl border border-red-100 hover:border-red-600 transition-all duration-300 shadow-sm hover:shadow-lg active:scale-95"
         >
-          <LogOut size={18} />
+          <LogOut size={20} />
           Đăng xuất
         </button>
       </div>
 
-      {/* Card thông tin cá nhân */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-        <div className="p-6 sm:p-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-              <User size={28} />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                {user.profile?.fullName || user.email || "Người dùng"}
-              </h2>
-              <p className="text-gray-500 text-sm flex items-center gap-1.5 mt-1">
-                <Mail size={16} />
-                {user.email}
-              </p>
-            </div>
-          </div>
-
-          {/* Các thông tin bổ sung (có thể mở rộng sau) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <ShieldCheck size={24} className="text-green-600 mt-1" />
-              <div>
-                <h3 className="font-medium text-gray-900">Tài khoản an toàn</h3>
-                <p className="text-sm text-gray-600 mt-1">Đã xác thực email</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Card thông tin cá nhân */}
+        <div className="lg:col-span-1">
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-800 rounded-[2rem] shadow-2xl overflow-hidden text-white relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-2xl -ml-10 -mb-10"></div>
+            
+            <div className="p-8 relative z-10">
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border-4 border-white/30 mb-4 shadow-inner">
+                  <User size={40} strokeWidth={1.5} />
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight mb-1">
+                  {user.profile?.fullName || user.email || "Người dùng"}
+                </h2>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-sm font-medium text-blue-100 border border-white/10">
+                  <Mail size={14} />
+                  <span className="truncate max-w-[150px]">{user.email}</span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <Clock size={24} className="text-blue-600 mt-1" />
-              <div>
-                <h3 className="font-medium text-gray-900">Thành viên từ</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
-                </p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
+                    <ShieldCheck size={20} className="text-green-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-50 text-sm">Bảo mật</h3>
+                    <p className="text-xs text-blue-200 mt-0.5">Đã xác thực Email</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                  <div className="w-10 h-10 bg-blue-400/20 rounded-full flex items-center justify-center shrink-0">
+                    <Clock size={20} className="text-blue-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-50 text-sm">Thành viên từ</h3>
+                    <p className="text-xs text-blue-200 mt-0.5">
+                      Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Lịch sử đơn hàng */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden min-h-[560px] flex flex-col">
+        {/* Lịch sử đơn hàng */}
+        <div className="lg:col-span-2 flex flex-col">
+          <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden flex-1 flex flex-col min-h-[560px]">
         <div className="p-6 sm:p-8 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -184,43 +192,51 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 flex-1">
+        <div className="p-6 sm:p-8 flex-1 bg-gray-50/30">
           {loading ? (
             <div className="text-center text-gray-500 py-8 animate-pulse min-h-[280px] flex items-center justify-center">
               Đang tải đơn hàng...
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-10 text-gray-600 min-h-[320px] flex flex-col items-center justify-center">
-              <p className="font-medium text-gray-700 text-lg">
-                Bạn chưa có đơn hàng nào
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <Package size={40} className="text-gray-400" />
+              </div>
+              <p className="font-bold text-gray-900 text-xl">
+                Chưa có đơn hàng nào
+              </p>
+              <p className="text-gray-500 mt-2 mb-8">
+                Hãy khám phá các sản phẩm tuyệt vời của chúng tôi
               </p>
               <Link
                 to="/products"
-                className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-xl transition shadow-sm hover:shadow"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-full transition-all shadow-lg shadow-blue-600/30 hover:scale-105 active:scale-95"
               >
                 Bắt đầu mua sắm
               </Link>
             </div>
           ) : (
-            <div className="space-y-5">
-              <div className="flex flex-wrap gap-3 pb-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => {
-                      setActiveTab(tab);
-                      setShowAllOrders(false);
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${
-                      activeTab === tab
-                        ? "bg-blue-100 border-blue-300 text-blue-800"
-                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {STATUS_LABEL_MAP[tab]} ({statusCounts[tab]})
-                  </button>
-                ))}
+            <div className="space-y-6">
+              <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2 -mx-2 px-2 snap-x">
+                <div className="flex gap-2">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(tab);
+                        setShowAllOrders(false);
+                      }}
+                      className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold border transition-all snap-start ${
+                        activeTab === tab
+                          ? "bg-gray-900 border-gray-900 text-white shadow-md"
+                          : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                      }`}
+                    >
+                      {STATUS_LABEL_MAP[tab]} <span className={activeTab === tab ? "text-gray-400 font-normal ml-1" : "text-gray-400 font-normal ml-1"}>({statusCounts[tab]})</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {displayedOrders.length === 0 ? (
@@ -242,18 +258,18 @@ export default function Profile() {
                       className="group bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-5 transition-colors transition-shadow hover:shadow-md cursor-pointer"
                     >
                       {/* Header đơn hàng */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-gray-600">
-                            Mã đơn:
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                            #{order.id.slice(0, 4).toUpperCase()}
                           </span>
-                          <span className="font-semibold text-gray-900">
-                            #{order.id.slice(0, 8).toUpperCase()}
+                          <span className="font-bold text-gray-900 text-lg">
+                            Mã: {order.id.slice(0, 8).toUpperCase()}
                           </span>
                         </div>
 
-                        <span className="text-lg font-bold text-blue-600">
-                          {order.totalAmount.toLocaleString("vi-VN")} đ
+                        <span className="text-xl font-black text-blue-600 tabular-nums">
+                          {order.totalAmount.toLocaleString("vi-VN")} <span className="text-sm text-blue-600/70">đ</span>
                         </span>
                       </div>
 
@@ -320,6 +336,8 @@ export default function Profile() {
             </div>
           )}
         </div>
+        </div>
+      </div>
       </div>
     </div>
   );

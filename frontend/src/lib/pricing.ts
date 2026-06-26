@@ -17,9 +17,12 @@ export const getEffectiveProductPrice = (
     return priceOverride;
   }
 
+  const isSaleActive = product.isOnSale !== false;
+
   if (
-    product.isOnSale &&
+    isSaleActive &&
     typeof product.salePrice === "number" &&
+    product.salePrice > 0 &&
     product.salePrice < product.price
   ) {
     return product.salePrice;

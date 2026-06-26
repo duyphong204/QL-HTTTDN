@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Printer } from "lucide-react";
+import { Printer, Banknote } from "lucide-react";
 import { TableLoadingRow } from "@/components/common/Loading";
 import { SALARY_STATUS_BADGE, DETAIL_TYPE_BADGE } from "@/utils/salary";
 import { formatCurrencyVnd } from "@/utils/format";
@@ -64,7 +64,7 @@ export default function MySalaryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] p-6 md:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-500">
       <style>{`
         #print-monthly, #print-yearly { display: none; }
         @media print {
@@ -81,30 +81,35 @@ export default function MySalaryPage() {
         }
       `}</style>
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Bảng lương của tôi
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Xem thông tin lương và thu nhập cá nhân
-            </p>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-600/20">
+              <Banknote size={24} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                Bảng lương của tôi
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Xem thông tin lương và thu nhập cá nhân chi tiết
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={filterYear}
               onChange={(e) => setFilterYear(e.target.value)}
-              className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="h-11 min-w-[100px] px-3 text-sm font-medium border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 cursor-pointer transition-all"
             >
               {Array.from(
                 { length: 4 },
                 (_, i) => new Date().getFullYear() - 1 + i,
               ).map((y) => (
                 <option key={y} value={y}>
-                  {y}
+                  Năm {y}
                 </option>
               ))}
             </select>
@@ -112,9 +117,9 @@ export default function MySalaryPage() {
             <select
               value={filterMonth}
               onChange={(e) => setFilterMonth(e.target.value)}
-              className="h-11 px-3 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="h-11 min-w-[130px] px-3 text-sm font-medium border border-gray-200 rounded-xl bg-gray-50 text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 cursor-pointer transition-all"
             >
-              <option value="ALL">Tất cả tháng</option>
+              <option value="ALL">Tất cả các tháng</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
                 <option key={m} value={m}>
                   Tháng {m}
@@ -128,19 +133,19 @@ export default function MySalaryPage() {
               title={
                 filterMonth === "ALL" ? "Chọn một tháng để in phiếu lương" : ""
               }
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-600/20 transition-all hover:bg-purple-700 active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
             >
-              <Printer size={16} />
-              In phiếu tháng
+              <Printer size={18} strokeWidth={2.5} />
+              In tháng
             </button>
 
             <button
               onClick={printYearly}
               disabled={mySalaries.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl bg-slate-700 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl bg-slate-700 text-white shadow-lg shadow-slate-700/20 transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
             >
-              <Printer size={16} />
-              In lịch sử năm
+              <Printer size={18} strokeWidth={2.5} />
+              In cả năm
             </button>
           </div>
         </div>
@@ -148,13 +153,13 @@ export default function MySalaryPage() {
         {/* Month detail card */}
         {filterMonth !== "ALL" &&
           (salary && breakdown ? (
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-2xl p-6 md:p-8 space-y-8 shadow-sm">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <h2 className="text-lg font-black text-gray-900 uppercase tracking-wider">
                   Phiếu lương tháng {salary.month}/{salary.year}
                 </h2>
                 <span
-                  className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                  className={`inline-flex px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${
                     SALARY_STATUS_BADGE[
                       salary.status as keyof typeof SALARY_STATUS_BADGE
                     ]?.color
@@ -169,7 +174,7 @@ export default function MySalaryPage() {
               </div>
 
               {/* Summary cards */}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <SummaryCard
                   label="Lương cơ bản"
                   value={formatCurrencyVnd(breakdown.baseSalary)}
@@ -178,12 +183,12 @@ export default function MySalaryPage() {
                 <SummaryCard
                   label="Ngày công"
                   value={`${breakdown.actualWorkDays}/${breakdown.workingDays} ngày`}
-                  color="green"
+                  color="emerald"
                 />
                 <SummaryCard
                   label="Lương Gross"
                   value={formatCurrencyVnd(breakdown.grossSalary)}
-                  color="orange"
+                  color="amber"
                 />
                 <SummaryCard
                   label="Thực lĩnh"
@@ -193,72 +198,71 @@ export default function MySalaryPage() {
               </div>
 
               {/* Calculation explanation */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-1.5">
-                <p className="font-semibold text-slate-900">Cách tính lương</p>
-                <p>
-                  <span className="font-medium">Lương ngày</span> ={" "}
-                  {formatCurrencyVnd(breakdown.baseSalary)} ÷{" "}
-                  {breakdown.workingDays} ngày ={" "}
-                  <span className="font-medium text-slate-900">
-                    {formatCurrencyVnd(breakdown.dailyRate)}
-                  </span>
-                </p>
-                <p>
-                  <span className="font-medium">Lương Gross</span> ={" "}
-                  {formatCurrencyVnd(breakdown.dailyRate)} ×{" "}
-                  {breakdown.actualWorkDays} ngày ={" "}
-                  <span className="font-medium text-slate-900">
-                    {formatCurrencyVnd(breakdown.grossSalary)}
-                  </span>
-                </p>
-                {breakdown.unpaidDays > 0 && (
-                  <p>
-                    <span className="font-medium text-orange-600">
-                      Nghỉ không lương
-                    </span>{" "}
-                    = {breakdown.unpaidDays} ngày (đã tính vào ngày công thực tế)
-                  </p>
-                )}
-                {breakdown.totalBonus > 0 && (
-                  <p>
-                    <span className="font-medium text-green-700">
-                      + Thưởng/Phụ cấp
-                    </span>{" "}
-                    = {formatCurrencyVnd(breakdown.totalBonus)}
-                  </p>
-                )}
-                {breakdown.totalDeduction > 0 && (
-                  <p>
-                    <span className="font-medium text-red-700">− Khấu trừ</span>{" "}
-                    = {formatCurrencyVnd(breakdown.totalDeduction)}
-                  </p>
-                )}
-                <div className="mt-2 rounded-lg bg-white px-3 py-2 border border-slate-200 font-medium text-slate-900">
-                  Thực lĩnh = {formatCurrencyVnd(breakdown.grossSalary)}
-                  {breakdown.totalBonus > 0 &&
-                    ` + ${formatCurrencyVnd(breakdown.totalBonus)}`}
-                  {breakdown.totalDeduction > 0 &&
-                    ` − ${formatCurrencyVnd(breakdown.totalDeduction)}`}{" "}
-                  ={" "}
-                  <span className="text-purple-700">
-                    {formatCurrencyVnd(breakdown.netSalary)}
-                  </span>
+              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-6 text-sm text-gray-700 space-y-2.5">
+                <p className="font-bold text-gray-900 uppercase tracking-wider text-[11px] mb-3">Diễn giải cách tính</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2.5">
+                    <p className="flex justify-between items-center bg-white px-3 py-2 rounded border border-gray-100 shadow-sm">
+                      <span className="font-medium text-gray-600">Lương ngày:</span>
+                      <span className="font-bold text-gray-900">
+                        {formatCurrencyVnd(breakdown.baseSalary)} ÷ {breakdown.workingDays} = {formatCurrencyVnd(breakdown.dailyRate)}
+                      </span>
+                    </p>
+                    <p className="flex justify-between items-center bg-white px-3 py-2 rounded border border-gray-100 shadow-sm">
+                      <span className="font-medium text-gray-600">Lương Gross:</span>
+                      <span className="font-bold text-gray-900">
+                        {formatCurrencyVnd(breakdown.dailyRate)} × {breakdown.actualWorkDays} = {formatCurrencyVnd(breakdown.grossSalary)}
+                      </span>
+                    </p>
+                    {breakdown.unpaidDays > 0 && (
+                      <p className="flex justify-between items-center bg-orange-50 px-3 py-2 rounded border border-orange-100 shadow-sm">
+                        <span className="font-medium text-orange-700">Nghỉ không lương:</span>
+                        <span className="font-bold text-orange-800">
+                          {breakdown.unpaidDays} ngày
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2.5">
+                    {breakdown.totalBonus > 0 && (
+                      <p className="flex justify-between items-center bg-emerald-50 px-3 py-2 rounded border border-emerald-100 shadow-sm">
+                        <span className="font-medium text-emerald-700">+ Tổng thưởng:</span>
+                        <span className="font-bold text-emerald-800 tabular-nums">
+                          {formatCurrencyVnd(breakdown.totalBonus)}
+                        </span>
+                      </p>
+                    )}
+                    {breakdown.totalDeduction > 0 && (
+                      <p className="flex justify-between items-center bg-red-50 px-3 py-2 rounded border border-red-100 shadow-sm">
+                        <span className="font-medium text-red-700">− Khấu trừ:</span>
+                        <span className="font-bold text-red-800 tabular-nums">
+                          {formatCurrencyVnd(breakdown.totalDeduction)}
+                        </span>
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center bg-purple-100 px-4 py-3 rounded-xl border border-purple-200 shadow-sm">
+                      <span className="font-bold text-purple-900 uppercase tracking-wider text-xs">Thực lĩnh:</span>
+                      <span className="font-black text-purple-800 text-lg tabular-nums">
+                        {formatCurrencyVnd(breakdown.netSalary)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Itemized details */}
               {breakdown.details.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Chi tiết các khoản
+                  <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    Chi tiết các khoản thưởng & phạt
                   </h3>
-                  <div className="rounded-xl border border-gray-100 overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-50 text-gray-500 text-xs uppercase">
-                          <th className="px-4 py-2.5 text-left">Loại khoản</th>
-                          <th className="px-4 py-2.5 text-right">Số tiền</th>
-                          <th className="px-4 py-2.5 text-left">Ghi chú</th>
+                  <div className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
+                    <table className="w-full text-sm whitespace-nowrap text-left">
+                      <thead className="bg-gray-50/80 text-gray-600 font-semibold border-b border-gray-100">
+                        <tr>
+                          <th className="px-6 py-4 uppercase tracking-wider text-[11px]">Loại khoản</th>
+                          <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Số tiền</th>
+                          <th className="px-6 py-4 uppercase tracking-wider text-[11px] w-1/2">Ghi chú</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -268,21 +272,21 @@ export default function MySalaryPage() {
                               d.type as keyof typeof DETAIL_TYPE_BADGE
                             ];
                           return (
-                            <tr key={d.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-2.5">
+                            <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4">
                                 <span
-                                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${badge?.color ?? "bg-slate-100 text-slate-700"}`}
+                                  className={`inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm ${badge?.color ?? "bg-slate-50 text-slate-700 border-slate-200"}`}
                                 >
                                   {badge?.label ?? d.type}
                                 </span>
                               </td>
                               <td
-                                className={`px-4 py-2.5 text-right font-medium tabular-nums ${badge?.isPositive ? "text-green-600" : "text-red-600"}`}
+                                className={`px-6 py-4 text-right font-bold tabular-nums text-base ${badge?.isPositive ? "text-emerald-600" : "text-red-600"}`}
                               >
                                 {badge?.isPositive ? "+" : "−"}
                                 {formatCurrencyVnd(d.amount)}
                               </td>
-                              <td className="px-4 py-2.5 text-gray-400 text-xs">
+                              <td className="px-6 py-4 text-gray-500 font-medium whitespace-normal break-words">
                                 {d.description || "—"}
                               </td>
                             </tr>
@@ -296,48 +300,50 @@ export default function MySalaryPage() {
             </div>
           ) : (
             !isLoading && (
-              <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-10 text-center text-gray-400">
-                Tháng {filterMonth}/{filterYear} chưa có phiếu lương
+              <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-sm p-16 text-center text-gray-500">
+                <span className="text-5xl block mb-4">📄</span>
+                <p className="font-semibold text-lg">Chưa có phiếu lương tháng {filterMonth}/{filterYear}</p>
+                <p className="text-sm mt-1">Hệ thống chưa tạo dữ liệu lương cho tháng này.</p>
               </div>
             )
           ))}
 
         {/* Yearly table — luôn hiển thị đủ các tháng */}
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">
+        <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
               Lịch sử lương năm {filterYear}
             </h2>
             {mySalaries.length > 0 && (
-              <span className="text-xs text-gray-400">
-                {mySalaries.length} tháng có dữ liệu
+              <span className="text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-1 rounded uppercase tracking-wider">
+                {mySalaries.length} tháng
               </span>
             )}
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50/80 text-gray-600 font-semibold border-b border-gray-100">
                 <tr>
-                  <th className="px-6 py-3">Tháng</th>
-                  <th className="px-6 py-3 text-right">Lương cơ bản</th>
-                  <th className="px-6 py-3 text-right">Gross</th>
-                  <th className="px-6 py-3 text-right">Thưởng</th>
-                  <th className="px-6 py-3 text-right">Khấu trừ</th>
-                  <th className="px-6 py-3 text-right">Thực lĩnh</th>
-                  <th className="px-6 py-3 text-center">Trạng thái</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px]">Tháng</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Lương cơ bản</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Gross</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Thưởng</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Khấu trừ</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-right">Thực lĩnh</th>
+                  <th className="px-6 py-4 uppercase tracking-wider text-[11px] text-center">Trạng thái</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50/50 bg-white">
                 {isLoading ? (
                   <TableLoadingRow colSpan={7} text="Đang tải..." />
                 ) : mySalaries.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-6 py-10 text-center text-gray-400"
+                      className="px-6 py-16 text-center text-gray-400 font-medium"
                     >
-                      Chưa có dữ liệu lương năm {filterYear}
+                      Bạn chưa có dữ liệu lương năm {filterYear}.
                     </td>
                   </tr>
                 ) : (
@@ -345,37 +351,38 @@ export default function MySalaryPage() {
                     <tr
                       key={s.id}
                       onClick={() => setFilterMonth(String(s.month))}
-                      className={`cursor-pointer transition-colors ${
+                      className={`cursor-pointer transition-all group border-b border-gray-50 last:border-0 ${
                         String(s.month) === filterMonth
-                          ? "bg-blue-50 hover:bg-blue-100"
-                          : "hover:bg-gray-50"
+                          ? "bg-purple-50/60"
+                          : "hover:bg-blue-50/40"
                       }`}
                     >
-                      <td className="px-6 py-3 font-medium text-gray-900">
+                      <td className="px-6 py-4 font-bold text-gray-900">
                         Tháng {s.month}
+                        <span className="block text-[10px] text-gray-400 font-medium mt-0.5">Năm {s.year}</span>
                       </td>
-                      <td className="px-6 py-3 text-right text-gray-600 tabular-nums">
+                      <td className="px-6 py-4 text-right text-gray-600 font-medium tabular-nums">
                         {formatCurrencyVnd(s.baseSalary)}
                       </td>
-                      <td className="px-6 py-3 text-right text-gray-600 tabular-nums">
+                      <td className="px-6 py-4 text-right text-gray-600 font-medium tabular-nums">
                         {formatCurrencyVnd(s.grossSalary)}
                       </td>
-                      <td className="px-6 py-3 text-right text-green-600 tabular-nums">
+                      <td className="px-6 py-4 text-right font-medium text-emerald-600 tabular-nums">
                         {s.totalBonus > 0
                           ? `+${formatCurrencyVnd(s.totalBonus)}`
                           : "—"}
                       </td>
-                      <td className="px-6 py-3 text-right text-red-600 tabular-nums">
+                      <td className="px-6 py-4 text-right font-medium text-red-600 tabular-nums">
                         {s.totalDeduction > 0
                           ? `−${formatCurrencyVnd(s.totalDeduction)}`
                           : "—"}
                       </td>
-                      <td className="px-6 py-3 text-right font-semibold text-gray-900 tabular-nums">
+                      <td className="px-6 py-4 text-right font-bold text-gray-900 tabular-nums text-base">
                         {formatCurrencyVnd(s.netSalary)}
                       </td>
-                      <td className="px-6 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
                         <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                          className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-sm ${
                             SALARY_STATUS_BADGE[
                               s.status as keyof typeof SALARY_STATUS_BADGE
                             ]?.color
@@ -394,31 +401,31 @@ export default function MySalaryPage() {
               </tbody>
               {mySalaries.length > 1 && (
                 <tfoot>
-                  <tr className="bg-gray-50 font-semibold text-gray-700">
-                    <td className="px-6 py-3">Tổng năm</td>
-                    <td className="px-6 py-3 text-right tabular-nums">
+                  <tr className="bg-purple-50/50 font-bold border-t border-purple-100">
+                    <td className="px-6 py-4 text-purple-900 uppercase tracking-wider text-[11px]">Tổng năm</td>
+                    <td className="px-6 py-4 text-right tabular-nums text-purple-900">
                       {formatCurrencyVnd(
                         mySalaries.reduce((s, r) => s + r.baseSalary, 0),
                       )}
                     </td>
-                    <td className="px-6 py-3 text-right tabular-nums">
+                    <td className="px-6 py-4 text-right tabular-nums text-purple-900">
                       {formatCurrencyVnd(
                         mySalaries.reduce((s, r) => s + r.grossSalary, 0),
                       )}
                     </td>
-                    <td className="px-6 py-3 text-right text-green-600 tabular-nums">
+                    <td className="px-6 py-4 text-right text-emerald-700 tabular-nums">
                       +
                       {formatCurrencyVnd(
                         mySalaries.reduce((s, r) => s + r.totalBonus, 0),
                       )}
                     </td>
-                    <td className="px-6 py-3 text-right text-red-600 tabular-nums">
+                    <td className="px-6 py-4 text-right text-red-700 tabular-nums">
                       −
                       {formatCurrencyVnd(
                         mySalaries.reduce((s, r) => s + r.totalDeduction, 0),
                       )}
                     </td>
-                    <td className="px-6 py-3 text-right text-gray-900 tabular-nums">
+                    <td className="px-6 py-4 text-right text-purple-900 tabular-nums text-lg">
                       {formatCurrencyVnd(
                         mySalaries.reduce((s, r) => s + r.netSalary, 0),
                       )}
@@ -700,24 +707,18 @@ function SummaryCard({
 }: {
   label: string;
   value: string;
-  color: "blue" | "green" | "orange" | "purple";
+  color: "blue" | "emerald" | "amber" | "purple";
 }) {
-  const bg = {
-    blue: "bg-blue-50",
-    green: "bg-green-50",
-    orange: "bg-orange-50",
-    purple: "bg-purple-50",
-  };
-  const text = {
-    blue: "text-blue-600",
-    green: "text-green-700",
-    orange: "text-orange-600",
-    purple: "text-purple-700",
+  const styles = {
+    blue: "bg-blue-50/50 border-blue-100 text-blue-700",
+    emerald: "bg-emerald-50/50 border-emerald-100 text-emerald-700",
+    amber: "bg-amber-50/50 border-amber-100 text-amber-700",
+    purple: "bg-purple-50/50 border-purple-100 text-purple-700",
   };
   return (
-    <div className={`rounded-xl p-4 ${bg[color]}`}>
-      <p className={`text-xs font-medium mb-1 ${text[color]}`}>{label}</p>
-      <p className={`text-lg font-bold ${text[color]}`}>{value}</p>
+    <div className={`rounded-xl p-5 border shadow-sm ${styles[color]}`}>
+      <p className="text-[11px] font-bold uppercase tracking-wider mb-1 opacity-80">{label}</p>
+      <p className="text-xl font-black tabular-nums tracking-tight">{value}</p>
     </div>
   );
 }
