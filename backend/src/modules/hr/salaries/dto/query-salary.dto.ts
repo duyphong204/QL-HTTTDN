@@ -1,8 +1,10 @@
 import { IsOptional, IsInt, IsEnum, IsString, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SalaryStatus } from '@prisma/client';
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 
-export class QuerySalaryDto {
+/** Query params cho danh sách bảng lương */
+export class QuerySalaryDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -26,16 +28,4 @@ export class QuerySalaryDto {
   @IsOptional()
   @IsString()
   search?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number;
 }

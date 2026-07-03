@@ -139,8 +139,12 @@ export const useExportSlipPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await stockOutService.getStockOuts(params);
-        setStockOuts(data);
+        const response = await stockOutService.getStockOuts({
+          ...params,
+          page: params.page ?? 1,
+          limit: params.limit ?? 200,
+        });
+        setStockOuts(response.data);
       } catch (error: unknown) {
         const message = getErrorMessage(error);
         setError(message);

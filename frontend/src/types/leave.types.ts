@@ -35,6 +35,8 @@ export interface QueryLeaveRequestDto {
   employeeId?: string;
   year?: string;
   month?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface LeaveBalance {

@@ -23,9 +23,6 @@ export class UsersService {
 
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Helper: Tìm customer hoặc ném lỗi nếu không thấy
-   */
   private async findCustomerOrThrow(id: string, includeDeleted = false) {
     const user = await this.prisma.user.findFirst({
       where: {
@@ -42,9 +39,6 @@ export class UsersService {
     return new UserResponseDto(user);
   }
 
-  /**
-   * Lấy danh sách người dùng (có phân trang và tìm kiếm)
-   */
   async findAll(query: QueryUsersDto) {
     const {
       search,
@@ -109,9 +103,6 @@ export class UsersService {
     return this.findCustomerOrThrow(id);
   }
 
-  /**
-   * Tạo người dùng mới
-   */
   async create(dto: CreateUserDto) {
     const existedUser = await this.findByEmail(dto.email);
     if (existedUser && !existedUser.deletedAt) {
@@ -153,13 +144,9 @@ export class UsersService {
     return new UserResponseDto(user);
   }
 
-  /**
-   * Cập nhật thông tin người dùng
-   */
   async update(id: string, dto: UpdateUserDto) {
     const currentUser = await this.findCustomerOrThrow(id);
 
-    // Kiểm tra trùng email nếu có thay đổi email
     if (dto.email && dto.email !== currentUser.email) {
       const duplicated = await this.prisma.user.findFirst({
         where: { email: dto.email, deletedAt: null, NOT: { id } },
@@ -180,9 +167,6 @@ export class UsersService {
     return new UserResponseDto(user);
   }
 
-  /**
-   * Xóa mềm người dùng
-   */
   async remove(id: string) {
     await this.findCustomerOrThrow(id);
 
@@ -198,9 +182,6 @@ export class UsersService {
     return new UserResponseDto(user);
   }
 
-  /**
-   * Khôi phục người dùng đã xóa
-   */
   async restore(id: string) {
     const existingUser = await this.findCustomerOrThrow(id, true);
 
@@ -220,3 +201,4 @@ export class UsersService {
     return new UserResponseDto(user);
   }
 }
+

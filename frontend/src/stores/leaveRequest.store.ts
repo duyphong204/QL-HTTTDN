@@ -37,8 +37,8 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
   fetchMyRequests: async () => {
     set({ isLoading: true });
     try {
-      const data = await leaveRequestService.getMyLeaveRequests();
-      set({ myLeaveRequests: data });
+      const response = await leaveRequestService.getMyLeaveRequests({ page: 1, limit: 50 });
+      set({ myLeaveRequests: response.data });
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể tải đơn của bạn"));
     } finally {
@@ -86,8 +86,8 @@ export const useLeaveRequestStore = create<LeaveRequestState>((set, get) => ({
   fetchAllRequests: async (params?: QueryLeaveRequestDto) => {
     set({ isLoading: true });
     try {
-      const data = await leaveRequestService.getLeaveRequests(params);
-      set({ allLeaveRequests: data });
+      const response = await leaveRequestService.getLeaveRequests({ ...params, page: params?.page ?? 1, limit: params?.limit ?? 50 });
+      set({ allLeaveRequests: response.data });
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể tải danh sách đơn"));
     } finally {

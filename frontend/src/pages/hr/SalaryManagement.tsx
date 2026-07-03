@@ -59,9 +59,10 @@ export default function SalaryManagement() {
   }, [fetchStatistics, filters.year, filters.month]);
 
   const paginationMeta = useMemo(() => ({
-    page: filters.page,
-    limit: filters.limit,
-    total,
+    currentPage: filters.page,
+    itemsPerPage: filters.limit,
+    totalItems: total,
+    itemCount: Math.min(filters.limit, total - (filters.page - 1) * filters.limit),
     totalPages: Math.max(1, Math.ceil(total / filters.limit)),
   }), [filters.page, filters.limit, total]);
 

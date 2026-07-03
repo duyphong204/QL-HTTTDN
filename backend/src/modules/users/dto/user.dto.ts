@@ -11,6 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Role } from 'src/common/enums/role.enum';
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 
 export class ProfileDto {
   @IsString({ message: 'Họ tên phải là chuỗi' })
@@ -96,23 +97,11 @@ export class UserResponseDto {
   }
 }
 
-export class QueryUsersDto {
+export class QueryUsersDto extends PaginationQueryDto {
   @Type(() => String)
   @IsOptional()
   @IsString()
   search?: string;
-
-  @Type(() => Number)
-  @IsOptional()
-  @IsInt()
-  @Min(1, { message: 'Trang phải >= 1' })
-  page?: number = 1;
-
-  @Type(() => Number)
-  @IsOptional()
-  @IsInt()
-  @Min(1, { message: 'Giới hạn phải >= 1' })
-  limit?: number = 10;
 
   @IsOptional()
   @IsIn(['createdAt', 'email'], {

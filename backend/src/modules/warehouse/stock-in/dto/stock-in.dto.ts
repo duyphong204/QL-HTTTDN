@@ -8,8 +8,10 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 
-export class QueryStockInDto {
+/** Query params cho danh sách phiếu nhập kho */
+export class QueryStockInDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
@@ -21,19 +23,8 @@ export class QueryStockInDto {
   @IsNumber()
   @Min(2000)
   year?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  limit?: number = 20;
 }
+
 
 export class StockInDetailDto {
   @IsUUID(undefined, { message: 'ID sản phẩm không hợp lệ' })

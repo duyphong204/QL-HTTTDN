@@ -81,7 +81,9 @@ export class UpdateProductDto {
   supplierId?: string;
 }
 
-export class QueryProductDto {
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
+
+export class QueryProductDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
@@ -124,14 +126,6 @@ export class QueryProductDto {
     | 'price'
     | 'costPrice'
     | 'stockQuantity' = 'featured';
-
-  @IsOptional()
-  @Type(() => Number)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  limit?: number = 10;
 
   @IsOptional()
   @IsIn(['asc', 'desc'])

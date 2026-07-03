@@ -80,9 +80,11 @@ export const cartService = {
   },
 };
 
+import type { PaginatedResponse } from "@/types/common.types";
+
 export const stockOutService = {
-  getStockOuts: async (params?: StockOutQuery): Promise<StockOut[]> => {
-    return apiGet<StockOut[]>(endpoints.stockOuts.root, params);
+  getStockOuts: async (params?: StockOutQuery): Promise<PaginatedResponse<StockOut>> => {
+    return apiGet<PaginatedResponse<StockOut>>(endpoints.stockOuts.root, params);
   },
 
   getStockOutById: async (id: string): Promise<StockOut> => {

@@ -1,4 +1,5 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/api/client";
+import type { PaginatedResponse } from "@/types/common.types";
 import type {
   Order,
   CreateOrderDto,
@@ -11,16 +12,16 @@ import type {
 } from "@/types/sales.type";
 
 export const orderApi = {
-  getOrders: async () => {
-    return apiGet<Order[]>("/orders");
+  getOrders: async (params?: Record<string, string | number>) => {
+    return apiGet<PaginatedResponse<Order>>("/orders", params);
   },
 
   getOrderById: async (id: string) => {
     return apiGet<Order>(`/orders/${id}`);
   },
 
-  getMyOrders: async () => {
-    return apiGet<Order[]>("/orders/me");
+  getMyOrders: async (params?: Record<string, string | number>) => {
+    return apiGet<PaginatedResponse<Order>>("/orders/me", params);
   },
 
   createOrder: async (data: CreateOrderDto) => {

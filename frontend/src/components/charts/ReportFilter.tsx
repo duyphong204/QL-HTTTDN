@@ -34,7 +34,7 @@ export const ReportFilter = ({
   loading,
   typeOptions,
 }: ReportFilterProps) => {
-  const allowedTypes = useMemo(() => typeOptions ?? ["month", "quarter", "year"], [typeOptions]);
+  const allowedTypes = useMemo(() => typeOptions ?? (["month", "quarter", "year"] as ReportType[]), [typeOptions]);
 
   useEffect(() => {
     if (!allowedTypes.includes(filters.type)) {

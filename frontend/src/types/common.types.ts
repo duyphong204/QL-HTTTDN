@@ -6,12 +6,23 @@ export interface BaseEntity {
 
 export type SortOrder = "asc" | "desc";
 
+/**
+ * Metadata phân trang chuẩn – khớp với backend buildPaginationMeta()
+ * Dùng thống nhất ở tất cả các store và component.
+ */
 export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+  totalItems: number;   // Tổng số bản ghi trong DB
+  itemCount: number;    // Số bản ghi trang hiện tại
+  itemsPerPage: number; // Số bản ghi mỗi trang (limit)
+  totalPages: number;   // Tổng số trang
+  currentPage: number;  // Trang hiện tại
 }
+
+/**
+ * Alias ngắn dùng được ở store cũ (backward compat).
+ * Dần thay thế bằng PaginationMeta.
+ */
+export type Pagination = PaginationMeta;
 
 export interface BaseFilters {
   page?: number;
@@ -47,6 +58,3 @@ export interface PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
 }
-
-// Backward compatibility aliases.
-export type Pagination = PaginationMeta;

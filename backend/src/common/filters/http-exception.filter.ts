@@ -4,43 +4,57 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
-@Catch(HttpException)
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost): void {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
-    const exceptionResponse: unknown = exception.getResponse();
 
-    let message: string | string[] = exception.message || 'Lỗi không xác định';
-    let error: string = HttpStatus[status] || 'Error';
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | string[] = 'Lỗi máy chủ nội bộ';
+    let error = 'Internal Server Error';
 
-    if (typeof exceptionResponse === 'string') {
-      message = exceptionResponse;
-    } else if (
-      typeof exceptionResponse === 'object' &&
-      exceptionResponse !== null &&
-      ('message' in exceptionResponse || 'error' in exceptionResponse)
-    ) {
-      const payload = exceptionResponse as {
-        message?: unknown;
-        error?: unknown;
-      };
-      const msg = payload.message;
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const exceptionResponse: unknown = exception.getResponse();
 
-      if (payload.error) {
-        error = String(payload.error);
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null &&
+        ('message' in exceptionResponse || 'error' in exceptionResponse)
+      ) {
+        const payload = exceptionResponse as {
+          message?: unknown;
+          error?: unknown;
+        };
+        const msg = payload.message;
+
+        if (payload.error) {
+          error = String(payload.error);
+        }
+
+        if (Array.isArray(msg)) {
+          message = msg as string[];
+        } else if (typeof msg === 'string') {
+          message = msg;
+        }
       }
-
-      if (Array.isArray(msg)) {
-        message = msg as string[];
-      } else if (typeof msg === 'string') {
-        message = msg;
-      }
+    } else if (exception instanceof Error) {
+      this.logger.error(
+        `[Unhandled Exception] Path: ${request.url} | Message: ${exception.message}`,
+        exception.stack,
+      );
+      error = exception.name;
+      message = 'Đã có lỗi hệ thống xảy ra, vui lòng liên hệ quản trị viên.';
     }
 
     response.status(status).json({
@@ -53,3 +67,4 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 }
+

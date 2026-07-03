@@ -65,7 +65,14 @@ export class ProductService {
     const skip = (pageNumber - 1) * limitNumber;
 
     const where: Prisma.ProductWhereInput = { deletedAt: null };
-    const normalizedSearch = search ? normalizeVietnamese(search) : '';
+
+    // 1. TỐI ƯU SEARCH: Để DB làm việc thay vì kéo về RAM filter
+    if (search) {
+      where.name = {
+        contains: search.trim(),
+        mode: 'insensitive', // PostgreSQL hỗ trợ tìm kiếm không phân biệt hoa thường
+      };
+    }
 
     if (categoryId) {
       where.categoryId = categoryId;
@@ -112,50 +119,7 @@ export class ProductService {
       stockQuantity: { lte: 0 },
     };
 
-    if (normalizedSearch) {
-      const allProducts = await this.prisma.product.findMany({
-        where,
-        include: {
-          category: { select: { id: true, name: true } },
-          supplier: { select: { id: true, name: true } },
-          promotionLinks: {
-            include: {
-              promotion: true,
-            },
-          },
-        },
-        orderBy,
-      });
-
-      const pricedProducts = allProducts.map((product) =>
-        enrichProductPricing(product),
-      );
-
-      const filteredProducts = pricedProducts.filter((product) =>
-        normalizeVietnamese(product.name).includes(normalizedSearch),
-      );
-
-      const inStockProducts = filteredProducts.filter(
-        (product) => product.stockQuantity > 0,
-      );
-      const outOfStockProducts = filteredProducts.filter(
-        (product) => product.stockQuantity <= 0,
-      );
-      const orderedProducts = [...inStockProducts, ...outOfStockProducts];
-
-      const pagedProducts = orderedProducts.slice(skip, skip + limitNumber);
-
-      return {
-        data: pagedProducts,
-        meta: {
-          total: orderedProducts.length,
-          page: pageNumber,
-          limit: limitNumber,
-          totalPages: Math.ceil(orderedProducts.length / limitNumber) || 1,
-        },
-      };
-    }
-
+    // 2. KHÔNG LẤY TẤT CẢ DATA - Phân trang trực tiếp 2 luồng qua DB để ưu tiên inStock lên đầu
     const [inStockTotal, outOfStockTotal] = await this.prisma.$transaction([
       this.prisma.product.count({ where: inStockWhere }),
       this.prisma.product.count({ where: outOfStockWhere }),
@@ -176,21 +140,19 @@ export class ProductService {
       outOfStockTake = limitNumber;
     }
 
+    const includeConfig = {
+      category: { select: { id: true, name: true } },
+      supplier: { select: { id: true, name: true } },
+      promotionLinks: { include: { promotion: true } },
+    };
+
     const [inStockData, outOfStockData] = await Promise.all([
       inStockTake > 0
         ? this.prisma.product.findMany({
             where: inStockWhere,
             skip: inStockSkip,
             take: inStockTake,
-            include: {
-              category: { select: { id: true, name: true } },
-              supplier: { select: { id: true, name: true } },
-              promotionLinks: {
-                include: {
-                  promotion: true,
-                },
-              },
-            },
+            include: includeConfig,
             orderBy,
           })
         : Promise.resolve([]),
@@ -199,15 +161,7 @@ export class ProductService {
             where: outOfStockWhere,
             skip: outOfStockSkip,
             take: outOfStockTake,
-            include: {
-              category: { select: { id: true, name: true } },
-              supplier: { select: { id: true, name: true } },
-              promotionLinks: {
-                include: {
-                  promotion: true,
-                },
-              },
-            },
+            include: includeConfig,
             orderBy,
           })
         : Promise.resolve([]),

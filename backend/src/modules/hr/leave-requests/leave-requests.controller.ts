@@ -45,8 +45,11 @@ export class LeaveRequestsController {
     Role.WAREHOUSE_MANAGER,
     Role.SALES_MANAGER,
   )
-  async getMyRequests(@Request() req: any) {
-    return this.leaveRequestsService.getMyRequests(req.user.id);
+  async getMyRequests(
+    @Request() req: any,
+    @Query() query: QueryLeaveRequestDto,
+  ) {
+    return this.leaveRequestsService.getMyRequests(req.user.id, query);
   }
 
   @Get('balance')

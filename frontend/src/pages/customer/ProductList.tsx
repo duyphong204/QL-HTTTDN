@@ -78,10 +78,10 @@ export default function ProductList() {
   const currentMaxSelectedPrice = maxPriceFromUrl ?? sliderMax;
 
   const totalPages = meta?.totalPages || 1;
-  const currentPage = filters.page || 1;
+  const currentPage = meta?.currentPage ?? filters.page ?? 1;
   const shouldAddBottomSpacer = products.length < 6;
 
-  const totalCount = meta?.total ?? products.length;
+  const totalCount = meta?.totalItems ?? products.length;
 
   const activeCategoryLabel =
     categoryOptions.find((cat) => cat.value === activeCategory)?.label ||

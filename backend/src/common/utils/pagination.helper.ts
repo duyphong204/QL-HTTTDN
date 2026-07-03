@@ -1,57 +1,52 @@
-/**
- * Calculate pagination skip value
- * @param page Current page (1-based)
- * @param limit Items per page
- * @returns Skip value for database query
- */
+export function normalizePagination(
+  page: number | string | undefined,
+  limit: number | string | undefined,
+  defaultLimit = 10,
+  maxLimit = 100,
+): { page: number; limit: number } {
+  const p = Math.max(1, Number(page) || 1);
+  const l = Math.min(maxLimit, Math.max(1, Number(limit) || defaultLimit));
+  return { page: p, limit: l };
+}
+
 export function calculatePaginationSkip(
   page: number | string,
   limit: number | string,
 ): number {
-  const pageNum = Number(page) || 1;
-  const limitNum = Number(limit) || 10;
-  return (pageNum - 1) * limitNum;
+  const { page: p, limit: l } = normalizePagination(page, limit);
+  return (p - 1) * l;
 }
 
-/**
- * Build pagination metadata response
- * @param total Total count of items
- * @param page Current page (1-based)
- * @param limit Items per page
- * @returns Pagination metadata
- */
 export function buildPaginationMeta(
-  total: number,
+  totalItems: number,
   page: number | string,
   limit: number | string,
 ) {
-  const pageNum = Number(page) || 1;
-  const limitNum = Number(limit) || 10;
+  const { page: currentPage, limit: itemsPerPage } = normalizePagination(
+    page,
+    limit,
+  );
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const itemCount = Math.min(itemsPerPage, Math.max(0, totalItems - (currentPage - 1) * itemsPerPage));
 
   return {
-    total,
-    page: pageNum,
-    limit: limitNum,
-    totalPages: Math.ceil(total / limitNum),
+    totalItems,
+    itemCount,
+    itemsPerPage,
+    totalPages,
+    currentPage,
   };
 }
 
-/**
- * Generic paginated response builder
- * @param data Result data array
- * @param total Total count of items
- * @param page Current page (1-based)
- * @param limit Items per page
- * @returns Paginated response object
- */
 export function buildPaginatedResponse<T>(
   data: T[],
-  total: number,
+  totalItems: number,
   page: number | string,
   limit: number | string,
 ) {
   return {
     data,
-    meta: buildPaginationMeta(total, page, limit),
+    meta: buildPaginationMeta(totalItems, page, limit),
   };
 }
+

@@ -1,6 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { IsIn, IsInt, Min } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 
 export class CreateSupplierDto {
   @IsString({ message: 'Tên nhà cung cấp phải là chuỗi' })
@@ -38,28 +37,17 @@ export class UpdateSupplierDto {
   email?: string;
 }
 
-export class QuerySupplierDto {
+/** Query params cho danh sách nhà cung cấp */
+export class QuerySupplierDto extends PaginationQueryDto {
   @IsOptional()
   @IsString({ message: 'Từ khóa tìm kiếm phải là chuỗi' })
   search?: string;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt({ message: 'Trang phải là số nguyên' })
-  @Min(1, { message: 'Trang phải ít nhất 1' })
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt({ message: 'Giới hạn phải là số nguyên' })
-  @Min(1, { message: 'Giới hạn phải ít nhất 1' })
-  limit?: number = 10;
-
-  @IsOptional()
-  @IsIn(['name', 'email', 'phone'], { message: 'Sắp xếp theo không hợp lệ' })
+  @IsIn(['name', 'email', 'phone'], { message: 'sortBy không hợp lệ' })
   sortBy?: 'name' | 'email' | 'phone' = 'name';
 
   @IsOptional()
-  @IsIn(['asc', 'desc'], { message: 'Thứ tự sắp xếp không hợp lệ' })
+  @IsIn(['asc', 'desc'], { message: 'sortOrder không hợp lệ' })
   sortOrder?: 'asc' | 'desc' = 'asc';
 }

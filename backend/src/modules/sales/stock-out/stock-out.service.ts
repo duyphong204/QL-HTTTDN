@@ -8,6 +8,11 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, StockOutStatus } from '@prisma/client';
 import { FindStockOutQueryDto } from './dto/find-stock-out-query.dto';
 import { UpdateStockOutDto } from './dto/update-stock-out.dto';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+  normalizePagination,
+} from 'src/common/utils/pagination.helper';
 
 @Injectable()
 export class StockOutService {
@@ -18,10 +23,14 @@ export class StockOutService {
     items: { productId: string; quantity: number }[],
   ): Promise<Map<string, number>> {
     const costPriceMap = new Map<string, number>();
+    const productIds = items.map((i) => i.productId);
+    const products = await tx.product.findMany({
+      where: { id: { in: [...new Set(productIds)] } },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
     for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
+      const product = productMap.get(item.productId);
       if (!product || product.stockQuantity < item.quantity) {
         throw new BadRequestException(
           `Sản phẩm ${product?.name || item.productId} không đủ tồn kho`,
@@ -54,10 +63,16 @@ export class StockOutService {
     items: { productId: string; quantity: number }[],
   ): Promise<Map<string, number>> {
     const costPriceMap = new Map<string, number>();
+    
+    const productIds = items.map((i) => i.productId);
+    const products = await tx.product.findMany({
+      where: { id: { in: [...new Set(productIds)] } },
+      select: { id: true, costPrice: true },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
     for (const item of items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.productId },
-      });
+      const product = productMap.get(item.productId);
       if (!product) {
         throw new BadRequestException(
           `Sản phẩm ${item.productId} không tồn tại`,
@@ -70,9 +85,6 @@ export class StockOutService {
 
   async create(dto: CreateStockOutDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      // Nếu phiếu xuất liên kết với một Order → Order đã trừ tồn kho (COD hoặc MoMo IPN).
-      // StockOut chỉ là tài liệu kho/audit, không trừ lại.
-      // Nếu KHÔNG có orderId (xuất thủ công) → StockOut tự trừ tồn kho.
       const costPriceMap = dto.orderId
         ? await this.snapshotCostPrices(tx, dto.items)
         : await this.decrementInventory(tx, dto.items);
@@ -147,10 +159,8 @@ export class StockOutService {
 
       let costPriceMap: Map<string, number>;
       if (stockOut.orderId) {
-        // Order-linked: Order quản lý tồn kho, chỉ snapshot giá vốn mới
         costPriceMap = await this.snapshotCostPrices(tx, nextItems);
       } else {
-        // Manual export: hoàn kho cũ, trừ kho mới
         await this.incrementInventory(
           tx,
           stockOut.details.map((item) => ({
@@ -207,9 +217,6 @@ export class StockOutService {
         throw new BadRequestException('Phiếu xuất kho đã bị hủy trước đó');
       }
 
-      // Order-linked: Order quản lý tồn kho, không cần hoàn kho ở đây.
-      // Tồn kho sẽ được hoàn khi Order bị huỷ (cancelOrder).
-      // Manual export: hoàn lại tồn kho vì không có Order nào xử lý.
       if (!stockOut.orderId) {
         await this.incrementInventory(
           tx,
@@ -220,7 +227,6 @@ export class StockOutService {
         );
       }
 
-      // Soft-cancel: giữ record cho lịch sử, không hard-delete
       return tx.stockOut.update({
         where: { id },
         data: { status: StockOutStatus.CANCELLED },
@@ -233,10 +239,9 @@ export class StockOutService {
   }
 
   async findAll(query: FindStockOutQueryDto) {
+    const { page, limit } = normalizePagination(query.page, query.limit, 20);
     const { status, type, fromDate, toDate } = query;
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
-    const skip = (page - 1) * limit;
+    const skip = calculatePaginationSkip(page, limit);
 
     const where: Prisma.StockOutWhereInput = {
       ...(status && { status }),
@@ -251,7 +256,7 @@ export class StockOutService {
         : {}),
     };
 
-    const [data, total] = await Promise.all([
+    const [data, total] = await this.prisma.$transaction([
       this.prisma.stockOut.findMany({
         where,
         skip,
@@ -265,11 +270,6 @@ export class StockOutService {
       this.prisma.stockOut.count({ where }),
     ]);
 
-    return {
-      data,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
+    return buildPaginatedResponse(data, total, page, limit);
   }
 }

@@ -87,12 +87,12 @@ export const employeeService = {
 export const leaveRequestService = {
   getLeaveRequests: async (
     params?: QueryLeaveRequestDto,
-  ): Promise<LeaveRequest[]> => {
-    return apiGet<LeaveRequest[]>(endpoints.leaveRequests.root, params);
+  ): Promise<PaginatedResponse<LeaveRequest>> => {
+    return apiGet<PaginatedResponse<LeaveRequest>>(endpoints.leaveRequests.root, params);
   },
 
-  getMyLeaveRequests: async (): Promise<LeaveRequest[]> => {
-    return apiGet<LeaveRequest[]>(endpoints.leaveRequests.me);
+  getMyLeaveRequests: async (params?: QueryLeaveRequestDto): Promise<PaginatedResponse<LeaveRequest>> => {
+    return apiGet<PaginatedResponse<LeaveRequest>>(endpoints.leaveRequests.me, params);
   },
 
   getMyLeaveBalance: async (): Promise<{

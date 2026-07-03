@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as crypto from 'crypto';
 import * as https from 'https';
@@ -261,25 +261,27 @@ export class MomoService {
 
       if (paid) {
         if (order.paymentStatus !== 'PAID') {
-          for (const detail of order.details) {
-            const stockUpdate = await tx.product.updateMany({
-              where: {
-                id: detail.productId,
-                stockQuantity: { gte: detail.quantity },
-              },
-              data: {
-                stockQuantity: {
-                  decrement: detail.quantity,
+          await Promise.all(
+            order.details.map(async (detail) => {
+              const stockUpdate = await tx.product.updateMany({
+                where: {
+                  id: detail.productId,
+                  stockQuantity: { gte: detail.quantity },
                 },
-              },
-            });
+                data: {
+                  stockQuantity: {
+                    decrement: detail.quantity,
+                  },
+                },
+              });
 
-            if (stockUpdate.count === 0) {
-              throw new BadRequestException(
-                `San pham ${detail.productId} khong du ton kho de xac nhan don`,
-              );
-            }
-          }
+              if (stockUpdate.count === 0) {
+                throw new BadRequestException(
+                  `San pham ${detail.productId} khong du ton kho de xac nhan don`,
+                );
+              }
+            }),
+          );
         }
 
         await tx.order.update({
@@ -308,11 +310,12 @@ export class MomoService {
     };
   }
 
-  async getOrderPaymentStatus(orderId: string) {
+  async getOrderPaymentStatus(orderId: string, currentUser: any) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       select: {
         id: true,
+        userId: true,
         paymentMethod: true,
         paymentStatus: true,
         status: true,
@@ -321,6 +324,12 @@ export class MomoService {
 
     if (!order) {
       throw new BadRequestException('Khong tim thay don hang');
+    }
+
+    if (currentUser.role === 'CUSTOMER' && order.userId !== currentUser.id) {
+      throw new ForbiddenException(
+        'Ban khong co quyen xem trang thai thanh toan cua don hang nay',
+      );
     }
 
     return order;

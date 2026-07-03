@@ -51,8 +51,8 @@ export const useOrderStore = create<OrderState>((set) => ({
   fetchMyOrders: async () => {
     set({ loading: true });
     try {
-      const orders = await orderApi.getMyOrders();
-      set({ orders });
+      const response = await orderApi.getMyOrders({ page: 1, limit: 50 });
+      set({ orders: response.data as unknown as OrderHistoryOrder[] });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Lỗi tải đơn hàng";
       toast.error(message);

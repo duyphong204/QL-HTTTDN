@@ -8,6 +8,10 @@ import {
   calculateSalePrice,
   resolveActivePromotion as resolveProductPromotion,
 } from 'src/common/utils/pricing.helper';
+import { mapOrderForResponse } from './orders.mapper';
+import { canTransition } from './orders.workflow';
+import { calculatePaginationSkip, buildPaginatedResponse } from 'src/common/utils/pagination.helper';
+import { QueryOrderDto } from './dto/query-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -22,6 +26,20 @@ export class OrdersService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // 1. CHỐNG N+1 QUERY: Fetch toàn bộ products trong 1 câu lệnh duy nhất
+      const productIds = dto.items.map((item) => item.productId);
+      const products = await tx.product.findMany({
+        where: { id: { in: productIds } },
+        include: {
+          promotionLinks: {
+            include: { promotion: true },
+          },
+        },
+      });
+
+      // 2. Tạo Map để tra cứu O(1) thay vì lặp qua mảng liên tục
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
       let totalAmount = 0;
       const paymentMethod: 'COD' | 'BANK_TRANSFER' =
         dto.paymentMethod === 'BANK_TRANSFER' ? 'BANK_TRANSFER' : 'COD';
@@ -31,17 +49,9 @@ export class OrdersService {
 
       const orderDetailsData: Prisma.OrderDetailCreateWithoutOrderInput[] = [];
 
+      // 3. Vòng lặp thứ nhất: Tính toán và Validate dữ liệu (KHÔNG QUERIES DB Ở ĐÂY)
       for (const item of dto.items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-          include: {
-            promotionLinks: {
-              include: {
-                promotion: true,
-              },
-            },
-          },
-        });
+        const product = productMap.get(item.productId);
 
         if (!product) {
           throw new BadRequestException({
@@ -51,31 +61,7 @@ export class OrdersService {
           });
         }
 
-        if (decrementStockNow) {
-          // COD: decrement stock at order creation.
-          const stockUpdate = await tx.product.updateMany({
-            where: {
-              id: product.id,
-              stockQuantity: {
-                gte: item.quantity,
-              },
-            },
-            data: {
-              stockQuantity: {
-                decrement: item.quantity,
-              },
-            },
-          });
-
-          if (stockUpdate.count === 0) {
-            throw new BadRequestException({
-              code: 'PRODUCT_OUT_OF_STOCK',
-              productId: product.id,
-              message: `Sản phẩm ${product.name} không đủ tồn kho`,
-            });
-          }
-        } else if (product.stockQuantity < item.quantity) {
-          // BANK_TRANSFER: validate current stock, actual decrement occurs after payment success.
+        if (product.stockQuantity < item.quantity) {
           throw new BadRequestException({
             code: 'PRODUCT_OUT_OF_STOCK',
             productId: product.id,
@@ -90,13 +76,35 @@ export class OrdersService {
         totalAmount += amount;
 
         orderDetailsData.push({
-          product: {
-            connect: { id: product.id },
-          },
+          product: { connect: { id: product.id } },
           quantity: item.quantity,
           price: effectivePrice,
           costPrice: product.costPrice,
         });
+      }
+
+      // 4. Cập nhật số lượng tồn kho (nếu là COD) theo cách update tuần tự an toàn
+      if (decrementStockNow) {
+        for (const item of dto.items) {
+          const stockUpdate = await tx.product.updateMany({
+            where: {
+              id: item.productId,
+              stockQuantity: { gte: item.quantity },
+            },
+            data: {
+              stockQuantity: { decrement: item.quantity },
+            },
+          });
+
+          if (stockUpdate.count === 0) {
+            const product = productMap.get(item.productId);
+            throw new BadRequestException({
+              code: 'PRODUCT_OUT_OF_STOCK',
+              productId: item.productId,
+              message: `Sản phẩm ${product?.name} đã hết hàng ngay trước khi đặt`,
+            });
+          }
+        }
       }
 
       const order = await tx.order.create({
@@ -174,15 +182,21 @@ export class OrdersService {
       );
     }
 
+    // CHỐNG N+1 QUERY: Fetch toàn bộ product liên quan một lần duy nhất
+    const productIds = order.details.map((detail) => detail.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        name: true,
+        stockQuantity: true,
+      },
+    });
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
     for (const detail of order.details) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: detail.productId },
-        select: {
-          id: true,
-          name: true,
-          stockQuantity: true,
-        },
-      });
+      const product = productMap.get(detail.productId);
 
       if (!product) {
         throw new BadRequestException(
@@ -210,84 +224,50 @@ export class OrdersService {
     };
   }
 
-  private mapOrderForResponse(order: {
-    id: string;
-    fullName: string;
-    phone: string;
-    address: string;
-    totalAmount: number;
-    status: string;
-    paymentMethod: string;
-    paymentStatus: string;
-    createdAt: Date;
-    user?: {
-      email: string;
-      profile: {
-        fullName: string;
-      } | null;
-    } | null;
-    details: {
-      id: string;
-      productId: string;
-      quantity: number;
-      price: number;
-      product: { name: string; imageUrl: string | null };
-    }[];
-  }) {
-    const customerName =
-      order.user?.profile?.fullName || order.user?.email || order.fullName;
 
-    return {
-      id: order.id,
-      fullName: order.fullName,
-      customerName,
-      phone: order.phone,
-      address: order.address,
-      totalAmount: order.totalAmount,
-      status: order.status,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
-      createdAt: order.createdAt,
-      items: order.details.map((d) => ({
-        id: d.id,
-        productId: d.productId,
-        productName: d.product.name,
-        quantity: d.quantity,
-        price: d.price,
-        imageUrl: d.product.imageUrl,
-      })),
-    };
-  }
 
-  async getOrders() {
-    const orders = await this.prisma.order.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      include: {
-        user: {
-          select: {
-            email: true,
-            profile: {
-              select: {
-                fullName: true,
+  async getOrders(query: QueryOrderDto) {
+    const { page = 1, limit = 10, status, paymentStatus } = query;
+    const skip = calculatePaginationSkip(page, limit);
+
+    const where: Prisma.OrderWhereInput = {};
+    if (status) where.status = status;
+    if (paymentStatus) where.paymentStatus = paymentStatus;
+
+    const [orders, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              email: true,
+              profile: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+          },
+          details: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                  imageUrl: true,
+                },
               },
             },
           },
         },
-        details: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-      },
-    });
+      }),
+      this.prisma.order.count({ where }),
+    ]);
 
-    return orders.map((order) => this.mapOrderForResponse(order));
+    const data = orders.map((order) => mapOrderForResponse(order));
+    return buildPaginatedResponse(data, total, page, limit);
   }
 
   async getOrderById(id: string) {
@@ -321,20 +301,10 @@ export class OrdersService {
       throw new BadRequestException('Không tìm thấy đơn hàng');
     }
 
-    return this.mapOrderForResponse(order);
+    return mapOrderForResponse(order);
   }
 
-  private canTransition(current: string, next: string) {
-    const workflow: Record<string, string[]> = {
-      PENDING: ['APPROVED', 'CANCELLED'],
-      APPROVED: ['SHIPPING', 'CANCELLED'],
-      SHIPPING: ['COMPLETED'],
-      COMPLETED: [],
-      CANCELLED: [],
-    };
 
-    return workflow[current]?.includes(next) ?? false;
-  }
 
   async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
     const nextStatus = dto.status.toUpperCase();
@@ -376,7 +346,7 @@ export class OrdersService {
         return order;
       }
 
-      if (!this.canTransition(currentStatus, nextStatus)) {
+      if (!canTransition(currentStatus, nextStatus)) {
         throw new BadRequestException(
           `Không thể chuyển trạng thái từ ${currentStatus} sang ${nextStatus}`,
         );
@@ -424,7 +394,7 @@ export class OrdersService {
       return nextOrder;
     });
 
-    return this.mapOrderForResponse(updated);
+    return mapOrderForResponse(updated);
   }
 
   async cancelOrder(id: string) {
@@ -518,39 +488,44 @@ export class OrdersService {
       return cancelled;
     });
 
-    return this.mapOrderForResponse(updated);
+    return mapOrderForResponse(updated);
   }
 
   // Thống kê doanh thu & lợi nhuận
   private async calculateSalesStatistics(startDate: Date, endDate: Date) {
-    const orders = await this.prisma.order.findMany({
-      where: {
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-        status: 'COMPLETED',
-      },
-      include: {
-        details: true,
-      },
-    });
+    const orderWhere = {
+      createdAt: { gte: startDate, lte: endDate },
+      status: 'COMPLETED',
+    };
 
-    let totalRevenue = 0;
-    let totalCost = 0;
+    // 1. TỐI ƯU: Sử dụng aggregate để DB tính tổng số đơn và doanh thu
+    // Chỉ select quantity và costPrice để tự tính lợi nhuận (vì Prisma chưa hỗ trợ SUM(a * b) native)
+    const [orderAgg, orderDetails] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: orderWhere,
+        _count: { id: true },
+        _sum: { totalAmount: true },
+      }),
+      this.prisma.orderDetail.findMany({
+        where: { order: orderWhere },
+        select: { quantity: true, costPrice: true },
+      }),
+    ]);
+
+    const totalOrders = orderAgg._count.id;
+    const totalRevenue = orderAgg._sum.totalAmount ?? 0;
+
     let totalItemsSold = 0;
+    let totalCost = 0;
 
-    for (const order of orders) {
-      totalRevenue += order.totalAmount;
-
-      for (const detail of order.details) {
-        totalItemsSold += detail.quantity;
-        totalCost += detail.costPrice * detail.quantity;
-      }
+    // 2. Vòng lặp siêu nhẹ (chỉ duyệt mảng vài field nhỏ, không chứa full Order data)
+    for (const detail of orderDetails) {
+      totalItemsSold += detail.quantity;
+      totalCost += detail.costPrice * detail.quantity;
     }
 
     return {
-      totalOrders: orders.length,
+      totalOrders,
       totalItemsSold,
       totalProductsSold: totalItemsSold,
       totalRevenue,
@@ -598,34 +573,47 @@ export class OrdersService {
     };
   }
 
-  async getMyOrders(userId: string) {
-    const orders = await this.prisma.order.findMany({
-      where: { userId },
-      include: {
-        user: {
-          select: {
-            email: true,
-            profile: {
-              select: {
-                fullName: true,
-              },
-            },
-          },
-        },
-        details: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                imageUrl: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getMyOrders(userId: string, query: QueryOrderDto) {
+    const { page = 1, limit = 10, status, paymentStatus } = query;
+    const skip = calculatePaginationSkip(page, limit);
 
-    return orders.map((order) => this.mapOrderForResponse(order));
+    const where: Prisma.OrderWhereInput = { userId };
+    if (status) where.status = status;
+    if (paymentStatus) where.paymentStatus = paymentStatus;
+
+    const [orders, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              email: true,
+              profile: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+          },
+          details: {
+            include: {
+              product: {
+                select: {
+                  name: true,
+                  imageUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    const data = orders.map((order) => mapOrderForResponse(order));
+    return buildPaginatedResponse(data, total, page, limit);
   }
 }

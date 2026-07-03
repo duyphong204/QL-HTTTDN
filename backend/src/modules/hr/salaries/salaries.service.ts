@@ -35,20 +35,161 @@ export class SalariesService {
   // ==================== HR / ADMIN ====================
 
   async calculateAll(month: number, year: number) {
+    const { startDate, endDate } = getMonthDateRange(month, year);
+    const standardDays = calculateStandardWorkingDays(month, year);
+
     const employees = await this.prisma.employee.findMany({
       where: { resignDate: null },
-      select: { id: true },
     });
 
+    if (employees.length === 0) {
+      return { count: 0, message: 'Không có nhân viên cần tính lương' };
+    }
+
+    const employeeIds = employees.map((e) => e.id);
+
+    const existingSalaries = await this.prisma.salary.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        month,
+        year,
+      },
+      select: { employeeId: true },
+    });
+    const existingEmpIds = new Set(existingSalaries.map((s) => s.employeeId));
+
+    const empsToCalculate = employees.filter((e) => !existingEmpIds.has(e.id));
+    if (empsToCalculate.length === 0) {
+      return { count: 0, message: 'Tất cả nhân viên đã được tính lương từ trước' };
+    }
+
+    const pendingIds = empsToCalculate.map((e) => e.id);
+
+    const jobHistories = await this.prisma.jobHistory.findMany({
+      where: {
+        employeeId: { in: pendingIds },
+        startDate: { lte: startDate },
+        OR: [{ endDate: null }, { endDate: { gte: startDate } }],
+      },
+      orderBy: { startDate: 'desc' },
+    });
+
+    const jobHistoryMap = new Map<string, any>();
+    for (const jh of jobHistories) {
+      if (!jobHistoryMap.has(jh.employeeId)) {
+        jobHistoryMap.set(jh.employeeId, jh);
+      }
+    }
+
+    const leaveRequests = await this.prisma.leaveRequest.findMany({
+      where: {
+        employeeId: { in: pendingIds },
+        status: 'APPROVED',
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+      select: { employeeId: true, startDate: true, endDate: true, type: true },
+    });
+
+    const leaveRequestsMap = new Map<string, any[]>();
+    for (const lr of leaveRequests) {
+      if (!leaveRequestsMap.has(lr.employeeId)) {
+        leaveRequestsMap.set(lr.employeeId, []);
+      }
+      leaveRequestsMap.get(lr.employeeId)!.push(lr);
+    }
+
     let count = 0;
-    for (const emp of employees) {
-      const existing = await this.prisma.salary.findUnique({
-        where: { employeeId_month_year: { employeeId: emp.id, month, year } },
+    const salaryDataList: any[] = [];
+
+    for (const emp of empsToCalculate) {
+      const history = jobHistoryMap.get(emp.id);
+      const baseSalary = history?.baseSalary ?? emp.baseSalary;
+
+      const empLeaves = leaveRequestsMap.get(emp.id) ?? [];
+      const unpaidLeaveDays = calculateUnpaidLeaveDays(empLeaves, month, year);
+
+      let postResignDays = 0;
+      if (emp.resignDate) {
+        const rd = new Date(emp.resignDate);
+        if (rd >= startDate && rd <= endDate) {
+          const dayAfterResign = new Date(rd);
+          dayAfterResign.setDate(dayAfterResign.getDate() + 1);
+          if (dayAfterResign <= endDate) {
+            postResignDays = countWeekdays(dayAfterResign, endDate);
+          }
+        }
+      }
+
+      const totalUnpaidDays = unpaidLeaveDays + postResignDays;
+      const actualWorkDays = Math.max(0, standardDays - totalUnpaidDays);
+      const grossSalary = calculateGrossSalary(
+        baseSalary,
+        standardDays,
+        totalUnpaidDays,
+      );
+
+      const insuranceAmount = Math.round(baseSalary * INSURANCE_RATE);
+      const taxableIncome = grossSalary - TAX_ALLOWANCE;
+      const taxAmount = calculateProgressiveTax(taxableIncome);
+
+      const autoDetails: SalaryDetailInput[] = [
+        {
+          type: DetailType.INSURANCE,
+          amount: insuranceAmount,
+          description: 'Bảo hiểm xã hội (10.5%)',
+        },
+      ];
+      if (taxAmount > 0) {
+        autoDetails.push({
+          type: DetailType.TAX,
+          amount: taxAmount,
+          description: 'Thuế TNCN (lũy tiến 5–35%)',
+        });
+      }
+
+      const totalBonus = autoDetails
+        .filter((d) =>
+          ([DetailType.BONUS, DetailType.OT, DetailType.ALLOWANCE] as DetailType[]).includes(d.type),
+        )
+        .reduce((s, d) => s + d.amount, 0);
+
+      const totalDeduction = autoDetails
+        .filter((d) =>
+          ([DetailType.DEDUCTION, DetailType.INSURANCE, DetailType.TAX] as DetailType[]).includes(d.type),
+        )
+        .reduce((s, d) => s + d.amount, 0);
+
+      const netSalary = grossSalary + totalBonus - totalDeduction;
+
+      salaryDataList.push({
+        employeeId: emp.id,
+        month,
+        year,
+        baseSalary,
+        workingDays: standardDays,
+        actualWorkDays,
+        unpaidDays: totalUnpaidDays,
+        grossSalary,
+        totalBonus,
+        totalDeduction,
+        netSalary,
+        details: {
+          create: autoDetails.map((d) => ({
+            type: d.type,
+            amount: d.amount,
+            description: d.description ?? null,
+          })),
+        },
       });
-      if (existing) continue;
-      await this.calculateOne({ employeeId: emp.id, month, year });
+
       count++;
     }
+
+    await this.prisma.$transaction(
+      salaryDataList.map((data) => this.prisma.salary.create({ data })),
+    );
+
     return { count, message: `Đã tính lương cho ${count} nhân viên` };
   }
 

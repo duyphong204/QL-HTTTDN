@@ -10,6 +10,10 @@ import {
   UpdateStockInDto,
 } from './dto/stock-in.dto';
 import { Prisma, StockInStatus } from '@prisma/client';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from 'src/common/utils/pagination.helper';
 
 @Injectable()
 export class StockInService {
@@ -17,14 +21,10 @@ export class StockInService {
 
   private async applyStockChange(
     tx: Prisma.TransactionClient,
-    productId: string,
+    product: any,
     quantityChange: number,
     unitPrice: number,
   ) {
-    const product = await tx.product.findUnique({ where: { id: productId } });
-    if (!product)
-      throw new NotFoundException(`Sản phẩm ${productId} không tồn tại`);
-
     const newQuantity = product.stockQuantity + quantityChange;
 
     if (newQuantity < 0) {
@@ -40,26 +40,36 @@ export class StockInService {
       newCostPrice = (currentTotalValue + incomingValue) / newQuantity;
     }
 
-    await tx.product.update({
-      where: { id: productId },
+    const updatedProduct = await tx.product.update({
+      where: { id: product.id },
       data: { stockQuantity: newQuantity, costPrice: newCostPrice },
     });
+
+    // Object.assign gán đè dữ liệu mới nhất vào Object trong RAM
+    Object.assign(product, updatedProduct);
   }
 
   async createStockIn(dto: CreateStockInDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
+      const productIds = dto.details.map((item) => item.productId);
+      
+      // Fetch toàn bộ Product 1 lần để chống N+1 Query
+      const products = await tx.product.findMany({
+        where: { id: { in: [...new Set(productIds)] } },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
       const totalAmount = dto.details.reduce(
         (sum, item) => sum + item.quantity * item.price,
         0,
       );
 
       for (const item of dto.details) {
-        await this.applyStockChange(
-          tx,
-          item.productId,
-          item.quantity,
-          item.price,
-        );
+        const product = productMap.get(item.productId);
+        if (!product) {
+          throw new NotFoundException(`Sản phẩm ${item.productId} không tồn tại`);
+        }
+        await this.applyStockChange(tx, product, item.quantity, item.price);
       }
 
       return tx.stockIn.create({
@@ -92,23 +102,31 @@ export class StockInService {
         throw new BadRequestException('Không thể sửa phiếu nhập đã bị hủy');
       }
 
+      const nextDetails = dto.details || oldStockIn.details;
+
+      const allProductIds = [
+        ...oldStockIn.details.map((item) => item.productId),
+        ...nextDetails.map((item) => item.productId),
+      ];
+      
+      // Fetch toàn bộ Product (cả cũ lẫn mới) 1 lần
+      const products = await tx.product.findMany({
+        where: { id: { in: [...new Set(allProductIds)] } },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      // Hoàn lại kho cũ
       for (const oldItem of oldStockIn.details) {
-        await this.applyStockChange(
-          tx,
-          oldItem.productId,
-          -oldItem.quantity,
-          oldItem.price,
-        );
+        const product = productMap.get(oldItem.productId);
+        if (!product) throw new NotFoundException(`Sản phẩm ${oldItem.productId} không tồn tại`);
+        await this.applyStockChange(tx, product, -oldItem.quantity, oldItem.price);
       }
 
-      const nextDetails = dto.details || oldStockIn.details;
+      // Áp dụng kho mới
       for (const newItem of nextDetails) {
-        await this.applyStockChange(
-          tx,
-          newItem.productId,
-          newItem.quantity,
-          newItem.price,
-        );
+        const product = productMap.get(newItem.productId);
+        if (!product) throw new NotFoundException(`Sản phẩm ${newItem.productId} không tồn tại`);
+        await this.applyStockChange(tx, product, newItem.quantity, newItem.price);
       }
 
       const totalAmount = nextDetails.reduce(
@@ -146,11 +164,20 @@ export class StockInService {
         throw new BadRequestException('Phiếu nhập đã bị hủy trước đó');
       }
 
+      const productIds = stockIn.details.map((item) => item.productId);
+      
+      const products = await tx.product.findMany({
+        where: { id: { in: [...new Set(productIds)] } },
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
       // Hoàn lại tồn kho (reverse weighted-average cost)
       for (const item of stockIn.details) {
+        const product = productMap.get(item.productId);
+        if (!product) throw new NotFoundException(`Sản phẩm ${item.productId} không tồn tại`);
         await this.applyStockChange(
           tx,
-          item.productId,
+          product,
           -item.quantity,
           item.price,
         );
@@ -185,29 +212,25 @@ export class StockInService {
 
   async findAll(query: QueryStockInDto = {}) {
     const { month, year, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
+    const skip = calculatePaginationSkip(page, limit);
 
-    const where = month && year
+    const where: Prisma.StockInWhereInput = month && year
       ? { date: { gte: new Date(year, month - 1, 1), lte: new Date(year, month, 0, 23, 59, 59) } }
       : year
         ? { date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59) } }
         : {};
 
-    const [data, total] = await Promise.all([
+    const [data, total] = await this.prisma.$transaction([
       this.prisma.stockIn.findMany({
         where,
         skip,
-        take: limit,
+        take: Number(limit),
         include: { supplier: true, details: { include: { product: true } } },
         orderBy: { date: 'desc' },
       }),
       this.prisma.stockIn.count({ where }),
     ]);
-    return {
-      data,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
+    
+    return buildPaginatedResponse(data, total, page, limit);
   }
 }

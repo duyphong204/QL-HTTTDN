@@ -5,13 +5,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateEmployeeDto } from '../dto/create-employee.dto';
 import {
-  UpdateProfileDto,
-  CreateEmployeeDto,
   QueryEmployeeDto,
   ChangePositionDto,
   UpdateEmployeeProfileByHrDto,
-} from './dto/employee.dto';
+} from '../dto/hr-filter.dto';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import {
@@ -19,9 +18,10 @@ import {
   buildPaginatedResponse,
 } from 'src/common/utils/pagination.helper';
 import { Role } from 'src/common/enums/role.enum';
+import { COMMON_USER_SELECT } from './employee-self.service';
 
 @Injectable()
-export class EmployeesService {
+export class HrManagementService {
   constructor(private prisma: PrismaService) {}
 
   private async assertEmployeeNotAdminByUserId(userId: string) {
@@ -32,64 +32,6 @@ export class EmployeesService {
     if (user?.role === Role.ADMIN) {
       throw new ForbiddenException('Không được thao tác trên tài khoản ADMIN');
     }
-  }
-
-  // ==================== NHÂN VIÊN TỰ XỬ LÝ ====================
-  async updateMe(userId: string, dto: UpdateProfileDto) {
-    const employee = await this.prisma.employee.findUnique({
-      where: { userId },
-    });
-    if (!employee) {
-      throw new NotFoundException('Bạn chưa được gán là nhân viên');
-    }
-
-    return this.prisma.profile.update({
-      where: { userId },
-      data: {
-        fullName: dto.fullName,
-        phone: dto.phone,
-        address: dto.address,
-        avatar: dto.avatar,
-        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-      },
-    });
-  }
-
-  async getProfile(userId: string) {
-    const employee = await this.prisma.employee.findUnique({
-      where: { userId },
-      select: {
-        id: true,
-        code: true,
-        department: true,
-        position: true,
-        baseSalary: true,
-        joinDate: true,
-        resignDate: true,
-        user: {
-          select: {
-            email: true,
-            role: true,
-            profile: {
-              select: {
-                fullName: true,
-                phone: true,
-                address: true,
-                avatar: true,
-                dateOfBirth: true,
-              },
-            },
-          },
-        },
-        jobHistories: {
-          orderBy: { startDate: 'desc' },
-          take: 5,
-        },
-      },
-    });
-
-    if (!employee) throw new NotFoundException('Nhân viên không tồn tại');
-    return employee;
   }
 
   // ==================== QUẢN LÝ NHÂN SỰ ====================
@@ -202,20 +144,16 @@ export class EmployeesService {
         });
       }
 
-      await tx.employee.update({
+      return tx.employee.update({
         where: { id },
         data: {
           ...(dto.department !== undefined && { department: dto.department }),
           ...(dto.position !== undefined && { position: dto.position }),
           ...(dto.baseSalary !== undefined && { baseSalary: dto.baseSalary }),
         },
-      });
-
-      return tx.employee.findUnique({
-        where: { id },
         include: {
           user: {
-            select: { id: true, email: true, role: true, profile: true },
+            select: { id: true, ...COMMON_USER_SELECT },
           },
           jobHistories: { orderBy: { startDate: 'desc' }, take: 5 },
         },
@@ -334,19 +272,7 @@ export class EmployeesService {
         take: Number(limit),
         include: {
           user: {
-            select: {
-              email: true,
-              role: true,
-              profile: {
-                select: {
-                  fullName: true,
-                  phone: true,
-                  avatar: true,
-                  address: true,
-                  dateOfBirth: true,
-                },
-              },
-            },
+            select: COMMON_USER_SELECT,
           },
         },
         orderBy: { [normalizedSortBy]: normalizedSortOrder },
@@ -362,18 +288,7 @@ export class EmployeesService {
       where: { id },
       include: {
         user: {
-          select: {
-            email: true,
-            profile: {
-              select: {
-                fullName: true,
-                phone: true,
-                address: true,
-                avatar: true,
-                dateOfBirth: true,
-              },
-            },
-          },
+          select: COMMON_USER_SELECT,
         },
         jobHistories: {
           orderBy: { startDate: 'desc' },
@@ -453,7 +368,6 @@ export class EmployeesService {
         where: { month: currentMonth, year: currentYear },
       }),
       this.prisma.leaveRequest.count({ where: { status: 'PENDING' } }),
-      // Monthly breakdown (all 12 months of the year)
       this.prisma.salary.groupBy({
         by: ['month'],
         where: { year: currentYear },
@@ -461,16 +375,15 @@ export class EmployeesService {
         _count: { id: true },
         orderBy: { month: 'asc' },
       }),
-      // Leave requests by type for the year/month
       this.prisma.leaveRequest.groupBy({
         by: ['type'],
         where: { startDate: { gte: leaveFrom, lte: leaveTo } },
         _count: { id: true },
       }),
-      // Per-employee leave detail for the year/month
       this.prisma.leaveRequest.findMany({
         where: { startDate: { gte: leaveFrom, lte: leaveTo } },
         orderBy: { startDate: 'desc' },
+        take: 50,
         include: {
           employee: {
             select: {

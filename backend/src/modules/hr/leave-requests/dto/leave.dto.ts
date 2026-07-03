@@ -1,12 +1,13 @@
 import {
   IsDateString,
   IsEnum,
-  IsNotEmpty,
   IsIn,
-  IsString,
+  IsNotEmpty,
   IsOptional,
+  IsString,
 } from 'class-validator';
 import { LeaveType } from '@prisma/client';
+import { PaginationQueryDto } from 'src/common/dto/pagination.dto';
 
 export class CreateLeaveDto {
   @IsDateString()
@@ -32,7 +33,8 @@ export class UpdateLeaveStatusDto {
   rejectionReason?: string;
 }
 
-export class QueryLeaveRequestDto {
+/** Query params cho danh sách đơn nghỉ phép – kế thừa phân trang chuẩn */
+export class QueryLeaveRequestDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   status?: string;

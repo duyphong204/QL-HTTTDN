@@ -95,8 +95,8 @@ export const useStockInStore = create<StockInState>((set, get) => ({
     get().setLoading(true);
     get().setError(null);
     try {
-      const data = await stockInService.getStockIns();
-      get().setStockIns(data);
+      const response = await stockInService.getStockIns({ page: 1, limit: 200 });
+      get().setStockIns(response.data);
     } catch (error: unknown) {
       const message = getErrorMessage(error);
       get().setError(message);

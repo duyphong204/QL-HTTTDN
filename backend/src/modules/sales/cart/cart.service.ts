@@ -255,8 +255,65 @@ export class CartService {
         );
       }
 
+      const productIds = Array.from(merged.keys());
+      if (productIds.length === 0) return this.mapCart(cart);
+
+      // Bulk Fetch: Tránh N+1 Query khi validate Product
+      const products = await tx.product.findMany({
+        where: { id: { in: productIds } },
+        include: productInclude,
+      });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
+      // Bulk Fetch: Lấy tất cả CartItem hiện có của giỏ hàng này
+      const existingItems = await tx.cartItem.findMany({
+        where: { cartId: cart.id, productId: { in: productIds } },
+      });
+      const existingItemMap = new Map(existingItems.map((i) => [i.productId, i]));
+
+      const createData: Prisma.CartItemCreateManyInput[] = [];
+
       for (const [productId, quantity] of merged.entries()) {
-        await this.upsertItem(tx, cart.id, productId, quantity);
+        const product = productMap.get(productId);
+        if (!product || product.deletedAt) {
+          throw new BadRequestException({
+            code: 'PRODUCT_NOT_FOUND',
+            productId,
+            message: `Sản phẩm ${productId} không tồn tại`,
+          });
+        }
+
+        const existing = existingItemMap.get(productId);
+        const nextQuantity = existing ? existing.quantity + quantity : quantity;
+
+        if (nextQuantity <= 0) {
+          throw new BadRequestException('Số lượng sản phẩm không hợp lệ');
+        }
+
+        if (product.stockQuantity < nextQuantity) {
+          throw new BadRequestException({
+            code: 'PRODUCT_OUT_OF_STOCK',
+            productId,
+            message: `Sản phẩm ${product.name} không đủ tồn kho`,
+          });
+        }
+
+        if (existing) {
+          await tx.cartItem.update({
+            where: { id: existing.id },
+            data: { quantity: nextQuantity },
+          });
+        } else {
+          createData.push({
+            cartId: cart.id,
+            productId,
+            quantity: nextQuantity,
+          });
+        }
+      }
+
+      if (createData.length > 0) {
+        await tx.cartItem.createMany({ data: createData });
       }
 
       return this.mapCart(await this.loadCart(userId, tx));

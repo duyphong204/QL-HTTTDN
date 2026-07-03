@@ -31,7 +31,7 @@ export default function ShopHome() {
         setFlashProducts(
           (flashRes?.data ?? []).filter((item) => item.isOnSale),
         );
-        setTotalProducts(featuredRes?.meta?.total ?? 0);
+        setTotalProducts(featuredRes?.meta?.totalItems ?? 0);
       } catch {
         setFeaturedProducts([]);
         setFlashProducts([]);

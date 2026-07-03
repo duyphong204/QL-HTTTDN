@@ -13,6 +13,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { QueryOrderDto } from './dto/query-order.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
@@ -25,8 +26,8 @@ export class OrdersController {
 
   @Get()
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
-  getOrders() {
-    return this.ordersService.getOrders();
+  getOrders(@Query() query: QueryOrderDto) {
+    return this.ordersService.getOrders(query);
   }
 
   @Post()
@@ -43,8 +44,8 @@ export class OrdersController {
 
   @Get('me')
   @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
-  getMyOrders(@Request() req: any) {
-    return this.ordersService.getMyOrders(req.user.id);
+  getMyOrders(@Request() req: any, @Query() query: QueryOrderDto) {
+    return this.ordersService.getMyOrders(req.user.id, query);
   }
 
   @Get('stats')

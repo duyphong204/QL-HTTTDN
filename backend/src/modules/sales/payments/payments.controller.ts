@@ -5,8 +5,15 @@ import {
   Get,
   Post,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { MomoService } from './momo.service';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { Role } from 'src/common/enums/role.enum';
+import { OrderStatusQueryDto } from './dto/order-status.dto';
 
 @Controller('payments')
 export class PaymentsController {
@@ -53,7 +60,13 @@ export class PaymentsController {
   }
 
   @Get('order-status')
-  async getOrderPaymentStatus(@Query('orderId') orderId: string) {
-    return this.momoService.getOrderPaymentStatus(orderId);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SALES_MANAGER, Role.CUSTOMER)
+  async getOrderPaymentStatus(
+    @Query() query: OrderStatusQueryDto,
+    @Request() req: any,
+  ) {
+    return this.momoService.getOrderPaymentStatus(query.orderId, req.user);
   }
 }
+

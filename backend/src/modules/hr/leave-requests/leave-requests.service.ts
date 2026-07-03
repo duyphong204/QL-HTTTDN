@@ -8,6 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateLeaveDto, QueryLeaveRequestDto } from './dto/leave.dto';
 import { LeaveType, LeaveStatus, Prisma } from '@prisma/client';
 import { countWeekdays } from '../salaries/salary.utils';
+import { calculatePaginationSkip, buildPaginatedResponse } from 'src/common/utils/pagination.helper';
 
 const DEFAULT_ANNUAL_DAYS = 12;
 
@@ -81,26 +82,37 @@ export class LeaveRequestsService {
     });
   }
 
-  async getMyRequests(userId: string) {
+  async getMyRequests(userId: string, query?: QueryLeaveRequestDto) {
     const employee = await this.getEmployeeOrThrow(userId);
+    const { page = 1, limit = 10 } = query || {};
+    const skip = calculatePaginationSkip(Number(page), Number(limit));
 
-    const requests = await this.prisma.leaveRequest.findMany({
-      where: { employeeId: employee.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        employee: {
-          select: {
-            user: { select: { profile: { select: { fullName: true } } } },
+    const where: Prisma.LeaveRequestWhereInput = { employeeId: employee.id };
+
+    const [requests, total] = await this.prisma.$transaction([
+      this.prisma.leaveRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Number(limit),
+        include: {
+          employee: {
+            select: {
+              user: { select: { profile: { select: { fullName: true } } } },
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.leaveRequest.count({ where }),
+    ]);
 
-    return requests.map((item) => ({
+    const data = requests.map((item) => ({
       ...item,
       employeeName: item.employee.user.profile?.fullName ?? 'Bạn',
       employee: undefined,
     }));
+
+    return buildPaginatedResponse(data, total, Number(page), Number(limit));
   }
 
   async getMyBalance(userId: string) {
@@ -117,7 +129,8 @@ export class LeaveRequestsService {
   }
 
   async findAll(query?: QueryLeaveRequestDto) {
-    const { status, type, employeeId, year, month } = query || {};
+    const { status, type, employeeId, year, month, page = 1, limit = 10 } = query || {};
+    const skip = calculatePaginationSkip(Number(page), Number(limit));
 
     const where: Prisma.LeaveRequestWhereInput = {};
     if (status) where.status = status as LeaveStatus;
@@ -140,22 +153,27 @@ export class LeaveRequestsService {
       }
     }
 
-    const leaveRequests = await this.prisma.leaveRequest.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        employee: {
-          select: {
-            code: true,
-            user: {
-              select: { profile: { select: { fullName: true } } },
+    const [leaveRequests, total] = await this.prisma.$transaction([
+      this.prisma.leaveRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Number(limit),
+        include: {
+          employee: {
+            select: {
+              code: true,
+              user: {
+                select: { profile: { select: { fullName: true } } },
+              },
             },
           },
         },
-      },
-    });
+      }),
+      this.prisma.leaveRequest.count({ where }),
+    ]);
 
-    return leaveRequests.map((item) => ({
+    const data = leaveRequests.map((item) => ({
       id: item.id,
       employeeId: item.employeeId,
       employeeName: item.employee.user.profile?.fullName ?? item.employee.code,
@@ -163,11 +181,13 @@ export class LeaveRequestsService {
       startDate: item.startDate,
       endDate: item.endDate,
       totalDays: item.totalDays,
-      reason: item.reason,
       status: item.status,
+      reason: item.reason,
       rejectionReason: item.rejectionReason,
       createdAt: item.createdAt,
     }));
+
+    return buildPaginatedResponse(data, total, Number(page), Number(limit));
   }
 
   async updateStatus(
