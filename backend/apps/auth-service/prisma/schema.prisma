@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-auth"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("AUTH_DATABASE_URL")
+}
+
+model User {
+  id               String      @id @default(uuid())
+  email            String      @unique
+  password         String
+  role             Role        @default(CUSTOMER)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  refreshTokenHash String?
+  deletedAt        DateTime?
+  isActive         Boolean     @default(true)
+  profile          Profile?
+  logs             SystemLog[]
+}
+
+model Profile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  fullName    String
+  phone       String?
+  address     String?
+  avatar      String?
+  dateOfBirth DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  HR_MANAGER
+  WAREHOUSE_MANAGER
+  SALES_MANAGER
+  EMPLOYEE
+  CUSTOMER
+}

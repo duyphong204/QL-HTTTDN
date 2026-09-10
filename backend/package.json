@@ -7,6 +7,14 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "build:all": "nest build api-gateway && nest build auth-service && nest build warehouse-service && nest build sales-service && nest build hr-service && nest build report-service",
+    "start:all": "concurrently -n \"GATEWAY,AUTH,WAREHOUSE,SALES,HR,REPORT\" -c \"cyan,magenta,yellow,blue,green,red\" \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:warehouse\" \"npm run start:sales\" \"npm run start:hr\" \"npm run start:report\"",
+    "start:gateway": "nest start api-gateway --watch",
+    "start:auth": "nest start auth-service --watch",
+    "start:warehouse": "nest start warehouse-service --watch",
+    "start:sales": "nest start sales-service --watch",
+    "start:hr": "nest start hr-service --watch",
+    "start:report": "nest start report-service --watch",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch --swc",
@@ -20,18 +28,26 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^12.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/microservices": "^11.2.1",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.16",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.10.2",
+    "amqp-connection-manager": "^5.0.0",
+    "amqplib": "^2.0.1",
     "bcrypt": "^6.0.0",
+    "cache-manager": "^7.2.9",
+    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
+    "helmet": "^8.3.0",
     "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -56,6 +72,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.2",
+    "concurrently": "^10.0.5",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -80,7 +97,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -88,7 +105,11 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@app/common(|/.*)$": "<rootDir>/libs/common/src$1",
+      "^src/(.*)$": "<rootDir>/apps/$1"
+    }
   }
 }

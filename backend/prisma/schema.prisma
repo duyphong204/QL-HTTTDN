@@ -38,6 +38,7 @@ model Profile {
   avatar      String?
   dateOfBirth DateTime?
   user        User      @relation(fields: [userId], references: [id])
+  @@index([userId])
 }
 
 model Employee {
@@ -224,6 +225,9 @@ model Product {
   supplier        Supplier           @relation(fields: [supplierId], references: [id])
   stockInDetails  StockInDetail[]
   stockOutDetails StockOutDetail[]
+  
+  @@index([categoryId])
+  @@index([supplierId])
 }
 
 model StockIn {
@@ -257,6 +261,8 @@ model Cart {
   updatedAt DateTime   @updatedAt
   user      User       @relation(fields: [userId], references: [id])
   items     CartItem[]
+  
+  @@index([userId])
 }
 
 model CartItem {
@@ -266,6 +272,9 @@ model CartItem {
   quantity  Int     @default(1)
   cart      Cart    @relation(fields: [cartId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+  
+  @@index([cartId])
+  @@index([productId])
 }
 
 model Order {
@@ -282,6 +291,8 @@ model Order {
   user          User?         @relation(fields: [userId], references: [id])
   details       OrderDetail[]
   stockOuts     StockOut[]
+  
+  @@index([userId])
 }
 
 model StockOut {
@@ -318,6 +329,9 @@ model OrderDetail {
   costPrice Float
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+  
+  @@index([orderId])
+  @@index([productId])
 }
 
 model SystemLog {

@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-report"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("REPORT_DATABASE_URL")
+}
+
+model DailyReport {
+  id              String   @id @default(uuid())
+  date            DateTime @unique @db.Date
+  totalOrders     Int      @default(0)
+  totalRevenue    Float    @default(0)
+  totalProfit     Float    @default(0)
+  totalItemsSold  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MonthlyReport {
+  id              String   @id @default(uuid())
+  month           Int
+  year            Int
+  totalOrders     Int      @default(0)
+  totalRevenue    Float    @default(0)
+  totalProfit     Float    @default(0)
+  totalItemsSold  Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([month, year])
+}
+
+model ProductPerformance {
+  id           String   @id @default(uuid())
+  productId    String   @unique
+  productName  String
+  totalSold    Int      @default(0)
+  totalRevenue Float    @default(0)
+  updatedAt    DateTime @updatedAt
+}

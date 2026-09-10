@@ -1,0 +1,435 @@
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '@app/common/prisma/prisma.service';
+import { CreateEmployeeDto } from '../dto/create-employee.dto';
+import {
+  QueryEmployeeDto,
+  ChangePositionDto,
+  UpdateEmployeeProfileByHrDto,
+} from '../dto/hr-filter.dto';
+import { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from '@app/common/utils/pagination.helper';
+import { Role } from '@app/common/enums/role.enum';
+import { COMMON_USER_SELECT } from './employee-self.service';
+
+@Injectable()
+export class HrManagementService {
+  constructor(private prisma: PrismaService) {}
+
+  private async assertEmployeeNotAdminByUserId(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role === Role.ADMIN) {
+      throw new ForbiddenException('Không được thao tác trên tài khoản ADMIN');
+    }
+  }
+
+  // ==================== QUẢN LÝ NHÂN SỰ ====================
+  private async generateEmployeeCode(
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    const lastEmployee = await tx.employee.findFirst({
+      orderBy: {
+        joinDate: 'desc',
+      },
+    });
+
+    if (!lastEmployee) return 'NV0001';
+
+    const lastCode = lastEmployee.code;
+    const numberPart = parseInt(lastCode.replace('NV', ''), 10);
+    const nextNumber = isNaN(numberPart) ? 1 : numberPart + 1;
+
+    return `NV${nextNumber.toString().padStart(4, '0')}`;
+  }
+
+  async create(dto: CreateEmployeeDto) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { role: true },
+    });
+
+    if (existingUser) {
+      if (existingUser.role === Role.ADMIN) {
+        throw new ForbiddenException(
+          'Không được thao tác trên tài khoản ADMIN',
+        );
+      }
+      throw new BadRequestException('Email đã tồn tại trong hệ thống');
+    }
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          password: hashedPassword,
+          role: dto.role || Role.EMPLOYEE,
+        },
+      });
+
+      await tx.profile.create({
+        data: {
+          userId: user.id,
+          fullName: dto.fullName,
+        },
+      });
+
+      const employee = await tx.employee.create({
+        data: {
+          userId: user.id,
+          code: await this.generateEmployeeCode(tx),
+          department: dto.department,
+          position: dto.position,
+          baseSalary: dto.baseSalary,
+          joinDate: new Date(),
+        },
+      });
+
+      await tx.jobHistory.create({
+        data: {
+          employeeId: employee.id,
+          department: dto.department,
+          position: dto.position,
+          baseSalary: dto.baseSalary,
+          startDate: new Date(),
+        },
+      });
+
+      return employee;
+    });
+  }
+
+  async changePosition(id: string, dto: ChangePositionDto) {
+    const current = await this.prisma.employee.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!current) throw new NotFoundException('Không tìm thấy nhân viên');
+    await this.assertEmployeeNotAdminByUserId(current.userId);
+
+    const effectiveDate = new Date(dto.effectiveDate);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.jobHistory.updateMany({
+        where: { employeeId: id, endDate: null },
+        data: { endDate: effectiveDate },
+      });
+
+      await tx.jobHistory.create({
+        data: {
+          employeeId: id,
+          department: dto.department ?? current.department,
+          position: dto.position ?? current.position,
+          baseSalary: dto.baseSalary ?? current.baseSalary,
+          startDate: effectiveDate,
+        },
+      });
+
+      if (dto.role !== undefined) {
+        await tx.user.update({
+          where: { id: current.userId },
+          data: { role: dto.role },
+        });
+      }
+
+      return tx.employee.update({
+        where: { id },
+        data: {
+          ...(dto.department !== undefined && { department: dto.department }),
+          ...(dto.position !== undefined && { position: dto.position }),
+          ...(dto.baseSalary !== undefined && { baseSalary: dto.baseSalary }),
+        },
+        include: {
+          user: {
+            select: { id: true, ...COMMON_USER_SELECT },
+          },
+          jobHistories: { orderBy: { startDate: 'desc' }, take: 5 },
+        },
+      });
+    });
+  }
+
+  async updateEmployeeProfile(id: string, dto: UpdateEmployeeProfileByHrDto) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    return this.prisma.profile.update({
+      where: { userId: employee.userId },
+      data: {
+        ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.address !== undefined && { address: dto.address }),
+        ...(dto.avatar !== undefined && { avatar: dto.avatar }),
+        ...(dto.dateOfBirth !== undefined && {
+          dateOfBirth: new Date(dto.dateOfBirth),
+        }),
+      },
+    });
+  }
+
+  async remove(id: string) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+    await this.assertEmployeeNotAdminByUserId(employee.userId);
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: employee.userId },
+        data: {
+          isActive: false,
+          deletedAt: new Date(), // soft delete
+        },
+      });
+
+      await tx.employee.update({
+        where: { id },
+        data: { resignDate: new Date() },
+      });
+
+      await tx.jobHistory.updateMany({
+        where: { employeeId: id, endDate: null },
+        data: { endDate: new Date() },
+      });
+
+      return { message: 'Nhân sự đã được cho nghỉ việc thành công' };
+    });
+  }
+
+  // ==================== QUERY & STATISTICS ====================
+  async findAll(query?: QueryEmployeeDto) {
+    const {
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'code',
+      sortOrder = 'asc',
+      department,
+      position,
+      isActive,
+    } = query || {};
+
+    const allowedSortBy = [
+      'code',
+      'department',
+      'position',
+      'joinDate',
+      'baseSalary',
+    ] as const;
+    const normalizedSortBy = allowedSortBy.includes(sortBy as any)
+      ? sortBy
+      : 'code';
+    const normalizedSortOrder: Prisma.SortOrder =
+      sortOrder === 'desc' ? 'desc' : 'asc';
+
+    const skip = calculatePaginationSkip(page, limit);
+
+    const where: Prisma.EmployeeWhereInput = {
+      user: { role: { notIn: [Role.ADMIN, Role.CUSTOMER] } },
+      ...(isActive === true
+        ? { resignDate: null }
+        : isActive === false
+          ? { resignDate: { not: null } }
+          : {}),
+      ...(search && {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' } },
+          { user: { email: { contains: search, mode: 'insensitive' } } },
+          {
+            user: {
+              profile: { fullName: { contains: search, mode: 'insensitive' } },
+            },
+          },
+        ],
+      }),
+      ...(department && { department }),
+      ...(position && { position }),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.employee.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          user: {
+            select: COMMON_USER_SELECT,
+          },
+        },
+        orderBy: { [normalizedSortBy]: normalizedSortOrder },
+      }),
+      this.prisma.employee.count({ where }),
+    ]);
+
+    return buildPaginatedResponse(data, total, page, limit);
+  }
+
+  async getEmployeeById(id: string, requester?: { id: string; role: Role }) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: COMMON_USER_SELECT,
+        },
+        jobHistories: {
+          orderBy: { startDate: 'desc' },
+        },
+      },
+    });
+
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    if (requester?.role === Role.EMPLOYEE && requester.id !== employee.userId) {
+      throw new ForbiddenException('Bạn chỉ được xem hồ sơ của chính mình');
+    }
+
+    return employee;
+  }
+
+  async getJobHistory(id: string, requester?: { id: string; role: Role }) {
+    const employee = await this.prisma.employee.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+
+    if (!employee) throw new NotFoundException('Không tìm thấy nhân viên');
+
+    if (requester?.role === Role.EMPLOYEE && requester.id !== employee.userId) {
+      throw new ForbiddenException('Bạn chỉ được xem lịch sử của chính mình');
+    }
+
+    return this.prisma.jobHistory.findMany({
+      where: { employeeId: id },
+      orderBy: { startDate: 'desc' },
+    });
+  }
+
+  async getHrStatisticsWithFilter(month?: number, year?: number) {
+    const currentMonth = month ?? new Date().getMonth() + 1;
+    const currentYear = year ?? new Date().getFullYear();
+
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
+
+    const leaveFrom = month
+      ? new Date(currentYear, currentMonth - 1, 1)
+      : new Date(currentYear, 0, 1);
+    const leaveTo = month
+      ? new Date(currentYear, currentMonth, 0, 23, 59, 59)
+      : new Date(currentYear, 11, 31, 23, 59, 59);
+
+    const [
+      totalEmployees,
+      totalResigned,
+      newThisMonth,
+      resignedThisMonth,
+      salaryAggregate,
+      headcount,
+      pendingLeaveRequests,
+      monthlySalaries,
+      leaveStatsByType,
+      leaveDetails,
+    ] = await Promise.all([
+      this.prisma.employee.count({ where: { resignDate: null } }),
+      this.prisma.employee.count({ where: { resignDate: { not: null } } }),
+      this.prisma.employee.count({
+        where: { joinDate: { gte: startOfMonth, lte: endOfMonth } },
+      }),
+      this.prisma.employee.count({
+        where: {
+          resignDate: { gte: startOfMonth, lte: endOfMonth },
+        },
+      }),
+      this.prisma.salary.aggregate({
+        where: { month: currentMonth, year: currentYear },
+        _sum: { netSalary: true, totalBonus: true, totalDeduction: true },
+        _avg: { netSalary: true },
+      }),
+      this.prisma.salary.count({
+        where: { month: currentMonth, year: currentYear },
+      }),
+      this.prisma.leaveRequest.count({ where: { status: 'PENDING' } }),
+      this.prisma.salary.groupBy({
+        by: ['month'],
+        where: { year: currentYear },
+        _sum: { netSalary: true, totalBonus: true },
+        _count: { id: true },
+        orderBy: { month: 'asc' },
+      }),
+      this.prisma.leaveRequest.groupBy({
+        by: ['type'],
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        _count: { id: true },
+      }),
+      this.prisma.leaveRequest.findMany({
+        where: { startDate: { gte: leaveFrom, lte: leaveTo } },
+        orderBy: { startDate: 'desc' },
+        take: 50,
+        include: {
+          employee: {
+            select: {
+              code: true,
+              user: { select: { profile: { select: { fullName: true } } } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const monthlyBreakdown = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const found = monthlySalaries.find((s) => s.month === m);
+      return {
+        month: m,
+        totalNetSalary: found?._sum.netSalary ?? 0,
+        totalBonus: found?._sum.totalBonus ?? 0,
+        employeeCount: found?._count.id ?? 0,
+      };
+    });
+
+    return {
+      totalEmployees,
+      totalResigned,
+      newThisMonth,
+      resignedThisMonth,
+      headcount,
+      salaryMonth: currentMonth,
+      salaryYear: currentYear,
+      totalSalaryPaid: salaryAggregate._sum.netSalary ?? 0,
+      totalBonus: salaryAggregate._sum.totalBonus ?? 0,
+      totalDeduction: salaryAggregate._sum.totalDeduction ?? 0,
+      avgSalary: salaryAggregate._avg.netSalary ?? 0,
+      pendingLeaveRequests,
+      monthlyBreakdown,
+      leaveStatsByType,
+      leaveDetails: leaveDetails.map((l) => ({
+        employeeName: l.employee.user.profile?.fullName ?? l.employee.code,
+        type: l.type,
+        totalDays: l.totalDays,
+        status: l.status,
+        startDate: l.startDate,
+        endDate: l.endDate,
+      })),
+    };
+  }
+}
+
