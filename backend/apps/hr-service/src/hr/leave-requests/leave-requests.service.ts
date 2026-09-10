@@ -8,7 +8,10 @@ import { PrismaService } from '@app/common/prisma/prisma.service';
 import { CreateLeaveDto, QueryLeaveRequestDto } from './dto/leave.dto';
 import { LeaveType, LeaveStatus, Prisma } from '@prisma/client';
 import { countWeekdays } from '../salaries/salary.utils';
-import { calculatePaginationSkip, buildPaginatedResponse } from '@app/common/utils/pagination.helper';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from '@app/common/utils/pagination.helper';
 
 const DEFAULT_ANNUAL_DAYS = 12;
 
@@ -129,12 +132,20 @@ export class LeaveRequestsService {
   }
 
   async findAll(query?: QueryLeaveRequestDto) {
-    const { status, type, employeeId, year, month, page = 1, limit = 10 } = query || {};
+    const {
+      status,
+      type,
+      employeeId,
+      year,
+      month,
+      page = 1,
+      limit = 10,
+    } = query || {};
     const skip = calculatePaginationSkip(Number(page), Number(limit));
 
     const where: Prisma.LeaveRequestWhereInput = {};
     if (status) where.status = status as LeaveStatus;
-    if (type) where.type = type as LeaveType;
+    if (type) where.type = type;
     if (employeeId) where.employeeId = employeeId;
 
     if (year || month) {
@@ -265,4 +276,3 @@ export class LeaveRequestsService {
     return this.prisma.leaveRequest.delete({ where: { id } });
   }
 }
-

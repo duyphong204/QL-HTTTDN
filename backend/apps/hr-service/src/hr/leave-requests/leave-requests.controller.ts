@@ -93,5 +93,3 @@ export class LeaveRequestsController {
     return this.leaveRequestsService.delete(id, req.user.id);
   }
 }
-
-

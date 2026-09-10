@@ -2,7 +2,11 @@ import { eachDayOfInterval, eachMonthOfInterval, format } from 'date-fns';
 
 export type ReportBucket = 'day' | 'month';
 
-export const getSeriesDates = (start: Date, end: Date, bucket: ReportBucket) => {
+export const getSeriesDates = (
+  start: Date,
+  end: Date,
+  bucket: ReportBucket,
+) => {
   return bucket === 'day'
     ? eachDayOfInterval({ start, end })
     : eachMonthOfInterval({ start, end });

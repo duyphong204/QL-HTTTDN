@@ -144,4 +144,3 @@ export class QueryProductDto extends PaginationQueryDto {
   @IsBoolean()
   inStock?: boolean;
 }
-

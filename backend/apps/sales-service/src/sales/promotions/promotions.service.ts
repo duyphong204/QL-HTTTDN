@@ -220,4 +220,3 @@ export class PromotionsService {
     });
   }
 }
-

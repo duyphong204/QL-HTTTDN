@@ -12,18 +12,24 @@ export class ReportProxyController {
   @Public()
   @Get('sales')
   async getSalesReport(@Query() query: any) {
-    return firstValueFrom(this.reportClient.send({ cmd: 'reports.sales_summary' }, query));
+    return firstValueFrom(
+      this.reportClient.send({ cmd: 'reports.sales_summary' }, query),
+    );
   }
 
   @Public()
   @Get('warehouse')
   async getWarehouseReport(@Query() query: any) {
-    return firstValueFrom(this.reportClient.send({ cmd: 'reports.warehouse_summary' }, query));
+    return firstValueFrom(
+      this.reportClient.send({ cmd: 'reports.warehouse_summary' }, query),
+    );
   }
 
   @Public()
   @Get('hr')
   async getHrReport(@Query() query: any) {
-    return firstValueFrom(this.reportClient.send({ cmd: 'reports.hr_summary' }, query));
+    return firstValueFrom(
+      this.reportClient.send({ cmd: 'reports.hr_summary' }, query),
+    );
   }
 }

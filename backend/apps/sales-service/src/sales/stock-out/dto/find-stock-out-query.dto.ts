@@ -27,6 +27,4 @@ export class FindStockOutQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsDateString()
   toDate?: string;
-
 }
-

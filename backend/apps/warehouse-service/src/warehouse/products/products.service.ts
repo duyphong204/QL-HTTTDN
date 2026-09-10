@@ -304,24 +304,33 @@ export class ProductService {
         });
 
         if (result.count === 0) {
-          this.logger.error(`Product ${item.productId} out of stock for order ${order.id}`);
+          this.logger.error(
+            `Product ${item.productId} out of stock for order ${order.id}`,
+          );
           isSuccess = false;
           break;
         }
         deductedItems.push(item);
       } catch (err) {
-        this.logger.error(`Failed to deduct stock for product ${item.productId}: ${err}`);
+        this.logger.error(
+          `Failed to deduct stock for product ${item.productId}: ${err}`,
+        );
         isSuccess = false;
         break;
       }
     }
 
     if (!isSuccess) {
-      this.logger.warn(`Order ${order.id} failed stock deduction. Rolling back and emitting compensation event.`);
+      this.logger.warn(
+        `Order ${order.id} failed stock deduction. Rolling back and emitting compensation event.`,
+      );
       await this.restoreStockForOrder(deductedItems);
-      
+
       // Emit Compensation Event cho Sales Service qua RabbitMQ (Saga Pattern)
-      this.rmqClient.emit('warehouse.stock_failed', { orderId: order.id, reason: 'OUT_OF_STOCK' });
+      this.rmqClient.emit('warehouse.stock_failed', {
+        orderId: order.id,
+        reason: 'OUT_OF_STOCK',
+      });
     }
   }
 
@@ -337,4 +346,3 @@ export class ProductService {
     }
   }
 }
-

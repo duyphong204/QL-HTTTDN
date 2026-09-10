@@ -29,6 +29,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllRpcExceptionsFilter());
 
   await app.listen();
-  logger.log(`🚀 Auth & User Microservice TCP Listener running on port: ${port}`);
+  logger.log(
+    `🚀 Auth & User Microservice TCP Listener running on port: ${port}`,
+  );
 }
 void bootstrap();

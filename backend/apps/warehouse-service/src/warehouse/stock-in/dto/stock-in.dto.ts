@@ -25,7 +25,6 @@ export class QueryStockInDto extends PaginationQueryDto {
   year?: number;
 }
 
-
 export class StockInDetailDto {
   @IsUUID(undefined, { message: 'ID sản phẩm không hợp lệ' })
   productId!: string;
@@ -60,4 +59,3 @@ export class UpdateStockInDto {
   @Type(() => StockInDetailDto)
   details?: StockInDetailDto[];
 }
-

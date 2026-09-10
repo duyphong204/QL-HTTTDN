@@ -14,7 +14,11 @@ export class ReportServiceController {
 
   @MessagePattern({ cmd: 'report.health' })
   healthCheck() {
-    return { status: 'ok', service: 'report-service', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'report-service',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   @MessagePattern({ cmd: 'reports.sales_summary' })
@@ -36,7 +40,10 @@ export class ReportServiceController {
   @EventPattern('order.created')
   async handleOrderCreatedEvent(@Payload() order: any) {
     // Analytics update happens here in background
-    return { status: 'event_processed', event: 'order.created', orderId: order?.id };
+    return {
+      status: 'event_processed',
+      event: 'order.created',
+      orderId: order?.id,
+    };
   }
 }
-

@@ -55,4 +55,3 @@ export class QueryLeaveRequestDto extends PaginationQueryDto {
   @IsString()
   month?: string;
 }
-

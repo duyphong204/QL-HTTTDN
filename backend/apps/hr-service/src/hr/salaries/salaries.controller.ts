@@ -25,7 +25,6 @@ import { RolesGuard } from '@app/common';
 import { Roles } from '@app/common';
 import { Role } from '@app/common/enums/role.enum';
 
-
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('salaries')
@@ -127,5 +126,3 @@ export class SalariesController {
     return this.salariesService.removeDetail(id, detailId);
   }
 }
-
-

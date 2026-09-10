@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsIn,
+} from 'class-validator';
 import { PaginationQueryDto } from '@app/common/dto/pagination.dto';
 
 export class CreateSupplierDto {
@@ -51,4 +57,3 @@ export class QuerySupplierDto extends PaginationQueryDto {
   @IsIn(['asc', 'desc'], { message: 'sortOrder không hợp lệ' })
   sortOrder?: 'asc' | 'desc' = 'asc';
 }
-

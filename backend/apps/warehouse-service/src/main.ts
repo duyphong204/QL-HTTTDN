@@ -41,6 +41,8 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   await app.listen(port + 100); // Dummy HTTP port for the hybrid app
-  logger.log(`🚀 Warehouse & Inventory Microservice TCP Listener running on port: ${port}`);
+  logger.log(
+    `🚀 Warehouse & Inventory Microservice TCP Listener running on port: ${port}`,
+  );
 }
 void bootstrap();

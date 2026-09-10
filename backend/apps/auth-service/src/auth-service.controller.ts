@@ -12,7 +12,11 @@ export class AuthServiceController {
 
   @MessagePattern({ cmd: 'auth.health' })
   healthCheck() {
-    return { status: 'ok', service: 'auth-service', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'auth-service',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   @MessagePattern({ cmd: 'auth.login' })
@@ -55,4 +59,3 @@ export class AuthServiceController {
     return this.usersService.remove(id);
   }
 }
-

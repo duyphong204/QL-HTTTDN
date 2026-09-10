@@ -74,5 +74,3 @@ export class CartController {
     return this.cartService.syncCart(req.user.id, dto);
   }
 }
-
-

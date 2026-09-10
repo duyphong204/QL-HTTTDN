@@ -10,4 +10,3 @@ import { CartService } from './cart.service';
   exports: [CartService],
 })
 export class CartModule {}
-

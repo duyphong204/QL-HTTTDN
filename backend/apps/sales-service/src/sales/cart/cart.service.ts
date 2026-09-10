@@ -269,7 +269,9 @@ export class CartService {
       const existingItems = await tx.cartItem.findMany({
         where: { cartId: cart.id, productId: { in: productIds } },
       });
-      const existingItemMap = new Map(existingItems.map((i) => [i.productId, i]));
+      const existingItemMap = new Map(
+        existingItems.map((i) => [i.productId, i]),
+      );
 
       const createData: Prisma.CartItemCreateManyInput[] = [];
 
@@ -320,4 +322,3 @@ export class CartService {
     });
   }
 }
-

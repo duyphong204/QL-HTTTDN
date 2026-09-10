@@ -55,4 +55,3 @@ export class CreateEmployeeDto {
   @Min(0, { message: 'Lương cơ bản phải lớn hơn hoặc bằng 0' })
   baseSalary!: number;
 }
-

@@ -34,5 +34,3 @@ export class ReportController {
     return this.hrReportService.getHrReport(query);
   }
 }
-
-

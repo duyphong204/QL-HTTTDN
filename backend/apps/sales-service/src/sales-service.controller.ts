@@ -15,7 +15,10 @@ import { CreateStockOutDto } from './sales/stock-out/dto/create-stock-out.dto';
 import { UpdateStockOutDto } from './sales/stock-out/dto/update-stock-out.dto';
 import { FindStockOutQueryDto } from './sales/stock-out/dto/find-stock-out-query.dto';
 
-import { CreatePromotionDto, UpdatePromotionDto } from './sales/promotions/dto/promotion.dto';
+import {
+  CreatePromotionDto,
+  UpdatePromotionDto,
+} from './sales/promotions/dto/promotion.dto';
 
 @Controller()
 export class SalesServiceController {
@@ -28,7 +31,11 @@ export class SalesServiceController {
 
   @MessagePattern({ cmd: 'sales.health' })
   healthCheck() {
-    return { status: 'ok', service: 'sales-service', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'sales-service',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   // Orders
@@ -43,13 +50,23 @@ export class SalesServiceController {
   }
 
   @MessagePattern({ cmd: 'orders.stats' })
-  async getSalesStats(@Payload() query: { month?: string | number; year?: string | number }) {
-    return this.ordersService.getSalesStatistics(query?.month ? Number(query.month) : undefined, query?.year ? Number(query.year) : undefined);
+  async getSalesStats(
+    @Payload() query: { month?: string | number; year?: string | number },
+  ) {
+    return this.ordersService.getSalesStatistics(
+      query?.month ? Number(query.month) : undefined,
+      query?.year ? Number(query.year) : undefined,
+    );
   }
 
   @MessagePattern({ cmd: 'orders.period_stats' })
-  async getSalesStatsByPeriod(@Payload() query: { year?: string | number; quarter?: string | number }) {
-    return this.ordersService.getSalesStatisticsByPeriod(query?.year ? Number(query.year) : undefined, query?.quarter ? Number(query.quarter) : undefined);
+  async getSalesStatsByPeriod(
+    @Payload() query: { year?: string | number; quarter?: string | number },
+  ) {
+    return this.ordersService.getSalesStatisticsByPeriod(
+      query?.year ? Number(query.year) : undefined,
+      query?.quarter ? Number(query.quarter) : undefined,
+    );
   }
 
   @MessagePattern({ cmd: 'orders.find_one' })
@@ -63,7 +80,9 @@ export class SalesServiceController {
   }
 
   @MessagePattern({ cmd: 'orders.update_status' })
-  async updateOrderStatus(@Payload() payload: { id: string; data: UpdateOrderStatusDto }) {
+  async updateOrderStatus(
+    @Payload() payload: { id: string; data: UpdateOrderStatusDto },
+  ) {
     return this.ordersService.updateOrderStatus(payload.id, payload.data);
   }
 
@@ -85,8 +104,18 @@ export class SalesServiceController {
   }
 
   @MessagePattern({ cmd: 'cart.update_item' })
-  async updateCartItem(@Payload() payload: { itemId: string; data: UpdateCartItemDto & { userId: string } }) {
-    return this.cartService.updateItem(payload.data?.userId || 'system', payload.itemId, payload.data);
+  async updateCartItem(
+    @Payload()
+    payload: {
+      itemId: string;
+      data: UpdateCartItemDto & { userId: string };
+    },
+  ) {
+    return this.cartService.updateItem(
+      payload.data?.userId || 'system',
+      payload.itemId,
+      payload.data,
+    );
   }
 
   @MessagePattern({ cmd: 'cart.remove_item' })
@@ -116,7 +145,9 @@ export class SalesServiceController {
   }
 
   @MessagePattern({ cmd: 'stock_outs.update' })
-  async updateStockOut(@Payload() payload: { id: string; data: UpdateStockOutDto }) {
+  async updateStockOut(
+    @Payload() payload: { id: string; data: UpdateStockOutDto },
+  ) {
     return this.stockOutService.update(payload.id, payload.data);
   }
 
@@ -137,7 +168,9 @@ export class SalesServiceController {
   }
 
   @MessagePattern({ cmd: 'promotions.update' })
-  async updatePromotion(@Payload() payload: { id: string; data: UpdatePromotionDto }) {
+  async updatePromotion(
+    @Payload() payload: { id: string; data: UpdatePromotionDto },
+  ) {
     return this.promotionsService.update(payload.id, payload.data);
   }
 
@@ -148,8 +181,12 @@ export class SalesServiceController {
 
   // Event Listeners
   @EventPattern('warehouse.stock_failed')
-  async handleStockFailed(@Payload() payload: { orderId: string; reason: string }) {
-    return this.ordersService.handleStockFailed(payload.orderId, payload.reason);
+  async handleStockFailed(
+    @Payload() payload: { orderId: string; reason: string },
+  ) {
+    return this.ordersService.handleStockFailed(
+      payload.orderId,
+      payload.reason,
+    );
   }
 }
-

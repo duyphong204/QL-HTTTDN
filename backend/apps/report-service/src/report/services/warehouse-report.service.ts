@@ -70,7 +70,9 @@ export class WarehouseReportService {
       return { start, end, bucket: 'month' as const };
     }
 
-    throw new BadRequestException('Warehouse report supports month or year only');
+    throw new BadRequestException(
+      'Warehouse report supports month or year only',
+    );
   }
 
   private fillWarehouseBreakdown(
@@ -98,7 +100,13 @@ export class WarehouseReportService {
     const bucketUnit = bucket === 'day' ? 'day' : 'month';
     const bucketInterval = bucket === 'day' ? '1 day' : '1 month';
 
-    const [summaryRows, breakdownRows, topProducts, topCategories, topSuppliers] = await Promise.all([
+    const [
+      summaryRows,
+      breakdownRows,
+      topProducts,
+      topCategories,
+      topSuppliers,
+    ] = await Promise.all([
       this.prisma.$queryRaw<WarehouseSummaryRow[]>(Prisma.sql`
         WITH filtered_stock_in AS (
           SELECT id, "totalAmount", date
@@ -335,4 +343,3 @@ export class WarehouseReportService {
     };
   }
 }
-

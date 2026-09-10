@@ -121,4 +121,3 @@ export class ToggleActiveDto {
   @Type(() => Boolean)
   isActive!: boolean;
 }
-

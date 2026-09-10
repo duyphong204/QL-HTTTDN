@@ -60,7 +60,10 @@ export class SalariesService {
 
     const empsToCalculate = employees.filter((e) => !existingEmpIds.has(e.id));
     if (empsToCalculate.length === 0) {
-      return { count: 0, message: 'Tất cả nhân viên đã được tính lương từ trước' };
+      return {
+        count: 0,
+        message: 'Tất cả nhân viên đã được tính lương từ trước',
+      };
     }
 
     const pendingIds = empsToCalculate.map((e) => e.id);
@@ -150,13 +153,25 @@ export class SalariesService {
 
       const totalBonus = autoDetails
         .filter((d) =>
-          ([DetailType.BONUS, DetailType.OT, DetailType.ALLOWANCE] as DetailType[]).includes(d.type),
+          (
+            [
+              DetailType.BONUS,
+              DetailType.OT,
+              DetailType.ALLOWANCE,
+            ] as DetailType[]
+          ).includes(d.type),
         )
         .reduce((s, d) => s + d.amount, 0);
 
       const totalDeduction = autoDetails
         .filter((d) =>
-          ([DetailType.DEDUCTION, DetailType.INSURANCE, DetailType.TAX] as DetailType[]).includes(d.type),
+          (
+            [
+              DetailType.DEDUCTION,
+              DetailType.INSURANCE,
+              DetailType.TAX,
+            ] as DetailType[]
+          ).includes(d.type),
         )
         .reduce((s, d) => s + d.amount, 0);
 
@@ -652,4 +667,3 @@ export class SalariesService {
     });
   }
 }
-

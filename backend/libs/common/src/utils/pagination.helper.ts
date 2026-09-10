@@ -27,7 +27,10 @@ export function buildPaginationMeta(
     limit,
   );
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const itemCount = Math.min(itemsPerPage, Math.max(0, totalItems - (currentPage - 1) * itemsPerPage));
+  const itemCount = Math.min(
+    itemsPerPage,
+    Math.max(0, totalItems - (currentPage - 1) * itemsPerPage),
+  );
 
   return {
     totalItems,
@@ -49,4 +52,3 @@ export function buildPaginatedResponse<T>(
     meta: buildPaginationMeta(totalItems, page, limit),
   };
 }
-

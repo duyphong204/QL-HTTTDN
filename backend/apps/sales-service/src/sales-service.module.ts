@@ -8,4 +8,3 @@ import { PrismaModule } from '@app/common/prisma/prisma.module';
   controllers: [SalesServiceController],
 })
 export class SalesServiceAppModule {}
-

@@ -52,12 +52,12 @@ export class StockInService {
   async createStockIn(dto: CreateStockInDto, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       const productIds = dto.details.map((item) => item.productId);
-      
+
       // 1. TỐI ƯU BẢO MẬT (DBA): Pessimistic Locking - Khóa dòng bằng FOR UPDATE
       // Tránh lỗi Race Condition khi 2 thủ kho cùng lúc nhập chung 1 sản phẩm
       const uniqueProductIds = [...new Set(productIds)];
       const products = await tx.$queryRaw<any[]>(
-        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueProductIds)}) FOR UPDATE`
+        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueProductIds)}) FOR UPDATE`,
       );
       const productMap = new Map(products.map((p) => [p.id, p]));
 
@@ -69,7 +69,9 @@ export class StockInService {
       for (const item of dto.details) {
         const product = productMap.get(item.productId);
         if (!product) {
-          throw new NotFoundException(`Sản phẩm ${item.productId} không tồn tại`);
+          throw new NotFoundException(
+            `Sản phẩm ${item.productId} không tồn tại`,
+          );
         }
         await this.applyStockChange(tx, product, item.quantity, item.price);
       }
@@ -110,26 +112,42 @@ export class StockInService {
         ...oldStockIn.details.map((item) => item.productId),
         ...nextDetails.map((item) => item.productId),
       ];
-      
+
       // 1. TỐI ƯU BẢO MẬT (DBA): Pessimistic Locking - Khóa dòng bằng FOR UPDATE
       const uniqueAllIds = [...new Set(allProductIds)];
       const products = await tx.$queryRaw<any[]>(
-        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueAllIds)}) FOR UPDATE`
+        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueAllIds)}) FOR UPDATE`,
       );
       const productMap = new Map(products.map((p) => [p.id, p]));
 
       // Hoàn lại kho cũ
       for (const oldItem of oldStockIn.details) {
         const product = productMap.get(oldItem.productId);
-        if (!product) throw new NotFoundException(`Sản phẩm ${oldItem.productId} không tồn tại`);
-        await this.applyStockChange(tx, product, -oldItem.quantity, oldItem.price);
+        if (!product)
+          throw new NotFoundException(
+            `Sản phẩm ${oldItem.productId} không tồn tại`,
+          );
+        await this.applyStockChange(
+          tx,
+          product,
+          -oldItem.quantity,
+          oldItem.price,
+        );
       }
 
       // Áp dụng kho mới
       for (const newItem of nextDetails) {
         const product = productMap.get(newItem.productId);
-        if (!product) throw new NotFoundException(`Sản phẩm ${newItem.productId} không tồn tại`);
-        await this.applyStockChange(tx, product, newItem.quantity, newItem.price);
+        if (!product)
+          throw new NotFoundException(
+            `Sản phẩm ${newItem.productId} không tồn tại`,
+          );
+        await this.applyStockChange(
+          tx,
+          product,
+          newItem.quantity,
+          newItem.price,
+        );
       }
 
       const totalAmount = nextDetails.reduce(
@@ -168,24 +186,22 @@ export class StockInService {
       }
 
       const productIds = stockIn.details.map((item) => item.productId);
-      
+
       // 1. TỐI ƯU BẢO MẬT (DBA): Pessimistic Locking - Khóa dòng bằng FOR UPDATE
       const uniqueProductIds = [...new Set(productIds)];
       const products = await tx.$queryRaw<any[]>(
-        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueProductIds)}) FOR UPDATE`
+        Prisma.sql`SELECT * FROM "Product" WHERE id IN (${Prisma.join(uniqueProductIds)}) FOR UPDATE`,
       );
       const productMap = new Map(products.map((p) => [p.id, p]));
 
       // Hoàn lại tồn kho (reverse weighted-average cost)
       for (const item of stockIn.details) {
         const product = productMap.get(item.productId);
-        if (!product) throw new NotFoundException(`Sản phẩm ${item.productId} không tồn tại`);
-        await this.applyStockChange(
-          tx,
-          product,
-          -item.quantity,
-          item.price,
-        );
+        if (!product)
+          throw new NotFoundException(
+            `Sản phẩm ${item.productId} không tồn tại`,
+          );
+        await this.applyStockChange(tx, product, -item.quantity, item.price);
       }
 
       // Soft-cancel: giữ record cho lịch sử báo cáo, không hard-delete
@@ -219,11 +235,22 @@ export class StockInService {
     const { month, year, page = 1, limit = 20 } = query;
     const skip = calculatePaginationSkip(page, limit);
 
-    const where: Prisma.StockInWhereInput = month && year
-      ? { date: { gte: new Date(year, month - 1, 1), lte: new Date(year, month, 0, 23, 59, 59) } }
-      : year
-        ? { date: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59) } }
-        : {};
+    const where: Prisma.StockInWhereInput =
+      month && year
+        ? {
+            date: {
+              gte: new Date(year, month - 1, 1),
+              lte: new Date(year, month, 0, 23, 59, 59),
+            },
+          }
+        : year
+          ? {
+              date: {
+                gte: new Date(year, 0, 1),
+                lte: new Date(year, 11, 31, 23, 59, 59),
+              },
+            }
+          : {};
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.stockIn.findMany({
@@ -235,8 +262,7 @@ export class StockInService {
       }),
       this.prisma.stockIn.count({ where }),
     ]);
-    
+
     return buildPaginatedResponse(data, total, page, limit);
   }
 }
-

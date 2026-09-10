@@ -242,4 +242,3 @@ export class SalesReportService {
     return result;
   }
 }
-

@@ -5,10 +5,25 @@ import { CategoryService } from './warehouse/categories/categories.service';
 import { SuppliersService } from './warehouse/suppliers/suppliers.service';
 import { StockInService } from './warehouse/stock-in/stock-in.service';
 
-import { CreateProductDto, UpdateProductDto, QueryProductDto } from './warehouse/products/dto/product.dto';
-import { CreateCategoryDto, UpdateCategoryDto } from './warehouse/categories/dto/category.dto';
-import { CreateSupplierDto, UpdateSupplierDto, QuerySupplierDto } from './warehouse/suppliers/dto/supplier.dto';
-import { CreateStockInDto, UpdateStockInDto, QueryStockInDto } from './warehouse/stock-in/dto/stock-in.dto';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  QueryProductDto,
+} from './warehouse/products/dto/product.dto';
+import {
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from './warehouse/categories/dto/category.dto';
+import {
+  CreateSupplierDto,
+  UpdateSupplierDto,
+  QuerySupplierDto,
+} from './warehouse/suppliers/dto/supplier.dto';
+import {
+  CreateStockInDto,
+  UpdateStockInDto,
+  QueryStockInDto,
+} from './warehouse/stock-in/dto/stock-in.dto';
 
 @Controller()
 export class WarehouseServiceController {
@@ -21,7 +36,11 @@ export class WarehouseServiceController {
 
   @MessagePattern({ cmd: 'warehouse.health' })
   healthCheck() {
-    return { status: 'ok', service: 'warehouse-service', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'warehouse-service',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   // Products
@@ -46,7 +65,9 @@ export class WarehouseServiceController {
   }
 
   @MessagePattern({ cmd: 'products.update' })
-  async updateProduct(@Payload() payload: { id: string; data: UpdateProductDto }) {
+  async updateProduct(
+    @Payload() payload: { id: string; data: UpdateProductDto },
+  ) {
     return this.productService.update(payload.id, payload.data);
   }
 
@@ -67,7 +88,9 @@ export class WarehouseServiceController {
   }
 
   @MessagePattern({ cmd: 'categories.update' })
-  async updateCategory(@Payload() payload: { id: string; data: UpdateCategoryDto }) {
+  async updateCategory(
+    @Payload() payload: { id: string; data: UpdateCategoryDto },
+  ) {
     return this.categoryService.update(payload.id, payload.data);
   }
 
@@ -93,7 +116,9 @@ export class WarehouseServiceController {
   }
 
   @MessagePattern({ cmd: 'suppliers.update' })
-  async updateSupplier(@Payload() payload: { id: string; data: UpdateSupplierDto }) {
+  async updateSupplier(
+    @Payload() payload: { id: string; data: UpdateSupplierDto },
+  ) {
     return this.suppliersService.update(payload.id, payload.data);
   }
 
@@ -119,7 +144,9 @@ export class WarehouseServiceController {
   }
 
   @MessagePattern({ cmd: 'stock_ins.update' })
-  async updateStockIn(@Payload() payload: { id: string; data: UpdateStockInDto }) {
+  async updateStockIn(
+    @Payload() payload: { id: string; data: UpdateStockInDto },
+  ) {
     return this.stockInService.updateStockIn(payload.id, payload.data);
   }
 
@@ -129,20 +156,31 @@ export class WarehouseServiceController {
   }
 
   @MessagePattern({ cmd: 'inventory.reserve_stock' })
-  async reserveStock(@Payload() payload: { productId: string; quantity: number }) {
-    return { success: true, reservedQuantity: payload.quantity, productId: payload.productId };
+  async reserveStock(
+    @Payload() payload: { productId: string; quantity: number },
+  ) {
+    return {
+      success: true,
+      reservedQuantity: payload.quantity,
+      productId: payload.productId,
+    };
   }
 
   // Event Listeners from RabbitMQ
   @EventPattern('order.created')
   async handleOrderCreated(@Payload() order: any) {
-    if (order.paymentMethod === 'COD' || order.paymentMethod === 'BANK_TRANSFER') {
+    if (
+      order.paymentMethod === 'COD' ||
+      order.paymentMethod === 'BANK_TRANSFER'
+    ) {
       await this.productService.deductStockForOrder(order);
     }
   }
 
   @EventPattern('order.cancelled')
-  async handleOrderCancelled(@Payload() payload: { orderId: string; details: any[] }) {
+  async handleOrderCancelled(
+    @Payload() payload: { orderId: string; details: any[] },
+  ) {
     await this.productService.restoreStockForOrder(payload.details);
   }
 }
@@ -150,4 +188,3 @@ export class WarehouseServiceController {
 function payloadId(id: any): string {
   return typeof id === 'string' ? id : id?.id || String(id);
 }
-

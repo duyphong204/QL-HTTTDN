@@ -1,9 +1,4 @@
-import {
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  getDay,
-} from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 
 export const calculateStandardWorkingDays = (
   month: number,
@@ -44,7 +39,8 @@ export const calculateUnpaidLeaveDays = (
 
     for (const day of days) {
       const dow = getDay(day);
-      if (dow >= 1 && dow <= 5) { // T2–T6 (Mon–Fri)
+      if (dow >= 1 && dow <= 5) {
+        // T2–T6 (Mon–Fri)
         unpaidDays++;
       }
     }
