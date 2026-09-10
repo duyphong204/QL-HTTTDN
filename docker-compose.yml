@@ -1,0 +1,259 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # MESSAGE BROKER & INFRASTRUCTURE
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ql_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  redis:
+    image: redis:alpine
+    container_name: ql_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices-net
+
+  # ==========================================
+  # ISOLATED DATABASES (DATABASE-PER-SERVICE)
+  # ==========================================
+  db-auth:
+    image: postgres:16-alpine
+    container_name: db_auth
+    environment:
+      POSTGRES_DB: db_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  db-hr:
+    image: postgres:16-alpine
+    container_name: db_hr
+    environment:
+      POSTGRES_DB: db_hr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  db-warehouse:
+    image: postgres:16-alpine
+    container_name: db_warehouse
+    environment:
+      POSTGRES_DB: db_warehouse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  db-sales:
+    image: postgres:16-alpine
+    container_name: db_sales
+    environment:
+      POSTGRES_DB: db_sales
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  db-report:
+    image: postgres:16-alpine
+    container_name: db_report
+    environment:
+      POSTGRES_DB: db_report
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  # ==========================================
+  # MICROSERVICES
+  # ==========================================
+  auth-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: auth-service
+    container_name: ms_auth
+    environment:
+      AUTH_SERVICE_PORT: 3001
+      AUTH_DATABASE_URL: postgresql://postgres:postgrespassword@db-auth:5432/db_auth?schema=public
+      JWT_SECRET: supersecret_jwt_key_enterprise_2026
+    ports:
+      - "3001:3001"
+    depends_on:
+      db-auth:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  hr-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: hr-service
+    container_name: ms_hr
+    environment:
+      HR_SERVICE_PORT: 3002
+      HR_DATABASE_URL: postgresql://postgres:postgrespassword@db-hr:5432/db_hr?schema=public
+    ports:
+      - "3002:3002"
+    depends_on:
+      db-hr:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  warehouse-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: warehouse-service
+    container_name: ms_warehouse
+    environment:
+      WAREHOUSE_SERVICE_PORT: 3003
+      WAREHOUSE_DATABASE_URL: postgresql://postgres:postgrespassword@db-warehouse:5432/db_warehouse?schema=public
+    ports:
+      - "3003:3003"
+    depends_on:
+      db-warehouse:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  sales-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: sales-service
+    container_name: ms_sales
+    environment:
+      SALES_SERVICE_PORT: 3004
+      SALES_DATABASE_URL: postgresql://postgres:postgrespassword@db-sales:5432/db_sales?schema=public
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "3004:3004"
+    depends_on:
+      db-sales:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  report-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: report-service
+    container_name: ms_report
+    environment:
+      REPORT_SERVICE_PORT: 3005
+      REPORT_DATABASE_URL: postgresql://postgres:postgrespassword@db-report:5432/db_report?schema=public
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3005:3005"
+    depends_on:
+      db-report:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - microservices-net
+
+  # ==========================================
+  # API GATEWAY (SINGLE ENTRYPOINT)
+  # ==========================================
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: api-gateway
+    container_name: ms_api_gateway
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 3001
+      HR_SERVICE_HOST: hr-service
+      HR_SERVICE_PORT: 3002
+      WAREHOUSE_SERVICE_HOST: warehouse-service
+      WAREHOUSE_SERVICE_PORT: 3003
+      SALES_SERVICE_HOST: sales-service
+      SALES_SERVICE_PORT: 3004
+      REPORT_SERVICE_HOST: report-service
+      REPORT_SERVICE_PORT: 3005
+      JWT_SECRET: supersecret_jwt_key_enterprise_2026
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - hr-service
+      - warehouse-service
+      - sales-service
+      - report-service
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
