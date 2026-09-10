@@ -16,4 +16,3 @@ import { RmqModule, RABBITMQ_SERVICE } from '@app/common';
   exports: [ProductService],
 })
 export class ProductsModule {}
-

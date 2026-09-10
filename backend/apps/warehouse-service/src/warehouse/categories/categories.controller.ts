@@ -49,5 +49,3 @@ export class CategoriesController {
     return this.categoryService.remove(id);
   }
 }
-
-

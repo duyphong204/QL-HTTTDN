@@ -63,5 +63,3 @@ export class StockInController {
     return this.stockInService.removeStockIn(id);
   }
 }
-
-

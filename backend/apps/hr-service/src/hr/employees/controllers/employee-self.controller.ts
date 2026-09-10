@@ -41,5 +41,3 @@ export class EmployeeSelfController {
     return this.employeeSelfService.updateMe(req.user.id, dto);
   }
 }
-
-

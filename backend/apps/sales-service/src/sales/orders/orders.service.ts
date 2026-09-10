@@ -12,7 +12,10 @@ import {
 } from '@app/common/utils/pricing.helper';
 import { mapOrderForResponse } from './orders.mapper';
 import { canTransition } from './orders.workflow';
-import { calculatePaginationSkip, buildPaginatedResponse } from '@app/common/utils/pagination.helper';
+import {
+  calculatePaginationSkip,
+  buildPaginatedResponse,
+} from '@app/common/utils/pagination.helper';
 import { QueryOrderDto } from './dto/query-order.dto';
 
 @Injectable()
@@ -86,7 +89,7 @@ export class OrdersService {
         });
       }
 
-      // 4. Bỏ qua Cập nhật số lượng tồn kho (nếu là COD) ở đây. 
+      // 4. Bỏ qua Cập nhật số lượng tồn kho (nếu là COD) ở đây.
       // Sẽ giao cho Warehouse Service xử lý thông qua RabbitMQ.
 
       const order = await tx.order.create({
@@ -209,8 +212,6 @@ export class OrdersService {
     };
   }
 
-
-
   async getOrders(query: QueryOrderDto) {
     const { page = 1, limit = 10, status, paymentStatus } = query;
     const skip = calculatePaginationSkip(page, limit);
@@ -288,8 +289,6 @@ export class OrdersService {
 
     return mapOrderForResponse(order);
   }
-
-
 
   async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
     const nextStatus = dto.status.toUpperCase();
@@ -430,7 +429,10 @@ export class OrdersService {
 
       if (shouldRestoreStock) {
         // Giao việc khôi phục tồn kho cho Warehouse Service qua RabbitMQ
-        this.rmqClient.emit('order.cancelled', { orderId: order.id, details: order.details });
+        this.rmqClient.emit('order.cancelled', {
+          orderId: order.id,
+          details: order.details,
+        });
       }
 
       const cancelled = await tx.order.update({
@@ -469,7 +471,9 @@ export class OrdersService {
   }
 
   async handleStockFailed(orderId: string, reason: string) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
     if (!order) return;
 
     if (order.status !== 'CANCELLED') {
@@ -509,7 +513,7 @@ export class OrdersService {
 
     const totalOrders = orderAgg._count.id;
     const totalRevenue = orderAgg._sum.totalAmount ?? 0;
-    
+
     const totalItemsSold = detailAgg[0]?.totalItems ?? 0;
     const totalCost = detailAgg[0]?.totalCost ?? 0;
 
@@ -606,4 +610,3 @@ export class OrdersService {
     return buildPaginatedResponse(data, total, page, limit);
   }
 }
-

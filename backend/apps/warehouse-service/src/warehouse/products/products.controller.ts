@@ -93,5 +93,3 @@ export class ProductController {
     return this.productsService.findOne(id);
   }
 }
-
-

@@ -54,7 +54,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ('statusCode' in exception || 'status' in exception)
     ) {
       const payload = exception as any;
-      status = payload.statusCode || payload.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      status =
+        payload.statusCode ||
+        payload.status ||
+        HttpStatus.INTERNAL_SERVER_ERROR;
       message = payload.message || 'Lỗi máy chủ nội bộ';
       error = payload.error || payload.name || 'Internal Server Error';
     } else if (exception instanceof Error) {
@@ -63,7 +66,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         exception.stack,
       );
       error = exception.name;
-      message = exception.message || 'Đã có lỗi hệ thống xảy ra, vui lòng liên hệ quản trị viên.';
+      message =
+        exception.message ||
+        'Đã có lỗi hệ thống xảy ra, vui lòng liên hệ quản trị viên.';
     }
 
     response.status(status).json({
@@ -76,4 +81,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 }
-

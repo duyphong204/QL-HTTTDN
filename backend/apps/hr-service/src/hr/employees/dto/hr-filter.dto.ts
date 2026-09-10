@@ -83,4 +83,3 @@ export class QueryEmployeeDto extends PaginationQueryDto {
   @Type(() => Boolean)
   isActive?: boolean;
 }
-

@@ -1,5 +1,9 @@
 // backend/src/modules/warehouse/suppliers/suppliers.service.ts
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '@app/common/prisma/prisma.service';
 import {
   CreateSupplierDto,
@@ -82,4 +86,3 @@ export class SuppliersService {
     return this.prisma.supplier.delete({ where: { id } });
   }
 }
-

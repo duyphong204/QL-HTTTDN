@@ -5,10 +5,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { RmqModule, RABBITMQ_SERVICE } from '@app/common';
 
 @Module({
-  imports: [
-    PaymentsModule,
-    RmqModule.register({ name: RABBITMQ_SERVICE }),
-  ],
+  imports: [PaymentsModule, RmqModule.register({ name: RABBITMQ_SERVICE })],
   providers: [OrdersService],
   controllers: [OrdersController],
   exports: [OrdersService],

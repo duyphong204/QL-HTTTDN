@@ -1,8 +1,4 @@
-import {
-  IsDateString,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString({ message: 'Họ tên phải là chuỗi' })

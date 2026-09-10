@@ -17,7 +17,11 @@ export class HrServiceController {
 
   @MessagePattern({ cmd: 'hr.health' })
   healthCheck() {
-    return { status: 'ok', service: 'hr-service', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'hr-service',
+      timestamp: new Date().toISOString(),
+    };
   }
 
   // Employees
@@ -38,7 +42,10 @@ export class HrServiceController {
 
   @MessagePattern({ cmd: 'employees.update' })
   async updateEmployee(@Payload() payload: { id: string; data: any }) {
-    return this.hrManagementService.updateEmployeeProfile(payload.id, payload.data);
+    return this.hrManagementService.updateEmployeeProfile(
+      payload.id,
+      payload.data,
+    );
   }
 
   @MessagePattern({ cmd: 'employees.delete' })
@@ -53,7 +60,10 @@ export class HrServiceController {
 
   @MessagePattern({ cmd: 'employees.hr_report' })
   async getHrReport(@Payload() query: any) {
-    return this.hrManagementService.getHrStatisticsWithFilter(query?.month ? Number(query.month) : undefined, query?.year ? Number(query.year) : undefined);
+    return this.hrManagementService.getHrStatisticsWithFilter(
+      query?.month ? Number(query.month) : undefined,
+      query?.year ? Number(query.year) : undefined,
+    );
   }
 
   // Leave Requests
@@ -63,8 +73,13 @@ export class HrServiceController {
   }
 
   @MessagePattern({ cmd: 'leave_requests.find_my' })
-  async findMyLeaveRequests(@Payload() payload: { userId: string; query: any }) {
-    return this.leaveRequestsService.getMyRequests(payload.userId || 'system', payload.query || {});
+  async findMyLeaveRequests(
+    @Payload() payload: { userId: string; query: any },
+  ) {
+    return this.leaveRequestsService.getMyRequests(
+      payload.userId || 'system',
+      payload.query || {},
+    );
   }
 
   @MessagePattern({ cmd: 'leave_requests.balance' })
@@ -74,12 +89,20 @@ export class HrServiceController {
 
   @MessagePattern({ cmd: 'leave_requests.create' })
   async createLeaveRequest(@Payload() payload: { userId: string; dto: any }) {
-    return this.leaveRequestsService.create(payload.userId || 'system', payload.dto || payload);
+    return this.leaveRequestsService.create(
+      payload.userId || 'system',
+      payload.dto || payload,
+    );
   }
 
   @MessagePattern({ cmd: 'leave_requests.update_status' })
   async updateLeaveStatus(@Payload() payload: { id: string; data: any }) {
-    return this.leaveRequestsService.updateStatus(payload.id, payload.data?.status || LeaveStatus.APPROVED, 'system', payload.data?.rejectionReason);
+    return this.leaveRequestsService.updateStatus(
+      payload.id,
+      payload.data?.status || LeaveStatus.APPROVED,
+      'system',
+      payload.data?.rejectionReason,
+    );
   }
 
   @MessagePattern({ cmd: 'leave_requests.delete' })
@@ -96,16 +119,24 @@ export class HrServiceController {
 
   @MessagePattern({ cmd: 'salaries.find_my' })
   async findMySalaries(@Payload() payload: { userId: string; query: any }) {
-    return this.salariesService.getMySalaries(payload.userId || 'system', payload.query || {});
+    return this.salariesService.getMySalaries(
+      payload.userId || 'system',
+      payload.query || {},
+    );
   }
 
   @MessagePattern({ cmd: 'salaries.stats' })
   async getSalaryStats(@Payload() query: any) {
-    return this.salariesService.getStatistics(Number(query?.year) || new Date().getFullYear(), query?.month ? Number(query.month) : undefined);
+    return this.salariesService.getStatistics(
+      Number(query?.year) || new Date().getFullYear(),
+      query?.month ? Number(query.month) : undefined,
+    );
   }
 
   @MessagePattern({ cmd: 'salaries.calculate_batch' })
-  async calculateAllSalaries(@Payload() payload: { month: number; year: number }) {
+  async calculateAllSalaries(
+    @Payload() payload: { month: number; year: number },
+  ) {
     return this.salariesService.calculateAll(payload.month, payload.year);
   }
 
@@ -129,4 +160,3 @@ export class HrServiceController {
     return this.salariesService.pay(id);
   }
 }
-

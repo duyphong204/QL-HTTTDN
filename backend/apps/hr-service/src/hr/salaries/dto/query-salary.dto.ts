@@ -29,4 +29,3 @@ export class QuerySalaryDto extends PaginationQueryDto {
   @IsString()
   search?: string;
 }
-

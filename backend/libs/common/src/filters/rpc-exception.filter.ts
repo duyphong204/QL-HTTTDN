@@ -1,4 +1,10 @@
-import { Catch, RpcExceptionFilter as NestRpcExceptionFilter, ArgumentsHost, Logger, HttpException } from '@nestjs/common';
+import {
+  Catch,
+  RpcExceptionFilter as NestRpcExceptionFilter,
+  ArgumentsHost,
+  Logger,
+  HttpException,
+} from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { RpcException } from '@nestjs/microservices';
 
@@ -13,7 +19,10 @@ export class AllRpcExceptionsFilter implements NestRpcExceptionFilter {
       const res = exception.getResponse();
       errorResponse = {
         statusCode: exception.getStatus(),
-        message: typeof res === 'object' && res !== null && 'message' in res ? (res as any).message : res,
+        message:
+          typeof res === 'object' && res !== null && 'message' in res
+            ? (res as any).message
+            : res,
         error: exception.name,
       };
     } else if (exception instanceof RpcException) {
@@ -26,7 +35,9 @@ export class AllRpcExceptionsFilter implements NestRpcExceptionFilter {
       };
     }
 
-    this.logger.error(`[Microservice RPC Exception] ${JSON.stringify(errorResponse)}`);
+    this.logger.error(
+      `[Microservice RPC Exception] ${JSON.stringify(errorResponse)}`,
+    );
     return throwError(() => errorResponse);
   }
 }

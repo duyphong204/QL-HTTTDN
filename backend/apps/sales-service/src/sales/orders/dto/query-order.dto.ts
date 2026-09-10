@@ -10,4 +10,3 @@ export class QueryOrderDto extends PaginationQueryDto {
   @IsString()
   paymentStatus?: string;
 }
-

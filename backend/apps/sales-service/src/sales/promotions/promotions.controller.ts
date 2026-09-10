@@ -36,7 +36,7 @@ export class PromotionsController {
   create(@Body() dto: CreatePromotionDto) {
     return this.promotionsService.create(dto);
   }
-  
+
   @Patch(':id')
   @Roles(Role.ADMIN, Role.SALES_MANAGER)
   update(
@@ -61,5 +61,3 @@ export class PromotionsController {
     return this.promotionsService.remove(id);
   }
 }
-
-

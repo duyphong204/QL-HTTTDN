@@ -432,4 +432,3 @@ export class HrManagementService {
     };
   }
 }
-

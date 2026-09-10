@@ -22,7 +22,9 @@ describe('OrdersService', () => {
         {
           provide: PrismaService,
           useValue: {
-            $transaction: jest.fn().mockImplementation((callback) => callback(prismaService)),
+            $transaction: jest
+              .fn()
+              .mockImplementation((callback) => callback(prismaService)),
             product: {
               findMany: jest.fn(),
             },
@@ -115,7 +117,9 @@ describe('OrdersService', () => {
         } as any,
       ]);
 
-      jest.spyOn(prismaService.order, 'create').mockResolvedValue(mockOrder as any);
+      jest
+        .spyOn(prismaService.order, 'create')
+        .mockResolvedValue(mockOrder as any);
 
       const result = await service.createOrder('user-1', dto);
 

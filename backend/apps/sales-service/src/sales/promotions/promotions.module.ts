@@ -10,4 +10,3 @@ import { PromotionsService } from './promotions.service';
   exports: [PromotionsService],
 })
 export class PromotionsModule {}
-

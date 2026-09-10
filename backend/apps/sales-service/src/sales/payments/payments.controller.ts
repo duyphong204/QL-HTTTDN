@@ -69,6 +69,3 @@ export class PaymentsController {
     return this.momoService.getOrderPaymentStatus(query.orderId, req.user);
   }
 }
-
-
-

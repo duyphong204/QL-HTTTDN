@@ -63,7 +63,7 @@ export class StockOutService {
     items: { productId: string; quantity: number }[],
   ): Promise<Map<string, number>> {
     const costPriceMap = new Map<string, number>();
-    
+
     const productIds = items.map((i) => i.productId);
     const products = await tx.product.findMany({
       where: { id: { in: [...new Set(productIds)] } },
@@ -273,4 +273,3 @@ export class StockOutService {
     return buildPaginatedResponse(data, total, page, limit);
   }
 }
-

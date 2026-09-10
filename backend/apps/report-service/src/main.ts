@@ -39,6 +39,8 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
   await app.listen(port + 100);
-  logger.log(`🚀 Report & Analytics Microservice TCP Listener running on port: ${port}`);
+  logger.log(
+    `🚀 Report & Analytics Microservice TCP Listener running on port: ${port}`,
+  );
 }
 void bootstrap();

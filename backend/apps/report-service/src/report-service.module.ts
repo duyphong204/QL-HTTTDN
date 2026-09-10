@@ -7,7 +7,7 @@ import { PrismaModule } from '@app/common/prisma/prisma.module';
 
 @Module({
   imports: [
-    PrismaModule, 
+    PrismaModule,
     ReportModule,
     CacheModule.register({
       isGlobal: true,
@@ -18,4 +18,3 @@ import { PrismaModule } from '@app/common/prisma/prisma.module';
   controllers: [ReportServiceController],
 })
 export class ReportServiceAppModule {}
-

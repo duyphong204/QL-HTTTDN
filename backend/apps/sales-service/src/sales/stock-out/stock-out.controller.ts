@@ -54,5 +54,3 @@ export class StockOutController {
     return this.service.findAll(query);
   }
 }
-
-
