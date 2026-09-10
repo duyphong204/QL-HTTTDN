@@ -1,464 +1,234 @@
-# Hệ Thống Quản Lý Thông Tin Doanh Nghiệp (QL_HTTTDN)
+<div align="center">
+  <img src="https://via.placeholder.com/150/09f/fff.png?text=QL_HTTTDN" alt="Logo" width="120" height="120">
+  <h1 align="center">Hệ Thống Quản Lý Thông Tin Doanh Nghiệp (Enterprise ERP)</h1>
+  <p align="center">
+    <strong>Giải pháp ERP toàn diện xây dựng trên Kiến trúc Microservices (NestJS Monorepo)</strong>
+    <br />
+    Tích hợp Quản trị Nhân sự (HR), Quản lý Kho (Warehouse), Kinh doanh (Sales) và Bán hàng trực tuyến.
+  </p>
 
-> Giải pháp quản lý toàn diện cho doanh nghiệp thương mại, tích hợp các module Nhân sự, Kho hàng, Kinh doanh và nền tảng bán hàng trực tuyến.
+  <!-- Badges -->
+  <p align="center">
+    <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+    <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+    <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" alt="RabbitMQ" />
+    <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+    <img src="https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white" alt="Prisma" />
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  </p>
+</div>
+
+---
 
 ## 📋 Mục Lục
 
-- [Giới Thiệu](#giới-thiệu)
-- [Công Nghệ](#công-nghệ)
-- [Kiến Trúc Hệ Thống](#kiến-trúc-hệ-thống)
-- [Tính Năng & Phân Quyền](#tính-năng--phân-quyền)
-- [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
-- [Hướng Dẫn Cài Đặt](#hướng-dẫn-cài-đặt)
-- [Cấu Hình Biến Môi Trường](#cấu-hình-biến-môi-trường)
-- [Chạy Ứng Dụng](#chạy-ứng-dụng)
-- [Tài Khoản Mặc Định](#tài-khoản-mặc-định)
-- [API Documentation](#api-documentation)
-- [Documentation](#documentation)
-- [Đóng Góp](#đóng-góp)
+- [🎯 Giới Thiệu](#-giới-thiệu)
+- [🛠 Công Nghệ Sử Dụng](#-công-nghệ-sử-dụng)
+- [🏗 Kiến Trúc Hệ Thống (Microservices)](#-kiến-trúc-hệ-thống-microservices)
+- [📂 Cấu Trúc Mã Nguồn (Monorepo)](#-cấu-trúc-mã-nguồn-monorepo)
+- [✨ Các Điểm Nhấn Kỹ Thuật (Technical Highlights)](#-các-điểm-nhấn-kỹ-thuật-technical-highlights)
+- [🚀 Hướng Dẫn Cài Đặt & Khởi Chạy](#-hướng-dẫn-cài-đặt--khởi-chạy)
+- [🔧 Cấu Hình Môi Trường](#-cấu-hình-môi-trường)
+- [📚 API Documentation](#-api-documentation)
 
 ---
 
 ## 🎯 Giới Thiệu
 
-**QL_HTTTDN** là một hệ thống quản lý thông tin doanh nghiệp (ERP Lite) được thiết kế cho các doanh nghiệp vừa và nhỏ (SME) hoạt động trong lĩnh vực thương mại điện tử và phân phối hàng hóa.
+**QL_HTTTDN** là hệ thống ERP (Enterprise Resource Planning) được thiết kế chuyên biệt cho quy mô doanh nghiệp vừa và nhỏ (SME), hoạt động chủ yếu trong lĩnh vực phân phối, bán lẻ và thương mại điện tử. 
 
-### Đối Tượng Sử Dụng
-
-| Vai Trò | Mô Tả |
-|---------|-------|
-| **Admin** | Ban giám đốc - Quản lý toàn bộ hệ thống, nhân sự, kho và báo cáo |
-| **HR Manager** | Quản lý nhân sự, lương, phép, thống kê nhân sự |
-| **Warehouse Manager** | Quản lý sản phẩm, danh mục, nhà cung cấp, phiếu nhập/xuất kho |
-| **Sales Manager** | Quản lý đơn hàng, phiếu xuất, khuyến mãi, báo cáo doanh số |
-| **Employee** | Xem hồ sơ cá nhân, xin phép, xem bảng lương |
-| **Customer** | Khách hàng mua hàng trực tuyến, theo dõi đơn hàng |
+Hệ thống được chuyển đổi (refactor) từ kiến trúc Monolithic sang kiến trúc **Microservices chuẩn mực**, đảm bảo tính mở rộng cao (Scalability), độ tin cậy (Reliability), và tính nhất quán dữ liệu (Data Consistency) theo chuẩn công nghiệp thực tế.
 
 ---
 
-## 🛠 Công Nghệ
+## 🛠 Công Nghệ Sử Dụng
 
-### Backend
-- **Runtime:** Node.js
-- **Framework:** NestJS 10+
-- **Database:** PostgreSQL 14+
+### Backend (Microservices)
+- **Framework:** NestJS (v10+)
+- **Architecture:** Microservices Monorepo (TCP Transport)
+- **Message Broker:** RabbitMQ (Event-driven & Saga Pattern)
+- **Database:** PostgreSQL (Database-per-service pattern)
+- **Caching:** Redis (Tối ưu Report/Dashboard)
 - **ORM:** Prisma
-- **Authentication:** JWT
+- **Auth:** JWT (JSON Web Tokens) qua API Gateway
 - **Validation:** class-validator, class-transformer
-- **File Upload:** Cloudinary
 
 ### Frontend
-- **Library:** React 19+
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS 4
-- **UI Components:** Shadcn/ui + Radix UI
+- **Core:** React 19 (TypeScript) + Vite
+- **UI & Styling:** Tailwind CSS 4, Shadcn/UI, Radix UI
 - **State Management:** Zustand
-- **Routing:** React Router v7
-- **HTTP Client:** Axios
-- **Charts:** Recharts
-- **Notifications:** Sonner
-- **Forms:** React Hook Form
+- **Networking:** Axios
+- **Khác:** Recharts (Báo cáo), React Hook Form, Sonner
 
-### DevOps & Tools
-- **Build Tool:** Vite
-- **Package Manager:** npm
-- **Linting:** ESLint
-- **Code Formatter:** Prettier
-- **Version Control:** Git
+### DevOps & Infrastructure
+- **Containerization:** Docker & Docker Compose
+- **Task Runner:** npm scripts (concurrently)
 
 ---
 
-## 🏗 Kiến Trúc Hệ Thống
+## 🏗 Kiến Trúc Hệ Thống (Microservices)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (React + TS)                    │
-├─────────────────────────────────────────────────────────────┤
-│  Admin Portal │ HR Portal │ Warehouse │ Sales │ Ecommerce  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Axios + JWT
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Backend (NestJS + Prisma)                │
-├──────────────┬──────────────┬──────────────┬─────────────────┤
-│  Auth Module │ HR Module    │ Warehouse    │ Sales Module   │
-│              │              │ Module       │                │
-├──────────────┴──────────────┴──────────────┴─────────────────┤
-│                    Shared Services                           │
-│  (Database, Cache, File Upload, Logging)                    │
-└─────────────────────────────────┬──────────────────────────┘
-                                  │
-                                  ▼
-                        ┌─────────────────────┐
-                        │   PostgreSQL DB     │
-                        │   + Cloudinary      │
-                        └─────────────────────┘
+Hệ thống được vận hành xoay quanh một **API Gateway** làm điểm vào duy nhất, điều phối request xuống các Service con thông qua giao thức TCP nội bộ và RabbitMQ.
+
+```mermaid
+graph TD
+    Client[Client / Browser] -->|REST / HTTP| Gateway(API Gateway)
+    
+    Gateway -->|TCP| Auth[Auth Service]
+    Gateway -->|TCP| HR[HR Service]
+    Gateway -->|TCP| Warehouse[Warehouse Service]
+    Gateway -->|TCP| Sales[Sales Service]
+    Gateway -->|TCP| Report[Report Service]
+
+    Sales -.->|RabbitMQ Events| Warehouse
+    Sales -.->|RabbitMQ Events| Report
+    
+    Auth --> DB1[(DB: db_auth)]
+    HR --> DB2[(DB: db_hr)]
+    Warehouse --> DB3[(DB: db_warehouse)]
+    Sales --> DB4[(DB: db_sales)]
+    Report --> DB5[(DB: db_report)]
+    Report --> Redis[(Redis Cache)]
 ```
 
 ---
 
-## ✨ Tính Năng & Phân Quyền
+## 📂 Cấu Trúc Mã Nguồn (Monorepo)
 
-### 1️⃣ Module Quản Lý Nhân Sự (HR)
+Dự án được quản lý dưới dạng **NestJS Monorepo**, giúp chia sẻ code (Shared Library) dễ dàng giữa các Microservices nhưng vẫn giữ được sự độc lập khi Build và Deploy.
 
-**Người dùng:** Admin, HR Manager
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Quản lý nhân viên | `/hr/employees` | Thêm, sửa, xóa, xem chi tiết |
-| Quản lý lương | `/hr/salaries` | Tính lương, xuất bảng, duyệt |
-| Duyệt phép năm | `/hr/leave-requests` | Xem, duyệt, từ chối đơn |
-| Thống kê nhân sự | `/hr/statistics` | Xem báo cáo thống kê, biểu đồ |
-| Báo cáo HR | `/hr/reports` | Xuất báo cáo theo tháng/quý/năm |
-
-**Người dùng:** Employee, Sales Manager, Warehouse Manager
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Xin phép | `/employee/leave-request` | Gửi đơn xin phép, theo dõi |
-| Hồ sơ cá nhân | `/employee/profile` | Xem và cập nhật thông tin |
-| Bảng lương | `/employee/salary` | Xem bảng lương cá nhân |
-
----
-
-### 2️⃣ Module Quản Lý Kho (Warehouse)
-
-**Người dùng:** Admin, Warehouse Manager
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Danh mục sản phẩm | `/warehouse/categories` | Tạo, sửa, xóa danh mục |
-| Quản lý sản phẩm | `/warehouse/products` | CRUD sản phẩm, cập nhật giá |
-| Nhà cung cấp | `/warehouse/suppliers` | Quản lý thông tin NCC |
-| Phiếu nhập kho | `/warehouse/import-slips` | Tạo, duyệt phiếu nhập |
-| Báo cáo kho | `/warehouse/reports` | Tồn kho, nhập/xuất, trendline |
-
----
-
-### 3️⃣ Module Quản Lý Kinh Doanh (Sales)
-
-**Người dùng:** Admin, Sales Manager
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Đơn hàng | `/sales/orders` | Xem, xác nhận, hủy đơn |
-| Phiếu xuất kho | `/sales/export-slips` | Tạo, duyệt phiếu xuất |
-| Khuyến mãi | `/admin/promotions` | Tạo, sửa, xóa promotion |
-| Báo cáo bán hàng | `/sales/reports` | Doanh thu, lợi nhuận, top sản phẩm |
-
----
-
-### 4️⃣ Module Quản Trị Hệ Thống (Admin)
-
-**Người dùng:** Admin
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Dashboard | `/admin/dashboard` | Xem tổng quan hệ thống |
-| Quản lý khách hàng | `/admin/users` | Quản lý tài khoản khách hàng |
-| Báo cáo tổng hợp | `/admin/reports` | Báo cáo toàn hệ thống |
-
----
-
-### 5️⃣ Portal Bán Hàng Trực Tuyến (Ecommerce)
-
-**Người dùng:** Customer (chưa đăng nhập hoặc đã đăng nhập)
-
-| Tính Năng | Trang | Quyền |
-|-----------|-------|-------|
-| Trang chủ | `/` | Xem danh sách sản phẩm, banner |
-| Danh sách sản phẩm | `/products` | Lọc, tìm kiếm, phân trang |
-| Chi tiết sản phẩm | `/products/:id` | Xem thông tin, đánh giá, mua |
-| Giỏ hàng | `/cart` | Thêm, xóa, cập nhật số lượng |
-| Thanh toán | `/checkout` | Nhập địa chỉ, chọn phương thức |
-| Đơn hàng của tôi | `/orders` | Theo dõi đơn hàng, hủy |
-| Hồ sơ khách hàng | `/profile` | Cập nhật thông tin cá nhân |
-| Về chúng tôi | `/about` | Thông tin doanh nghiệp |
-| Liên hệ | `/contact` | Form liên hệ |
-
----
-
-## 📁 Cấu Trúc Dự Án
-
-```
+```bash
 QL_HTTTDN/
 ├── backend/
-│   ├── src/
-│   │   ├── auth/              # Module xác thực & phân quyền
-│   │   ├── hr/                # Module Nhân sự
-│   │   ├── warehouse/         # Module Kho hàng
-│   │   ├── sales/             # Module Kinh doanh
-│   │   ├── users/             # Module Khách hàng
-│   │   ├── common/            # Hằng số, enum, filter, interceptor
-│   │   ├── prisma/            # Database layer
-│   │   ├── app.module.ts      # Root module
-│   │   └── main.ts            # Entry point
-│   ├── prisma/
-│   │   ├── schema.prisma      # Database schema
-│   │   ├── seed.ts            # Data seeding
-│   │   └── migrations/        # Database migrations
-│   ├── package.json
-│   └── tsconfig.json
+│   ├── apps/
+│   │   ├── api-gateway/         # API Gateway (REST -> TCP proxy & JWT decode)
+│   │   ├── auth-service/        # Quản lý Users, Đăng nhập, Token
+│   │   ├── hr-service/          # Quản lý Nhân sự, Chấm công, Tính Lương
+│   │   ├── sales-service/       # Quản lý Đơn hàng, Giỏ hàng, Khuyến mãi
+│   │   ├── warehouse-service/   # Quản lý Sản phẩm, Tồn kho, Phiếu nhập
+│   │   └── report-service/      # Xử lý số liệu thống kê & Caching Redis
+│   │
+│   ├── libs/
+│   │   └── common/              # Shared thư viện (DTO, Guard, Decorator, PrismaClient, RMQ)
+│   │
+│   ├── prisma/                  # Prisma Schema & Migrations
+│   ├── package.json             # Scripts (start:all, build:all)
+│   └── nest-cli.json
 │
-├── frontend/
-│   ├── src/
-│   │   ├── pages/             # Các trang theo module
-│   │   │   ├── admin/
-│   │   │   ├── hr/
-│   │   │   ├── warehouse/
-│   │   │   ├── sales/
-│   │   │   ├── employee/
-│   │   │   ├── customer/
-│   │   │   └── auth/
-│   │   ├── components/        # Tái sử dụng UI components
-│   │   ├── layouts/           # Layout templates
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── stores/            # Zustand state management
-│   │   ├── services/          # API service functions
-│   │   ├── types/             # TypeScript types
-│   │   ├── api/               # Axios configuration
-│   │   ├── routes/            # Route configuration
-│   │   ├── App.tsx            # Root component
-│   │   └── main.tsx           # Entry point
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── .env.example               # Template biến môi trường
-├── .gitignore
-├── README.md                  # File này
-└── package.json               # Root package (optional)
+├── frontend/                    # Source code React Vite UI
+├── docker-compose.yml           # Định nghĩa hạ tầng Postgres, Redis, RabbitMQ
+└── README.md
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt
+## ✨ Các Điểm Nhấn Kỹ Thuật (Technical Highlights)
 
-### Yêu Cầu Hệ Thống
+Hệ thống được tối ưu hóa khắt khe theo tiêu chuẩn **Senior Architect**:
 
-- **Node.js:** v18.0.0 hoặc cao hơn
-- **npm:** v9.0.0 hoặc cao hơn
-- **PostgreSQL:** v14 hoặc cao hơn
-- **Git:** v2.0 hoặc cao hơn
+1. **Saga Pattern (Choreography):**
+   - Đảm bảo tính nhất quán dữ liệu phân tán. Khi Đơn hàng (Sales) được tạo, sự kiện trừ kho được bắn sang Warehouse qua RabbitMQ. Nếu Warehouse trừ kho thất bại, sự kiện bù trừ (Compensation Event `warehouse.stock_failed`) sẽ được bắn ngược lại để Sales tự động Hủy đơn.
 
-### Bước 1: Clone Repository
+2. **Pessimistic Locking & Transaction:**
+   - Xử lý triệt để bài toán **Race Condition** (nhiều người mua cùng 1 mặt hàng tại cùng 1 thời điểm) bằng Transaction và Locking (`FOR UPDATE` / Prisma `$transaction`) trong tính năng Xuất/Nhập kho và Tính Lương.
 
+3. **Database-Per-Service:**
+   - Đảm bảo tính lỏng lẻo (Loose Coupling). Mỗi Service sở hữu một DB riêng (Auth DB, Sales DB, HR DB,...), cấm tuyệt đối các service Join bảng chéo của nhau (Cross-DB Joins).
+
+4. **Bảo Mật API Gateway:**
+   - Tích hợp `AuthMiddleware` tại Gateway để chặn và giải mã JWT token (Stateless), bóc tách `userId` và inject vào TCP Payload đẩy xuống các microservices nội bộ.
+
+---
+
+## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
+
+### Yêu Cầu Môi Trường
+- **Node.js** v22+
+- **Docker** & **Docker Compose**
+
+### Bước 1: Khởi Chạy Hạ Tầng (Infrastructure)
+Bao gồm 5 instance PostgreSQL, 1 RabbitMQ, và 1 Redis.
 ```bash
-git clone <repository-url>
 cd QL_HTTTDN
+docker-compose up -d
 ```
+*Đợi khoảng 30s để RabbitMQ và Postgres chuyển sang trạng thái "healthy".*
 
-### Bước 2: Cài Đặt Dependencies
-
-**Backend:**
+### Bước 2: Khởi Tạo Database (Migration & Seeding)
 ```bash
 cd backend
-npm install
-```
-
-**Frontend:**
-```bash
-cd ../frontend
-npm install
-```
-
-### Bước 3: Tạo File Biến Môi Trường
-
-Tạo file `.env` trong thư mục `backend/` (tham khảo `.env.example`):
-
-```bash
-cp backend/.env.example backend/.env
-```
-
----
-
-## 🔧 Cấu Hình Biến Môi Trường
-
-### Backend Environment (`.env`)
-
-```env
-# Database
-DATABASE_URL=postgresql://username:password@localhost:5432/ql_htttdn_db
-
-# JWT
-JWT_SECRET=your_jwt_secret_key_here
-JWT_EXPIRATION=24h
-JWT_REFRESH_SECRET=your_refresh_token_secret_here
-JWT_REFRESH_EXPIRATION=7d
-
-# Application
-NODE_ENV=development
-PORT=3000
-API_VERSION=v1
-
-# Cloudinary (File Upload)
-CLOUDINARY_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Email (Optional)
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USER=your_email@gmail.com
-MAIL_PASSWORD=your_password
-```
-
-### Frontend Environment (tùy chọn `frontend/.env`)
-
-```env
-VITE_API_URL=http://localhost:3000/api
-VITE_CLOUDINARY_URL=https://api.cloudinary.com/v1_1/your_cloud_name
-```
-
----
-
-## ▶️ Chạy Ứng Dụng
-
-### 1️⃣ Tạo & Cập Nhật Database
-
-```bash
-cd backend
-
-# Tạo migration mới (nếu cần)
+npx prisma generate
 npx prisma migrate dev --name init
-
-# Hoặc chỉ áp dụng migration hiện có
-npx prisma migrate deploy
-
-# Xem database trực quan (tùy chọn)
-npx prisma studio
+# Hoặc chạy seed (nếu có): npx prisma db seed
 ```
 
-### 2️⃣ Chạy Backend (Development)
-
+### Bước 3: Chạy Toàn Bộ Hệ Thống Microservices
+Lệnh này sẽ dùng `concurrently` để chạy API Gateway và 5 Microservices cùng một lúc (mỗi service có màu log khác nhau).
 ```bash
-cd backend
-npm run start:dev
+# Ở thư mục backend/
+npm install
+npm run start:all
 ```
+*Hệ thống Backend (API Gateway) sẽ chạy ở cổng `http://localhost:3000`.*
 
-Máy chủ sẽ khởi động tại: **http://localhost:3000**
-
-API endpoints: **http://localhost:3000/api**
-
-### 3️⃣ Chạy Frontend (Development)
-
-Mở terminal khác:
-
+### Bước 4: Chạy Frontend (React)
+Mở một cửa sổ Terminal mới:
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
-
-Ứng dụng web sẽ khởi động tại: **http://localhost:5173**
-
-### 4️⃣ Build Production
-
-**Backend:**
-```bash
-cd backend
-npm run build
-npm start
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run build
-npm run preview
-```
+*Giao diện Web sẽ chạy ở cổng `http://localhost:5173`.*
 
 ---
 
-## 👤 Tài Khoản Mặc Định
+## 🔧 Cấu Hình Môi Trường (.env)
 
-Sau khi chạy migration, hệ thống sẽ tự động tạo các tài khoản demo:
+Tạo file `backend/.env`:
+```env
+# Database kết nối tới Docker Infra
+DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/ql_htttdn_db?schema=public"
 
-| Email | Mật Khẩu | Vai Trò | Chuyên Dùng Trang |
-|-------|----------|--------|------------------|
-| admin@example.com | admin123 | Admin | `/admin/dashboard` |
-| hr@example.com | hr123 | HR Manager | `/hr/employees` |
-| warehouse@example.com | warehouse123 | Warehouse Manager | `/warehouse/products` |
-| sales@example.com | sales123 | Sales Manager | `/sales/orders` |
-| employee@example.com | employee123 | Employee | `/employee/profile` |
-| customer@example.com | customer123 | Customer | `/products` |
+# JWT Config
+JWT_SECRET=supersecret_jwt_key_enterprise_2026
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
 
-> ⚠️ **Bảo Mật:** Thay đổi mật khẩu mặc định trước khi triển khai lên Production.
+# Microservices Ports
+PORT=3000
+AUTH_SERVICE_PORT=3001
+HR_SERVICE_PORT=3002
+WAREHOUSE_SERVICE_PORT=3003
+SALES_SERVICE_PORT=3004
+REPORT_SERVICE_PORT=3005
+
+# RabbitMQ & Redis
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+REDIS_URL=redis://localhost:6379
+
+# Các cấu hình Cloudinary / Thanh toán MOMO, VNPAY...
+```
 
 ---
 
 ## 📚 API Documentation
 
-### Base URL
-```
-http://localhost:3000/api/v1
-```
+**Base Gateway URL:** `http://localhost:3000/api/v1`
 
-### Authentication
-Tất cả các request cần gửi JWT token trong header:
+Các API được chia theo module proxy:
+* `POST /auth/login`
+* `GET /auth/me`
+* `GET /employees`, `GET /salaries` (HR Service)
+* `GET /products`, `POST /stock-ins` (Warehouse Service)
+* `GET /orders`, `POST /cart/items` (Sales Service)
 
-```bash
-Authorization: Bearer {token}
-```
-
-### Endpoint Chính
-
-#### Auth
-- `POST /auth/login` - Đăng nhập
-- `POST /auth/register` - Đăng ký
-- `POST /auth/refresh` - Làm mới token
-- `POST /auth/logout` - Đăng xuất
-
-#### HR
-- `GET /hr/employees` - Danh sách nhân viên
-- `POST /hr/employees` - Tạo nhân viên
-- `GET /hr/salaries` - Danh sách lương
-- `GET /hr/leave-requests` - Đơn xin phép
-
-#### Warehouse
-- `GET /warehouse/products` - Danh sách sản phẩm
-- `POST /warehouse/products` - Tạo sản phẩm
-- `GET /warehouse/import-slips` - Phiếu nhập
-
-#### Sales
-- `GET /sales/orders` - Danh sách đơn hàng
-- `GET /sales/export-slips` - Phiếu xuất
-
-> Xem chi tiết tại: `/api/docs` (Swagger UI)
+Chi tiết vui lòng truy cập Swagger UI tại: `http://localhost:3000/api/docs` (Nếu đã cấu hình OpenAPI).
 
 ---
 
-## 📖 Documentation
+## 📖 Tài Liệu Bổ Sung (Documentation)
 
-Xem tài liệu chi tiết về dự án tại đây:
+Xem tài liệu phân tích thiết kế chi tiết về dự án (Sơ đồ Use Case, Database Schema, Thiết kế luồng) tại Google Docs:
 
-📄 **[Tài Liệu Đồ Án Hệ Thống](https://docs.google.com/document/d/1XqtkOd1yMQn5PyFbvHDQ_iRZfTD2NIHiVMYGJ8HG__A/edit?usp=sharing)**
+📄 **[Tài Liệu Đồ Án Quản Lý HTTT Doanh Nghiệp](https://docs.google.com/document/d/1XqtkOd1yMQn5PyFbvHDQ_iRZfTD2NIHiVMYGJ8HG__A/edit?tab=t.0#heading=h.id13odx6zz9x)**
 
-*Tài liệu bao gồm:*
-- Phân tích yêu cầu chi tiết
-- Thiết kế cơ sở dữ liệu
-- Sơ đồ use case & DFD
-- Hướng dẫn sử dụng từng module
-
----
-
-## 📊 Tính Năng Nâng Cao
-
-✅ **Hoàn thiện:**
-- Xác thực & phân quyền dựa trên role
-- Quản lý nhân sự (lương, phép)
-- Quản lý kho (nhập, xuất, tồn)
-- Quản lý đơn hàng & doanh số
-- Portal ecommerce
-- Báo cáo & thống kê
-- Thông báo Toast
-
-## 👥 Đóng Góp
-
-Mọi đóng góp đều được chào đón! Vui lòng:
-
-1. Fork repository
-2. Tạo branch feature (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-**Last Updated:** May 2026 | **Version:** 1.0.0
