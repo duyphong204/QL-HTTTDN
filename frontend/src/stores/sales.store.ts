@@ -30,8 +30,8 @@ export const useSalesStore = create<SalesState>((set) => ({
   fetchOrders: async () => {
     set({ isLoading: true });
     try {
-      const data = await orderApi.getOrders();
-      set({ orders: data });
+      const response = await orderApi.getOrders({ page: 1, limit: 50 }); // Fetch more temporarily since we don't have full UI pagination
+      set({ orders: response.data });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Lỗi tải đơn hàng";
       toast.error(message);

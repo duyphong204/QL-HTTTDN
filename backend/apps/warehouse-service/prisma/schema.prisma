@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-warehouse"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("WAREHOUSE_DATABASE_URL")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  contact   String?
+  phone     String?
+  email     String?
+  address   String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id              String            @id @default(uuid())
+  code            String            @unique
+  name            String
+  description     String?
+  unit            String
+  costPrice       Float
+  sellingPrice    Float
+  stockQuantity   Int               @default(0)
+  minStockLevel   Int               @default(5)
+  categoryId      String?
+  supplierId      String?
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  supplier        Supplier?         @relation(fields: [supplierId], references: [id])
+  stockInDetails  StockInDetail[]
+  stockOutDetails StockOutDetail[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model StockIn {
+  id          String          @id @default(uuid())
+  code        String          @unique
+  creatorId   String
+  totalCost   Float
+  note        String?
+  details     StockInDetail[]
+  createdAt   DateTime        @default(now())
+}
+
+model StockInDetail {
+  id         String   @id @default(uuid())
+  stockInId  String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  stockIn    StockIn  @relation(fields: [stockInId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model StockOut {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  creatorId   String
+  totalAmount Float
+  note        String?
+  details     StockOutDetail[]
+  createdAt   DateTime         @default(now())
+}
+
+model StockOutDetail {
+  id         String   @id @default(uuid())
+  stockOutId String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  stockOut   StockOut @relation(fields: [stockOutId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}

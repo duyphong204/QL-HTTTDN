@@ -1,0 +1,54 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { UsersService } from './users.service';
+import { JwtAuthGuard, RolesGuard, Roles } from '@app/common';
+import { Role } from '@app/common/enums/role.enum';
+import { CreateUserDto, QueryUsersDto, UpdateUserDto } from './dto/user.dto';
+
+@Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  getAllUsers(@Query() query: QueryUsersDto) {
+    return this.usersService.findAll(query);
+  }
+  // GET /users/:id
+  @Get(':id')
+  getUserById(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
+  // POST /users
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  createUser(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
+  }
+  // PATCH /users/:id
+  @Patch(':id')
+  updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
+  }
+  @Delete(':id')
+  deleteUser(@Param('id') id: string) {
+    return this.usersService.remove(id);
+  }
+  @Patch(':id/restore')
+  restoreUser(@Param('id') id: string) {
+    return this.usersService.restore(id);
+  }
+}
+

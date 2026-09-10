@@ -34,19 +34,29 @@ interface FailedQueueItem {
   reject: (error: unknown) => void;
 }
 
+interface ApiResponse {
+  success?: boolean;
+  data?: unknown;
+  meta?: unknown;
+}
+
 let isRefreshing = false;
 let failedQueue: FailedQueueItem[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    error ? prom.reject(error) : prom.resolve(token);
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
   });
   failedQueue = [];
 };
 
 axiosInstance.interceptors.response.use(
   (response) => {
-    const payload = response.data as any;
+    const payload = response.data as ApiResponse;
     // Chỉ unwrap nếu dữ liệu đúng cấu trúc Envelope và chưa bị unwrap trước đó
     if (payload && payload.success && "data" in payload) {
       return {

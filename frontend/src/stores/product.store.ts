@@ -17,7 +17,7 @@ import type {
   UpdateProductDto,
   ProductQuery,
 } from "@/types/product.types";
-import type { BaseFilters, SortOrder } from "@/types/common.types";
+import type { BaseFilters, PaginationMeta, SortOrder } from "@/types/common.types";
 import type { Category } from "@/types/product.types";
 import type { Supplier } from "@/types/supplier.types";
 
@@ -34,7 +34,7 @@ interface ProductState {
   products: Product[];
   categories: Category[];
   suppliers: Supplier[];
-  meta?: ProductResponse["meta"];
+  meta?: PaginationMeta;
   stats: ProductStats | null;
   filters: ProductFilters;
   isLoading: boolean;

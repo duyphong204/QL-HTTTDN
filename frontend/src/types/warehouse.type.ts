@@ -98,10 +98,11 @@ export interface WarehouseReport {
 export interface ProductResponse {
   data: Product[];
   meta: {
-    total: number;
-    page: number;
-    limit: number;
+    totalItems: number;
+    itemCount: number;
+    itemsPerPage: number;
     totalPages: number;
+    currentPage: number;
   };
 }
 // Input khi tạo StockIn detail

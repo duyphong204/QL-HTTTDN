@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Menu, X, UserCircle } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, UserCircle, Package, Info, Phone } from "lucide-react";
 import { useCartStore } from "@/stores/cart.store";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -32,14 +32,17 @@ export default function Header() {
 
   const total = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  useEffect(() => {
-    if (!location.pathname.startsWith("/products")) {
-      return;
-    }
+  const [prevSearch, setPrevSearch] = useState(location.search);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
 
-    const params = new URLSearchParams(location.search);
-    setSearchText(params.get("search") ?? "");
-  }, [location.pathname, location.search]);
+  if (location.search !== prevSearch || location.pathname !== prevPathname) {
+    setPrevSearch(location.search);
+    setPrevPathname(location.pathname);
+    if (location.pathname.startsWith("/products")) {
+      const params = new URLSearchParams(location.search);
+      setSearchText(params.get("search") ?? "");
+    }
+  }
 
   useEffect(() => {
     const onScroll = () => {
@@ -56,11 +59,10 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b backdrop-blur-md transition-colors duration-300 ${
-        isScrolled
+      className={`sticky top-0 z-50 border-b backdrop-blur-md transition-colors duration-300 ${isScrolled
           ? "bg-white/75 border-white/40 shadow-sm"
           : "bg-white border-gray-200/80 shadow-lg"
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18">
@@ -116,7 +118,7 @@ export default function Header() {
           </nav>
 
           {/* Right section */}
-          <div className="flex items-center gap-5 sm:gap-7">
+          <div className="flex items-center gap-2 sm:gap-5">
             {/* Search desktop */}
             <div className="hidden md:block relative w-56 lg:w-72 xl:w-96">
               <input
@@ -164,7 +166,7 @@ export default function Header() {
 
             {/* Hamburger */}
             <button
-              className="lg:hidden text-gray-700 p-2 -mr-2"
+              className={`lg:hidden p-2 -mr-2 rounded-xl transition-colors ${open ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"}`}
               onClick={() => setOpen(!open)}
               aria-label="Toggle menu"
             >
@@ -204,13 +206,14 @@ export default function Header() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="lg:hidden bg-white border-t shadow-xl">
-          <div className="px-4 py-6 flex flex-col gap-3 text-lg font-medium">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t shadow-2xl z-50 origin-top animate-in slide-in-from-top-4 duration-300">
+          <div className="px-4 py-6 flex flex-col gap-2 text-base font-bold">
             <Link
               to="/products"
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
+              <Package size={22} className="text-blue-600" />
               Sản phẩm
             </Link>
             <Link
@@ -218,6 +221,7 @@ export default function Header() {
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
+              <Info size={22} className="text-blue-600" />
               Giới thiệu
             </Link>
             <Link
@@ -225,6 +229,7 @@ export default function Header() {
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3"
               onClick={() => setOpen(false)}
             >
+              <Phone size={22} className="text-blue-600" />
               Liên hệ
             </Link>
             <Link
@@ -232,7 +237,7 @@ export default function Header() {
               className="text-gray-800 hover:bg-blue-50 hover:text-blue-700 py-4 px-5 rounded-xl transition-colors flex items-center gap-3 border-t pt-5 mt-2"
               onClick={() => setOpen(false)}
             >
-              <UserCircle size={24} />
+              <UserCircle size={22} className="text-gray-500" />
               {isAuthenticated ? "Tài khoản" : "Đăng nhập / Đăng ký"}
             </Link>
           </div>

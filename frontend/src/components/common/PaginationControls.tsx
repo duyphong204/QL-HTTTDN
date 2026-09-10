@@ -9,6 +9,7 @@ import type { PaginationMeta } from "@/types/common.types";
 
 interface PaginationControlsProps {
   meta?: PaginationMeta | null;
+  /** Fallback khi meta chưa có */
   currentPage?: number;
   isLoading?: boolean;
   totalLabel?: string;
@@ -22,11 +23,11 @@ export function PaginationControls({
   totalLabel = "Tổng",
   onPageChange,
 }: PaginationControlsProps) {
-  const page = meta?.page ?? currentPage ?? 1;
+  // Hỗ trợ cả field mới (currentPage/totalItems) và field cũ (page/total)
+  const page = meta?.currentPage ?? currentPage ?? 1;
   const totalPages = meta?.totalPages ?? 1;
-  const total = meta?.total ?? 0;
+  const total = meta?.totalItems ?? 0;
 
-  // Hàm hỗ trợ ngăn click khi đang load hoặc disable
   const handlePageChange = (targetPage: number) => {
     if (isLoading || targetPage < 1 || targetPage > totalPages) return;
     onPageChange(targetPage);
@@ -45,7 +46,7 @@ export function PaginationControls({
         </p>
       </div>
 
-      {/* Điều hướng Shadcn bên phải */}
+      {/* Điều hướng trang */}
       <Pagination className="w-auto mx-0">
         <PaginationContent className="gap-1">
           <PaginationItem>
@@ -55,11 +56,16 @@ export function PaginationControls({
                 e.preventDefault();
                 handlePageChange(page - 1);
               }}
-              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page <= 1 || isLoading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
+              aria-disabled={page <= 1 || isLoading}
+              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${
+                page <= 1 || isLoading
+                  ? "pointer-events-none opacity-40"
+                  : "cursor-pointer"
+              }`}
             />
           </PaginationItem>
 
-          {/* Hiển thị trang hiện tại kiểu Badge */}
+          {/* Badge trang hiện tại */}
           <PaginationItem>
             <div className="px-3 py-1 text-sm font-semibold bg-blue-600 text-white rounded-md shadow-sm shadow-blue-200">
               {page} / {totalPages}
@@ -73,7 +79,12 @@ export function PaginationControls({
                 e.preventDefault();
                 handlePageChange(page + 1);
               }}
-              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${page >= totalPages || isLoading ? "pointer-events-none opacity-40" : "cursor-pointer"}`}
+              aria-disabled={page >= totalPages || isLoading}
+              className={`hover:bg-blue-50 hover:text-blue-700 border-blue-100 ${
+                page >= totalPages || isLoading
+                  ? "pointer-events-none opacity-40"
+                  : "cursor-pointer"
+              }`}
             />
           </PaginationItem>
         </PaginationContent>

@@ -28,7 +28,7 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative py-20 md:py-28 bg-slate-900 overflow-hidden">
+      <section className="relative py-12 sm:py-20 md:py-28 bg-slate-900 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full" />
@@ -39,7 +39,7 @@ export default function Contact() {
             <MessageSquare className="w-4 h-4" />
             <span>Liên hệ ngay</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
             Kết nối với{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
               TechStore
@@ -52,9 +52,9 @@ export default function Contact() {
         </div>
       </section>
 
-      <div className="container mx-auto px-6 -mt-16 relative z-20 pb-24">
+      <div className="container mx-auto px-4 sm:px-6 -mt-8 sm:-mt-16 relative z-20 pb-16 sm:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-8 md:p-12">
+          <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-8 md:p-12">
             <div className="flex flex-col md:flex-row gap-12">
               <div className="flex-1">
                 <h2 className="text-3xl font-bold text-slate-900 mb-2">
@@ -153,7 +153,7 @@ export default function Contact() {
           </div>
         </div>
 
-        <div className="mt-12 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200 border-8 border-white h-[450px]">
+        <div className="mt-12 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200 border-4 sm:border-8 border-white h-[300px] sm:h-[450px]">
           <iframe
             title="TechStore Location"
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.9544155255326!2d106.6756613!3d10.7380025!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f08f8702c81%3A0x6b9d6a36c845b4c1!2zMTQvMzkgUGjhuqFtIEjDuW5nLCBQaMaw4budbmcgNCwgUXXhuq1uIDgsIEjhu5MgQ2jDryBNaW5o!5e0!3m2!1svi!2s!4v1713524000000!5m2!1svi!2s"

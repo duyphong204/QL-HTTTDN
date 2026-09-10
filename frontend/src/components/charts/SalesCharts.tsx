@@ -31,7 +31,7 @@ interface RevenueBarChartProps {
 }
 
 export const RevenueBarChart = ({ data }: RevenueBarChartProps) => (
-  <ResponsiveContainer width="100%" height="100%">
+  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
     <BarChart data={data} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
       <XAxis dataKey="time" tick={{ fontSize: 12, fill: "#64748b" }} />
@@ -65,7 +65,7 @@ interface ProfitLineChartProps {
 }
 
 export const ProfitLineChart = ({ data }: ProfitLineChartProps) => (
-  <ResponsiveContainer width="100%" height="100%">
+  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
     <LineChart data={data} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
       <XAxis dataKey="time" tick={{ fontSize: 12, fill: "#64748b" }} />

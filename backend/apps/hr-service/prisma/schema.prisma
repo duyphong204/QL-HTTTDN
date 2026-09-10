@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/client-hr"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("HR_DATABASE_URL")
+}
+
+model Department {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  name        String
+  description String?
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Employee {
+  id            String         @id @default(uuid())
+  code          String         @unique
+  userId        String?        @unique
+  fullName      String
+  email         String         @unique
+  phone         String?
+  departmentId  String?
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  baseSalary    Float          @default(0)
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  payrolls      Payroll[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Attendance {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime @db.Date
+  checkIn    DateTime
+  checkOut   DateTime?
+  status     String   @default("PRESENT")
+}
+
+model LeaveRequest {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  startDate  DateTime @db.Date
+  endDate    DateTime @db.Date
+  reason     String
+  status     String   @default("PENDING")
+}
+
+model Payroll {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  month       Int
+  year        Int
+  baseSalary  Float
+  allowances  Float    @default(0)
+  deductions  Float    @default(0)
+  finalSalary Float
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+}

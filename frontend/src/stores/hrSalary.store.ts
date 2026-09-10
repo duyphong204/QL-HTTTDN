@@ -75,7 +75,7 @@ export const useHrSalaryStore = create<State>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await salaryService.getSalaries(get().filters);
-      set({ salaries: res.data, total: res.meta?.total ?? 0 });
+      set({ salaries: res.data, total: res.meta?.totalItems ?? 0 });
     } catch (e) {
       toast.error(getErrorMessage(e));
     } finally {

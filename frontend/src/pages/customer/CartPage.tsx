@@ -12,17 +12,20 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useProductStore } from "@/stores/product.store";
+import { getEffectiveProductPrice } from "@/lib/pricing";
+import { useMemo } from "react";
 
 export default function Cart() {
   const { items, increase, decrease, removeFromCart } = useCartStore();
   const { categories, fetchCategories } = useProductStore();
 
-  const getUnitPrice = (price: number, salePrice?: number) =>
-    typeof salePrice === "number" ? salePrice : price;
-
-  const totalPrice = items.reduce(
-    (sum, i) => sum + getUnitPrice(i.price, i.salePrice) * i.quantity,
-    0,
+  const totalPrice = useMemo(
+    () =>
+      items.reduce(
+        (sum, item) => sum + getEffectiveProductPrice(item) * item.quantity,
+        0,
+      ),
+    [items],
   );
 
   useEffect(() => {
@@ -93,26 +96,30 @@ export default function Cart() {
 
   // Phần giỏ hàng có sản phẩm - Giữ nguyên 100%
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-110px)]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-110px)] animate-in fade-in duration-500">
       {/* Tiêu đề + Back */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Giỏ hàng </h1>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">Giỏ hàng</h1>
+          <p className="text-gray-500 font-medium mt-2">Xem lại các sản phẩm bạn đã chọn</p>
+        </div>
         <Link
           to="/products"
-          className="text-blue-600 hover:text-blue-800 flex items-center gap-2 text-sm font-medium"
+          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wider"
         >
-          <ArrowLeft size={16} />
-          Continue Shopping
+          <ArrowLeft size={16} strokeWidth={2.5} />
+          Tiếp tục mua sắm
         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Danh sách sản phẩm - chiếm 2/3 */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {items.length} items
+          <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="p-6 sm:p-8 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                <ShoppingCart className="text-blue-600" />
+                {items.length} sản phẩm
               </h2>
             </div>
 
@@ -122,11 +129,12 @@ export default function Cart() {
                 className="p-6 border-b border-gray-200 last:border-b-0 flex flex-col sm:flex-row sm:items-center gap-6 hover:bg-gray-50 transition"
               >
                 {/* Ảnh sản phẩm */}
-                <div className="w-32 h-32 sm:w-28 sm:h-28 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                <div className="w-32 h-32 sm:w-28 sm:h-28 flex-shrink-0 bg-white rounded-2xl overflow-hidden border border-gray-100 p-2 shadow-sm">
                   <img
                     src={item.imageUrl || "https://via.placeholder.com/150"}
                     alt={item.name}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain mix-blend-multiply"
+                    loading="lazy"
                   />
                 </div>
 
@@ -134,10 +142,10 @@ export default function Cart() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-lg font-bold text-gray-900">
                         {item.name}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">Accessories</p>
+                      <p className="text-sm text-gray-500 mt-1">Sản phẩm</p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.id)}
@@ -147,30 +155,30 @@ export default function Cart() {
                     </button>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-4">
-                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                  <div className="mt-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 w-full">
+                    <div className="flex items-center border-2 border-gray-100 rounded-xl bg-white shrink-0 h-10">
                       <button
                         onClick={() => decrease(item.id)}
                         disabled={item.quantity <= 1}
-                        className="px-4 py-2 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-30 transition-all active:scale-95"
                       >
-                        <Minus size={16} />
+                        <Minus size={16} strokeWidth={2.5} />
                       </button>
-                      <span className="px-6 py-2 font-medium text-gray-900 bg-white">
+                      <span className="w-10 text-center font-bold text-gray-900 tabular-nums">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => increase(item.id)}
-                        className="px-4 py-2 bg-white hover:bg-gray-100 transition-colors"
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition-all active:scale-95"
                       >
-                        <Plus size={16} />
+                        <Plus size={16} strokeWidth={2.5} />
                       </button>
                     </div>
 
-                    <div className="text-right ml-auto">
+                    <div className="text-left sm:text-right w-full sm:w-auto mt-2 sm:mt-0 ml-0 sm:ml-auto">
                       <p className="text-lg font-bold text-blue-600">
                         {(
-                          getUnitPrice(item.price, item.salePrice) *
+                          getEffectiveProductPrice(item) *
                           item.quantity
                         ).toLocaleString("vi-VN")}{" "}
                         đ
@@ -200,56 +208,56 @@ export default function Cart() {
 
         {/* Order Summary - bên phải */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Order Summary
+          <div className="bg-white rounded-[2rem] shadow-2xl shadow-gray-200/50 border border-gray-100 p-6 sm:p-8 sticky top-28">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 tracking-tight">
+              Tóm tắt đơn hàng
             </h2>
 
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between text-gray-700">
-                <span>Subtotal</span>
-                <span className="font-medium">
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between text-gray-600 font-medium">
+                <span>Tạm tính</span>
+                <span className="font-bold text-gray-900 tabular-nums">
                   {totalPrice.toLocaleString("vi-VN")} đ
                 </span>
               </div>
-              <div className="flex justify-between text-gray-700">
-                <span>Shipping</span>
-                <span className="text-green-600 font-medium">FREE</span>
+              <div className="flex justify-between text-gray-600 font-medium">
+                <span>Phí vận chuyển</span>
+                <span className="text-emerald-600 font-bold uppercase tracking-wider text-sm">Miễn phí</span>
               </div>
-              <div className="border-t border-gray-200 pt-4 flex justify-between text-lg font-bold text-gray-900">
-                <span>Total</span>
-                <span>{totalPrice.toLocaleString("vi-VN")} đ</span>
+              <div className="border-t-2 border-gray-100 pt-6 mt-4 flex justify-between items-end">
+                <span className="text-lg font-bold text-gray-900">Tổng cộng</span>
+                <span className="text-3xl font-black text-blue-600 tabular-nums">{totalPrice.toLocaleString("vi-VN")} <span className="text-lg text-blue-600/70">đ</span></span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <Link
                 to="/checkout"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-center"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 text-center text-lg"
               >
-                Proceed to Checkout
+                Tiến hành thanh toán
               </Link>
 
               <Link
                 to="/products"
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3.5 rounded-xl transition flex items-center justify-center gap-2 text-center"
+                className="w-full bg-white hover:bg-gray-50 active:scale-95 text-gray-700 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 text-center border-2 border-gray-200"
               >
-                Continue Shopping
+                Tiếp tục mua sắm
               </Link>
             </div>
 
-            <div className="mt-8 space-y-3 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Truck size={18} className="text-green-600" />
-                <span>Free returns within 30 days</span>
+            <div className="mt-8 space-y-3 text-sm text-gray-500 font-medium">
+              <div className="flex items-center gap-2.5">
+                <Truck size={18} className="text-emerald-500" />
+                <span>Đổi trả miễn phí trong vòng 30 ngày</span>
               </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-green-600" />
-                <span>Secure checkout</span>
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck size={18} className="text-emerald-500" />
+                <span>Thanh toán bảo mật an toàn 100%</span>
               </div>
-              <div className="flex items-center gap-2">
-                <RefreshCw size={18} className="text-green-600" />
-                <span>2-year warranty included</span>
+              <div className="flex items-center gap-2.5">
+                <RefreshCw size={18} className="text-emerald-500" />
+                <span>Bảo hành chính hãng 2 năm</span>
               </div>
             </div>
           </div>

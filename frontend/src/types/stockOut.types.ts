@@ -63,4 +63,6 @@ export interface StockOutQuery {
   type?: StockOutType;
   fromDate?: string;
   toDate?: string;
+  page?: number;
+  limit?: number;
 }

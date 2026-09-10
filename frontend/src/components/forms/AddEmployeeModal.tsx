@@ -1,10 +1,22 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
+export interface AddEmployeeFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  joinDate: string;
+  position: string;
+  department: string;
+  baseSalary: number;
+  status: string;
+  address: string;
+}
+
 interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: AddEmployeeFormData) => void;
 }
 
 export function AddEmployeeModal({

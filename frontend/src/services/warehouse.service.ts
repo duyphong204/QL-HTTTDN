@@ -118,8 +118,10 @@ export const stockInService = {
     productId?: string;
     startDate?: string;
     endDate?: string;
-  }): Promise<StockIn[]> => {
-    return apiGet<StockIn[]>("/stock-ins", params);
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<StockIn>> => {
+    return apiGet<PaginatedResponse<StockIn>>("/stock-ins", params);
   },
 
   getStockInById: async (id: string): Promise<StockIn> => {
